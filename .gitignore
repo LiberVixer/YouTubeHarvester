@@ -1,0 +1,15 @@
+.env
+*.log
+download_*.log
+yt_archive.txt
+channels.txt
+queue.txt
+status.json
+last_download_at.txt
+stop_requested
+__pycache__/
+*.pyc
+.vscode/
+dist/deb-build/
+*.part
+

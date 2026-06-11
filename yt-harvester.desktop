@@ -1,0 +1,11 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=YT Harvester Tray
+Comment=YouTube downloader with Telegram notifications
+Exec=/bin/bash /home/redmin/YTD/start_tray.sh
+Icon=/home/redmin/YTD/assets/YTH-logo.png
+Terminal=false
+Categories=Network;
+StartupNotify=false
