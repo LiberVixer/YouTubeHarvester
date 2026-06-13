@@ -1,0 +1,100 @@
+name: Build YouTube Harvester Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env:
+  APP_VERSION: 0.2.2-beta
+  DEB_VERSION: 0.2.2~beta
+  MSI_VERSION: 0.2.2
+
+jobs:
+  linux:
+    name: Linux packages
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install package tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev fakeroot python3
+
+      - name: Validate scripts
+        run: |
+          python3 -m py_compile tray_launcher.py scripts/downloader.py scripts/check_channel_sections.py scripts/mark_channel_archived.py scripts/migrate_archive_details.py
+          bash -n run_download.sh packaging/build_deb.sh packaging/build_release.sh start_tray.sh
+
+      - name: Build Linux release files
+        run: |
+          bash packaging/build_release.sh "$DEB_VERSION" "$APP_VERSION"
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: youtube-harvester-linux
+          path: |
+            dist/release/YouTubeHarvester_${{ env.APP_VERSION }}_linux_all.deb
+            dist/release/YouTubeHarvester_${{ env.APP_VERSION }}_source.tar.gz
+            dist/release/SHA256SUMS-linux.txt
+
+      - name: Attach Linux files to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/release/YouTubeHarvester_${{ env.APP_VERSION }}_linux_all.deb
+            dist/release/YouTubeHarvester_${{ env.APP_VERSION }}_source.tar.gz
+            dist/release/SHA256SUMS-linux.txt
+
+  windows:
+    name: Windows packages
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install installer toolchains
+        shell: powershell
+        run: |
+          choco install innosetup wixtoolset -y
+
+      - name: Validate Python files
+        shell: powershell
+        run: |
+          python -m py_compile tray_launcher.py scripts/downloader.py scripts/check_channel_sections.py scripts/mark_channel_archived.py scripts/migrate_archive_details.py
+
+      - name: Build Windows release files
+        shell: powershell
+        run: |
+          powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 -Version "$env:APP_VERSION" -MsiVersion "$env:MSI_VERSION"
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: youtube-harvester-windows
+          path: |
+            dist/release/YouTubeHarvester_${{ env.APP_VERSION }}_windows_portable.zip
+            dist/release/YouTubeHarvester_${{ env.APP_VERSION }}_windows_setup.exe
+            dist/release/YouTubeHarvester_${{ env.APP_VERSION }}_windows_x64.msi
+            dist/release/SHA256SUMS-windows.txt
+
+      - name: Attach Windows files to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/release/YouTubeHarvester_${{ env.APP_VERSION }}_windows_portable.zip
+            dist/release/YouTubeHarvester_${{ env.APP_VERSION }}_windows_setup.exe
+            dist/release/YouTubeHarvester_${{ env.APP_VERSION }}_windows_x64.msi
+            dist/release/SHA256SUMS-windows.txt

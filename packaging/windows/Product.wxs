@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product
+      Id="*"
+      Name="YouTube Harvester"
+      Language="1033"
+      Version="$(var.MsiVersion)"
+      Manufacturer="YouTube Harvester"
+      UpgradeCode="B2DBF6B2-9429-45F9-B84D-1C74B33F0F70">
+
+    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of YouTube Harvester is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="YouTube Harvester" />
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="YouTube Harvester" />
+      </Directory>
+    </Directory>
+
+    <DirectoryRef Id="ApplicationProgramsFolder">
+      <Component Id="ApplicationShortcut" Guid="2B81E2AD-B599-4018-9A70-9770B994BA25">
+        <Shortcut
+            Id="ApplicationStartMenuShortcut"
+            Name="YouTube Harvester"
+            Description="YouTube Harvester"
+            Target="[INSTALLFOLDER]YouTubeHarvester.exe"
+            WorkingDirectory="INSTALLFOLDER" />
+        <RemoveFolder Id="ApplicationProgramsFolder" On="uninstall" />
+        <RegistryValue
+            Root="HKCU"
+            Key="Software\YouTube Harvester"
+            Name="installed"
+            Type="integer"
+            Value="1"
+            KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <Feature Id="DefaultFeature" Title="YouTube Harvester" Level="1">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="ApplicationShortcut" />
+    </Feature>
+  </Product>
+</Wix>

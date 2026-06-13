@@ -1,0 +1,15 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=YouTube Harvester
+Name[ru]=YouTube Harvester
+GenericName=YouTube downloader
+GenericName[ru]=Загрузчик YouTube
+Comment=YouTube downloader with Telegram notifications
+Comment[ru]=Загрузчик YouTube с интерфейсом в трее
+Exec=/bin/bash /home/redmin/YTD/start_tray.sh
+Icon=/home/redmin/YTD/assets/YTH-logo.png
+Terminal=false
+Categories=Network;
+StartupNotify=false
