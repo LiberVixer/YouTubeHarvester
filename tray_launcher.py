@@ -11,6 +11,7 @@ import subprocess
 import threading
 import os
 import time
+import shlex
 from pathlib import Path
 import urllib.request
 import html
@@ -37,6 +38,7 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QScrollArea,
     QInputDialog,
+    QFileDialog,
 )
 from PyQt5.QtGui import QIcon, QPixmap, QPainter, QColor, QBrush, QFont, QPen, QDesktopServices, QTextCursor, QPalette
 from PyQt5.QtCore import Qt, QTimer, QTime, QDate, QUrl, pyqtSignal
@@ -51,6 +53,19 @@ class ClickableLabel(QLabel):
         if event.button() == Qt.LeftButton:
             self.clicked.emit()
         super().mousePressEvent(event)
+
+
+CHANNEL_TYPE_DEFAULTS = {
+    "videos": True,
+    "shorts": True,
+    "streams": True,
+}
+
+CHANNEL_TYPE_BUTTONS = (
+    ("videos", "🎬", "Видео"),
+    ("shorts", "📱", "Шортсы"),
+    ("streams", "🔴", "Стримы"),
+)
 
 
 class TrayLauncher:
@@ -74,14 +89,17 @@ class TrayLauncher:
         self.last_download_file = Path(os.environ.get("YTD_LAST_DOWNLOAD_FILE", self.data_dir / "last_download_at.txt"))
         self.overview_logo_path = Path(os.environ.get("YTD_OVERVIEW_LOGO", self.app_dir / "assets" / "overview-logo.png"))
         self.video_placeholder_path = Path(os.environ.get("YTD_VIDEO_PLACEHOLDER", self.app_dir / "assets" / "video-placeholder.png"))
-        self.temp_dir = Path(os.environ.get("YTD_TEMP_DIR", "/media/sf_T/!/DWN/YTD"))
-        self.final_dir = Path(os.environ.get("YTD_FINAL_DIR", "/media/sf_T/!/DWN/Смотреть"))
+        self.queue_art_path = Path(os.environ.get("YTD_QUEUE_ART", self.app_dir / "assets" / "queue-scheduler.png"))
         self.is_running = False
         self.state = "idle"
         self.current_process = None
 
         self.schedules_file = Path(os.environ.get("YTD_SCHEDULES_FILE", Path.home() / ".config" / "YTD" / "schedules.json"))
         self.settings_file = Path(os.environ.get("YTD_SETTINGS_FILE", Path.home() / ".config" / "YTD" / "settings.json"))
+        self.env_file = Path(os.environ.get("YTD_ENV_FILE", self.config_dir / ".env"))
+        self.channel_rules_file = Path(os.environ.get("YTD_CHANNEL_RULES_FILE", self.config_dir / "channel_rules.json"))
+        self.app_settings = self.load_app_settings()
+        self.apply_runtime_settings(self.app_settings)
         self.schedules = []
         self.main_window = None
         self.last_tray_trigger_at = 0.0
@@ -166,6 +184,99 @@ class TrayLauncher:
         self.main_window.raise_()
         self.main_window.activateWindow()
 
+    def load_app_settings(self):
+        try:
+            if self.settings_file.exists():
+                data = json.loads(self.settings_file.read_text(encoding="utf-8"))
+                if isinstance(data, dict):
+                    return data
+        except Exception:
+            pass
+        return {}
+
+    def default_download_dir(self):
+        return Path.home() / "Downloads" / "YouTubeHarvester"
+
+    def default_temp_dir(self):
+        return Path.home() / "temp" / "YTH"
+
+    def _setting_path(self, settings: dict, key: str, env_key: str, default_path: Path):
+        value = str(settings.get(key) or os.environ.get(env_key) or default_path).strip()
+        return Path(os.path.expanduser(value))
+
+    def _setting_int(self, settings: dict, key: str, default: int, minimum: int = 1, maximum: int = 500):
+        try:
+            value = int(settings.get(key, default))
+        except (TypeError, ValueError):
+            value = default
+        return max(minimum, min(maximum, value))
+
+    def _setting_bool(self, settings: dict, key: str, default: bool):
+        value = settings.get(key, default)
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.strip().lower() not in {"0", "false", "no", "off", "нет"}
+        return bool(value)
+
+    def env_setting(self, key: str):
+        try:
+            if not self.env_file.exists():
+                return None
+            for line in self.env_file.read_text(encoding="utf-8").splitlines():
+                text = line.strip()
+                if not text or text.startswith("#"):
+                    continue
+                if text.startswith("export "):
+                    text = text[7:].strip()
+                try:
+                    parts = shlex.split(text, comments=False, posix=True)
+                except ValueError:
+                    parts = [text]
+                if parts and "=" in parts[0]:
+                    env_key, value = parts[0].split("=", 1)
+                    if env_key.strip() == key:
+                        return value
+        except Exception:
+            return None
+        return None
+
+    def apply_runtime_settings(self, settings: dict):
+        self.temp_dir = self._setting_path(settings, "temp_dir", "YTD_TEMP_DIR", self.default_temp_dir())
+        self.final_dir = self._setting_path(settings, "download_dir", "YTD_FINAL_DIR", self.default_download_dir())
+        self.videos_limit = self._setting_int(settings, "videos_limit", 5, 1, 100)
+        self.shorts_limit = self._setting_int(settings, "shorts_limit", 5, 1, 100)
+        self.streams_limit = self._setting_int(settings, "streams_limit", 5, 1, 100)
+        self.log_keep_count = self._setting_int(settings, "log_keep_count", 3, 1, 50)
+        self.cleanup_temp = self._setting_bool(settings, "cleanup_temp", True)
+        self.retry_failed_queue = self._setting_bool(settings, "retry_failed_queue", True)
+        telegram_default = self._setting_bool({"telegram_enabled": self.env_setting("TELEGRAM_ENABLED")}, "telegram_enabled", True)
+        self.telegram_enabled = self._setting_bool(settings, "telegram_enabled", telegram_default)
+        resolution = str(settings.get("max_resolution") or os.environ.get("YTD_MAX_RESOLUTION") or "1080").strip()
+        self.max_resolution = resolution if resolution in {"480", "720", "1080", "1440", "2160", "best"} else "1080"
+
+    def script_environment(self):
+        env = os.environ.copy()
+        env.update({
+            "YTD_APP_DIR": str(self.app_dir),
+            "YTD_DATA_DIR": str(self.data_dir),
+            "YTD_CONFIG_DIR": str(self.config_dir),
+            "YTD_CACHE_DIR": str(self.cache_dir),
+            "YTD_ENV_FILE": str(self.env_file),
+            "YTD_CHANNEL_RULES_FILE": str(self.channel_rules_file),
+            "YTD_TEMP_DIR": str(self.temp_dir),
+            "YTD_FINAL_DIR": str(self.final_dir),
+            "YTD_VIDEOS_LIMIT": str(self.videos_limit),
+            "YTD_SHORTS_LIMIT": str(self.shorts_limit),
+            "YTD_STREAMS_LIMIT": str(self.streams_limit),
+            "YTD_MAX_RESOLUTION": str(self.max_resolution),
+            "YTD_LOG_KEEP_COUNT": str(self.log_keep_count),
+            "YTD_CLEANUP_TEMP": "1" if self.cleanup_temp else "0",
+            "YTD_RETRY_FAILED_QUEUE": "1" if self.retry_failed_queue else "0",
+            "YTD_TELEGRAM_ENABLED": "1" if self.telegram_enabled else "0",
+        })
+        return env
+
     def run_script(self):
         if self.is_running:
             self.show_notification("⚠️", "Скрипт уже запущен", "Подождите завершения...")
@@ -190,7 +301,8 @@ class TrayLauncher:
             proc = subprocess.Popen(
                 ["bash", str(self.script_path)],
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
+                stderr=subprocess.DEVNULL,
+                env=self.script_environment(),
             )
             self.current_process = proc
             proc.wait()
@@ -313,6 +425,7 @@ class MainWindow(QMainWindow):
             self.theme = "dark"
         self.channel_cards = {}
         self.channel_cache_dir = self.launcher.cache_dir / "channels"
+        self.channel_rules = {}
 
         self.tabs = QTabWidget()
         self.setCentralWidget(self.tabs)
@@ -333,7 +446,6 @@ class MainWindow(QMainWindow):
 
         self._build_overview_tab()
         self._build_channels_tab()
-        self._build_schedule_tab()
         self._build_queue_tab()
         self._build_logs_tab()
 
@@ -468,11 +580,44 @@ class MainWindow(QMainWindow):
 
         self.tabs.addTab(tab, "Каналы")
 
-    def _build_schedule_tab(self):
+    def _build_queue_tab(self):
         tab = QWidget()
-        layout = QVBoxLayout(tab)
+        layout = QHBoxLayout(tab)
+        layout.setContentsMargins(12, 10, 12, 12)
+        layout.setSpacing(10)
 
-        top = QHBoxLayout()
+        schedule_panel = QWidget()
+        schedule_panel.setObjectName("toolPanel")
+        schedule_panel.setFixedWidth(318)
+        schedule_layout = QVBoxLayout(schedule_panel)
+        schedule_layout.setContentsMargins(10, 8, 10, 10)
+        schedule_layout.setSpacing(8)
+
+        self.queue_art_label = QLabel()
+        self.queue_art_label.setObjectName("queueArt")
+        self.queue_art_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.queue_art_label.setFixedSize(292, 255)
+        if self.launcher.queue_art_path.exists():
+            pixmap = QPixmap(str(self.launcher.queue_art_path))
+            if not pixmap.isNull():
+                self.queue_art_label.setPixmap(
+                    pixmap.scaled(self.queue_art_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                )
+        schedule_layout.addWidget(self.queue_art_label, 0, Qt.AlignLeft | Qt.AlignTop)
+
+        schedule_header = QHBoxLayout()
+        schedule_title = QLabel("Планировщик")
+        schedule_title.setObjectName("sectionTitle")
+        self.schedule_summary_label = QLabel("")
+        self.schedule_summary_label.setObjectName("subtleText")
+        schedule_header.addWidget(schedule_title)
+        schedule_header.addStretch()
+        schedule_header.addWidget(self.schedule_summary_label)
+        schedule_layout.addLayout(schedule_header)
+
+        top = QGridLayout()
+        top.setContentsMargins(0, 0, 0, 0)
+        top.setSpacing(8)
         self.schedule_hour_spin = QSpinBox()
         self.schedule_hour_spin.setRange(0, 23)
         self.schedule_hour_spin.setSuffix(":00")
@@ -480,46 +625,67 @@ class MainWindow(QMainWindow):
         self.schedule_enabled_check = QCheckBox("Включено")
         self.schedule_enabled_check.setChecked(True)
         add_btn = QPushButton("Добавить")
+        add_btn.setFixedHeight(30)
         add_btn.clicked.connect(self.add_schedule)
-        toggle_btn = QPushButton("Вкл/выкл выбранное")
+        toggle_btn = QPushButton("Вкл / выкл")
+        toggle_btn.setFixedHeight(30)
         toggle_btn.clicked.connect(self.toggle_selected_schedule)
-        remove_btn = QPushButton("Удалить выбранное")
+        remove_btn = QPushButton("Удалить")
+        remove_btn.setFixedHeight(30)
         remove_btn.clicked.connect(self.remove_selected_schedule)
-        top.addWidget(QLabel("Час:"))
-        top.addWidget(self.schedule_hour_spin)
-        top.addWidget(self.schedule_enabled_check)
-        top.addWidget(add_btn)
-        top.addWidget(toggle_btn)
-        top.addWidget(remove_btn)
-        top.addStretch()
-        layout.addLayout(top)
+        top.addWidget(QLabel("Запуск в"), 0, 0)
+        top.addWidget(self.schedule_hour_spin, 0, 1)
+        top.addWidget(self.schedule_enabled_check, 0, 2)
+        top.addWidget(add_btn, 1, 0, 1, 3)
+        top.addWidget(toggle_btn, 2, 0, 1, 2)
+        top.addWidget(remove_btn, 2, 2)
+        top.setColumnStretch(2, 1)
+        schedule_layout.addLayout(top)
 
         self.schedule_list = QListWidget()
-        layout.addWidget(self.schedule_list)
+        self.schedule_list.setAlternatingRowColors(True)
+        self.schedule_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.schedule_list.setFixedHeight(132)
+        schedule_layout.addWidget(self.schedule_list)
+        schedule_layout.addStretch()
+        layout.addWidget(schedule_panel)
 
-        self.tabs.addTab(tab, "Планировщик")
+        queue_panel = QWidget()
+        queue_panel.setObjectName("toolPanel")
+        queue_layout = QVBoxLayout(queue_panel)
+        queue_layout.setContentsMargins(10, 8, 10, 10)
+        queue_layout.setSpacing(8)
 
-    def _build_queue_tab(self):
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
+        queue_header = QHBoxLayout()
+        queue_title = QLabel("Очередь видео")
+        queue_title.setObjectName("sectionTitle")
+        self.queue_summary_label = QLabel("")
+        self.queue_summary_label.setObjectName("subtleText")
+        queue_header.addWidget(queue_title)
+        queue_header.addStretch()
+        queue_header.addWidget(self.queue_summary_label)
+        queue_layout.addLayout(queue_header)
 
         input_row = QHBoxLayout()
+        input_row.setSpacing(8)
         self.video_url_input = QLineEdit()
         self.video_url_input.setPlaceholderText("https://www.youtube.com/watch?v=...")
         self.video_url_input.textChanged.connect(self.schedule_video_preview)
-        self.add_video_button = QPushButton("Скачать")
+        self.add_video_button = QPushButton("Добавить в очередь")
+        self.add_video_button.setFixedHeight(30)
         self.add_video_button.setEnabled(False)
         self.add_video_button.clicked.connect(self.add_video_to_queue)
         input_row.addWidget(self.video_url_input)
         input_row.addWidget(self.add_video_button)
-        layout.addLayout(input_row)
+        queue_layout.addLayout(input_row)
 
         preview_row = QHBoxLayout()
+        preview_row.setSpacing(12)
         self.thumbnail_label = QLabel("Обложка")
         self.thumbnail_label.setAlignment(Qt.AlignCenter)
-        self.thumbnail_label.setFixedSize(320, 180)
+        self.thumbnail_label.setFixedSize(220, 124)
         self.thumbnail_label.setStyleSheet("border: 1px solid #555; background: #202020; color: #bbb;")
-        preview_row.addWidget(self.thumbnail_label)
+        preview_row.addWidget(self.thumbnail_label, 0, Qt.AlignTop)
 
         preview_info = QVBoxLayout()
         self.video_title_label = QLabel("Введите адрес YouTube-видео")
@@ -535,20 +701,26 @@ class MainWindow(QMainWindow):
         preview_info.addWidget(self.video_status_label)
         preview_info.addStretch()
         preview_row.addLayout(preview_info)
-        layout.addLayout(preview_row)
+        queue_layout.addLayout(preview_row)
 
         queue_buttons = QHBoxLayout()
+        queue_buttons.setSpacing(8)
         remove_btn = QPushButton("Удалить выбранное")
+        remove_btn.setFixedHeight(30)
         remove_btn.clicked.connect(self.remove_selected_queued_video)
         reload_btn = QPushButton("Перечитать очередь")
+        reload_btn.setFixedHeight(30)
         reload_btn.clicked.connect(self.refresh_queue)
         queue_buttons.addWidget(remove_btn)
         queue_buttons.addWidget(reload_btn)
         queue_buttons.addStretch()
-        layout.addLayout(queue_buttons)
+        queue_layout.addLayout(queue_buttons)
 
         self.queue_list = QListWidget()
-        layout.addWidget(self.queue_list)
+        self.queue_list.setAlternatingRowColors(True)
+        self.queue_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        queue_layout.addWidget(self.queue_list, 1)
+        layout.addWidget(queue_panel, 1)
 
         self.preview_timer = QTimer(self)
         self.preview_timer.setSingleShot(True)
@@ -559,23 +731,335 @@ class MainWindow(QMainWindow):
     def _build_logs_tab(self):
         tab = QWidget()
         layout = QVBoxLayout(tab)
+        layout.setContentsMargins(12, 10, 12, 12)
+        layout.setSpacing(10)
+
+        settings_row = QHBoxLayout()
+        settings_row.setSpacing(10)
+
+        download_panel = QWidget()
+        download_panel.setObjectName("toolPanel")
+        download_layout = QVBoxLayout(download_panel)
+        download_layout.setContentsMargins(10, 8, 10, 10)
+        download_layout.setSpacing(8)
+
+        download_title = QLabel("Загрузка")
+        download_title.setObjectName("sectionTitle")
+        download_layout.addWidget(download_title)
+
+        self.download_dir_input = QLineEdit()
+        download_layout.addLayout(self._path_setting_row(
+            "📁 Папка",
+            self.download_dir_input,
+            lambda: self.choose_directory(self.download_dir_input),
+        ))
+
+        self.temp_dir_input = QLineEdit()
+        download_layout.addLayout(self._path_setting_row(
+            "⌛ TEMP",
+            self.temp_dir_input,
+            lambda: self.choose_directory(self.temp_dir_input),
+        ))
+
+        limits_row = QHBoxLayout()
+        limits_row.setSpacing(6)
+        self.videos_limit_spin = self._limit_spin()
+        self.shorts_limit_spin = self._limit_spin()
+        self.streams_limit_spin = self._limit_spin()
+        for label_text, spin in (
+            ("🎬", self.videos_limit_spin),
+            ("📱", self.shorts_limit_spin),
+            ("🔴", self.streams_limit_spin),
+        ):
+            limits_row.addWidget(QLabel(label_text))
+            limits_row.addWidget(spin)
+        limits_row.addStretch()
+        download_layout.addLayout(limits_row)
+
+        resolution_row = QHBoxLayout()
+        resolution_row.setSpacing(8)
+        self.resolution_combo = QComboBox()
+        for label, value in (
+            ("480p", "480"),
+            ("720p", "720"),
+            ("1080p", "1080"),
+            ("1440p", "1440"),
+            ("2160p", "2160"),
+            ("Лучшее доступное", "best"),
+        ):
+            self.resolution_combo.addItem(label, value)
+        resolution_row.addWidget(QLabel("📺 Разрешение"))
+        resolution_row.addWidget(self.resolution_combo, 1)
+        download_layout.addLayout(resolution_row)
+
+        options_row = QHBoxLayout()
+        options_row.setSpacing(8)
+        self.cleanup_temp_check = QCheckBox("🧹 TEMP")
+        self.retry_queue_check = QCheckBox("🔁 Очередь")
+        self.autostart_check = QCheckBox("🚀 Старт")
+        self.log_keep_spin = self._limit_spin(1, 50)
+        options_row.addWidget(self.cleanup_temp_check)
+        options_row.addWidget(self.retry_queue_check)
+        options_row.addWidget(self.autostart_check)
+        options_row.addWidget(QLabel("📝 Логов"))
+        options_row.addWidget(self.log_keep_spin)
+        options_row.addStretch()
+        download_layout.addLayout(options_row)
+
+        telegram_panel = QWidget()
+        telegram_panel.setObjectName("toolPanel")
+        telegram_layout = QVBoxLayout(telegram_panel)
+        telegram_layout.setContentsMargins(10, 8, 10, 10)
+        telegram_layout.setSpacing(8)
+
+        telegram_header = QHBoxLayout()
+        telegram_title = QLabel("Telegram")
+        telegram_title.setObjectName("sectionTitle")
+        self.telegram_enabled_check = QCheckBox("🔔 Включено")
+        telegram_header.addWidget(telegram_title)
+        telegram_header.addStretch()
+        telegram_header.addWidget(self.telegram_enabled_check)
+        telegram_layout.addLayout(telegram_header)
+
+        self.bot_token_input, self.bot_token_eye = self._secret_input()
+        telegram_layout.addLayout(self._secret_setting_row("BOT_TOKEN", self.bot_token_input, self.bot_token_eye))
+        self.channel_id_input, self.channel_id_eye = self._secret_input()
+        telegram_layout.addLayout(self._secret_setting_row("CHANNEL_ID", self.channel_id_input, self.channel_id_eye))
+        self.proxy_url_input, self.proxy_url_eye = self._secret_input()
+        telegram_layout.addLayout(self._secret_setting_row("PROXY_URL", self.proxy_url_input, self.proxy_url_eye))
+
+        save_row = QHBoxLayout()
+        save_row.setSpacing(8)
+        save_btn = QPushButton("Сохранить настройки")
+        save_btn.setFixedHeight(30)
+        save_btn.clicked.connect(self.save_settings_from_ui)
+        open_env_btn = QPushButton("Открыть .env")
+        open_env_btn.setFixedHeight(30)
+        open_env_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(self.launcher.env_file))))
+        save_row.addWidget(save_btn)
+        save_row.addWidget(open_env_btn)
+        save_row.addStretch()
+        telegram_layout.addLayout(save_row)
+
+        settings_row.addWidget(download_panel, 3)
+        settings_row.addWidget(telegram_panel, 2)
+        layout.addLayout(settings_row)
+
+        logs_panel = QWidget()
+        logs_panel.setObjectName("toolPanel")
+        logs_layout = QVBoxLayout(logs_panel)
+        logs_layout.setContentsMargins(10, 8, 10, 10)
+        logs_layout.setSpacing(8)
 
         top = QHBoxLayout()
+        logs_title = QLabel("Логи")
+        logs_title.setObjectName("sectionTitle")
         self.log_combo = QComboBox()
         refresh_btn = QPushButton("Обновить список")
+        refresh_btn.setFixedHeight(30)
         refresh_btn.clicked.connect(self.refresh_logs)
         reload_btn = QPushButton("Перечитать лог")
+        reload_btn.setFixedHeight(30)
         reload_btn.clicked.connect(self.refresh_log_view)
+        top.addWidget(logs_title)
         top.addWidget(self.log_combo)
         top.addWidget(refresh_btn)
         top.addWidget(reload_btn)
-        layout.addLayout(top)
+        logs_layout.addLayout(top)
 
         self.log_view = QTextEdit()
         self.log_view.setReadOnly(True)
-        layout.addWidget(self.log_view)
+        logs_layout.addWidget(self.log_view, 1)
+        layout.addWidget(logs_panel, 1)
 
-        self.tabs.addTab(tab, "Логи")
+        self.refresh_settings_controls()
+
+        self.tabs.addTab(tab, "Настройки")
+
+    def _limit_spin(self, minimum: int = 1, maximum: int = 100):
+        spin = QSpinBox()
+        spin.setRange(minimum, maximum)
+        spin.setFixedWidth(62)
+        return spin
+
+    def _path_setting_row(self, label_text: str, line_edit: QLineEdit, callback):
+        row = QHBoxLayout()
+        row.setSpacing(8)
+        label = QLabel(label_text)
+        label.setFixedWidth(82)
+        button = QPushButton("...")
+        button.setFixedSize(34, 30)
+        button.clicked.connect(callback)
+        row.addWidget(label)
+        row.addWidget(line_edit, 1)
+        row.addWidget(button)
+        return row
+
+    def _secret_input(self):
+        line_edit = QLineEdit()
+        line_edit.setEchoMode(QLineEdit.Password)
+        button = QPushButton("👁")
+        button.setCheckable(True)
+        button.setFixedSize(34, 30)
+        button.setToolTip("Показать / скрыть")
+        button.clicked.connect(lambda checked=False, field=line_edit: self.toggle_secret_visibility(field, checked))
+        return line_edit, button
+
+    def _secret_setting_row(self, label_text: str, line_edit: QLineEdit, eye_button: QPushButton):
+        row = QHBoxLayout()
+        row.setSpacing(8)
+        label = QLabel(label_text)
+        label.setFixedWidth(104)
+        row.addWidget(label)
+        row.addWidget(line_edit, 1)
+        row.addWidget(eye_button)
+        return row
+
+    def toggle_secret_visibility(self, field: QLineEdit, visible: bool):
+        field.setEchoMode(QLineEdit.Normal if visible else QLineEdit.Password)
+
+    def choose_directory(self, field: QLineEdit):
+        current = field.text().strip() or str(Path.home())
+        selected = QFileDialog.getExistingDirectory(self, "Выбрать папку", current)
+        if selected:
+            field.setText(selected)
+
+    def refresh_settings_controls(self):
+        env_values = self.read_env_values()
+        self.download_dir_input.setText(str(self.launcher.final_dir))
+        self.temp_dir_input.setText(str(self.launcher.temp_dir))
+        self.download_dir_input.setCursorPosition(0)
+        self.temp_dir_input.setCursorPosition(0)
+        self.videos_limit_spin.setValue(self.launcher.videos_limit)
+        self.shorts_limit_spin.setValue(self.launcher.shorts_limit)
+        self.streams_limit_spin.setValue(self.launcher.streams_limit)
+        self.log_keep_spin.setValue(self.launcher.log_keep_count)
+        self.cleanup_temp_check.setChecked(self.launcher.cleanup_temp)
+        self.retry_queue_check.setChecked(self.launcher.retry_failed_queue)
+        self.telegram_enabled_check.setChecked(self.launcher.telegram_enabled)
+        self.autostart_check.setChecked(self.is_autostart_enabled())
+
+        resolution_index = self.resolution_combo.findData(self.launcher.max_resolution)
+        self.resolution_combo.setCurrentIndex(resolution_index if resolution_index >= 0 else 2)
+
+        self.bot_token_input.setText(env_values.get("BOT_TOKEN", ""))
+        self.channel_id_input.setText(env_values.get("CHANNEL_ID", ""))
+        self.proxy_url_input.setText(env_values.get("PROXY_URL", ""))
+
+    def save_settings_from_ui(self):
+        self.ui_settings.update({
+            "download_dir": self.download_dir_input.text().strip() or str(self.launcher.default_download_dir()),
+            "temp_dir": self.temp_dir_input.text().strip() or str(self.launcher.default_temp_dir()),
+            "videos_limit": int(self.videos_limit_spin.value()),
+            "shorts_limit": int(self.shorts_limit_spin.value()),
+            "streams_limit": int(self.streams_limit_spin.value()),
+            "max_resolution": self.resolution_combo.currentData() or "1080",
+            "log_keep_count": int(self.log_keep_spin.value()),
+            "cleanup_temp": self.cleanup_temp_check.isChecked(),
+            "retry_failed_queue": self.retry_queue_check.isChecked(),
+            "telegram_enabled": self.telegram_enabled_check.isChecked(),
+        })
+        self.save_ui_settings()
+        self.launcher.app_settings = dict(self.ui_settings)
+        self.launcher.apply_runtime_settings(self.launcher.app_settings)
+        self.launcher.temp_dir.mkdir(parents=True, exist_ok=True)
+        self.launcher.final_dir.mkdir(parents=True, exist_ok=True)
+        self.write_env_values({
+            "TELEGRAM_ENABLED": "1" if self.telegram_enabled_check.isChecked() else "0",
+            "BOT_TOKEN": self.bot_token_input.text(),
+            "CHANNEL_ID": self.channel_id_input.text(),
+            "PROXY_URL": self.proxy_url_input.text(),
+        })
+        self.set_autostart_enabled(self.autostart_check.isChecked())
+        self.refresh_overview()
+        QMessageBox.information(self, "Настройки", "Настройки сохранены")
+
+    def read_env_values(self):
+        values = {}
+        try:
+            if not self.launcher.env_file.exists():
+                return values
+            for line in self.launcher.env_file.read_text(encoding="utf-8").splitlines():
+                text = line.strip()
+                if not text or text.startswith("#"):
+                    continue
+                if text.startswith("export "):
+                    text = text[7:].strip()
+                try:
+                    parts = shlex.split(text, comments=False, posix=True)
+                except ValueError:
+                    parts = [text]
+                if not parts or "=" not in parts[0]:
+                    continue
+                key, value = parts[0].split("=", 1)
+                values[key.strip()] = value
+        except Exception:
+            return values
+        return values
+
+    def write_env_values(self, values: dict):
+        keys = set(values)
+        self.launcher.env_file.parent.mkdir(parents=True, exist_ok=True)
+        lines = []
+        seen = set()
+        if self.launcher.env_file.exists():
+            lines = self.launcher.env_file.read_text(encoding="utf-8").splitlines()
+        else:
+            lines = [
+                "# Telegram settings for YT Harvester.",
+                "# Values are edited from the application settings tab.",
+            ]
+
+        updated_lines = []
+        for line in lines:
+            stripped = line.strip()
+            body = stripped[7:].strip() if stripped.startswith("export ") else stripped
+            key = body.split("=", 1)[0].strip() if "=" in body else ""
+            if key in keys:
+                updated_lines.append(f"{key}={self.env_quote(values[key])}")
+                seen.add(key)
+            else:
+                updated_lines.append(line)
+
+        for key in ("TELEGRAM_ENABLED", "BOT_TOKEN", "CHANNEL_ID", "PROXY_URL"):
+            if key in keys and key not in seen:
+                updated_lines.append(f"{key}={self.env_quote(values[key])}")
+
+        self.launcher.env_file.write_text("\n".join(updated_lines).rstrip() + "\n", encoding="utf-8")
+
+    def env_quote(self, value):
+        text = str(value or "")
+        if not text:
+            return "''"
+        return "'" + text.replace("'", "'\"'\"'") + "'"
+
+    def autostart_file(self):
+        return Path.home() / ".config" / "autostart" / "yt-harvester.desktop"
+
+    def is_autostart_enabled(self):
+        return self.autostart_file().exists()
+
+    def set_autostart_enabled(self, enabled: bool):
+        path = self.autostart_file()
+        try:
+            if enabled:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                exec_path = Path("/usr/bin/yt-harvester")
+                exec_line = "yt-harvester" if exec_path.exists() else str(self.launcher.app_dir / "start_tray.sh")
+                path.write_text(
+                    "[Desktop Entry]\n"
+                    "Type=Application\n"
+                    "Name=YT Harvester\n"
+                    f"Exec={exec_line}\n"
+                    "Icon=yt-harvester\n"
+                    "Terminal=false\n"
+                    "X-GNOME-Autostart-enabled=true\n",
+                    encoding="utf-8",
+                )
+            elif path.exists():
+                path.unlink()
+        except Exception as e:
+            QMessageBox.warning(self, "Автозапуск", str(e))
 
     def refresh_all(self):
         self.refresh_overview()
@@ -656,6 +1140,25 @@ class MainWindow(QMainWindow):
                 QPushButton:hover {
                     background: #edf3f8;
                 }
+                QWidget#toolPanel {
+                    background: #ffffff;
+                    border: 1px solid #d7dfe7;
+                    border-radius: 4px;
+                }
+                QWidget#toolPanel QLabel, QWidget#toolPanel QCheckBox {
+                    background: transparent;
+                    font-family: "Noto Sans", "DejaVu Sans", "Noto Color Emoji", sans-serif;
+                }
+                QLabel#sectionTitle {
+                    background: transparent;
+                    font-size: 14px;
+                    font-weight: bold;
+                }
+                QLabel#subtleText {
+                    background: transparent;
+                    color: #5c6670;
+                    font-size: 12px;
+                }
                 QWidget#themeCorner {
                     background: #eef2f6;
                     border: none;
@@ -696,12 +1199,32 @@ class MainWindow(QMainWindow):
                     background: #ffffff;
                     border: 1px solid #b9c3cc;
                 }
+                QLabel#queueArt {
+                    background: transparent;
+                    border: none;
+                }
                 QLineEdit, QPlainTextEdit, QTextEdit, QListWidget, QComboBox, QSpinBox {
                     background: #ffffff;
+                    alternate-background-color: #f2f5f8;
                     color: #17202a;
                     border: 1px solid #b9c3cc;
                     selection-background-color: #2d7dd2;
                     selection-color: #ffffff;
+                }
+                QLineEdit {
+                    padding: 6px 8px;
+                }
+                QListWidget::item {
+                    min-height: 28px;
+                    padding: 4px 8px;
+                }
+                QListWidget::item:selected {
+                    background: #2d7dd2;
+                    color: #ffffff;
+                }
+                QListWidget::item:selected:!active {
+                    background: #2d7dd2;
+                    color: #ffffff;
                 }
             """)
             self.thumbnail_label.setStyleSheet("border: 1px solid #b9c3cc; background: #ffffff; color: #5c6670;")
@@ -735,6 +1258,25 @@ class MainWindow(QMainWindow):
                 }
                 QPushButton:hover {
                     background: #384454;
+                }
+                QWidget#toolPanel {
+                    background: #1c222a;
+                    border: 1px solid #303844;
+                    border-radius: 4px;
+                }
+                QWidget#toolPanel QLabel, QWidget#toolPanel QCheckBox {
+                    background: transparent;
+                    font-family: "Noto Sans", "DejaVu Sans", "Noto Color Emoji", sans-serif;
+                }
+                QLabel#sectionTitle {
+                    background: transparent;
+                    font-size: 14px;
+                    font-weight: bold;
+                }
+                QLabel#subtleText {
+                    background: transparent;
+                    color: #aeb8c2;
+                    font-size: 12px;
                 }
                 QWidget#themeCorner {
                     background: #232a32;
@@ -776,12 +1318,32 @@ class MainWindow(QMainWindow):
                     background: #101317;
                     border: 1px solid #3a4350;
                 }
+                QLabel#queueArt {
+                    background: transparent;
+                    border: none;
+                }
                 QLineEdit, QPlainTextEdit, QTextEdit, QListWidget, QComboBox, QSpinBox {
                     background: #101317;
+                    alternate-background-color: #151a20;
                     color: #e8edf2;
                     border: 1px solid #3a4350;
                     selection-background-color: #2d7dd2;
                     selection-color: #ffffff;
+                }
+                QLineEdit {
+                    padding: 6px 8px;
+                }
+                QListWidget::item {
+                    min-height: 28px;
+                    padding: 4px 8px;
+                }
+                QListWidget::item:selected {
+                    background: #2d7dd2;
+                    color: #ffffff;
+                }
+                QListWidget::item:selected:!active {
+                    background: #2d7dd2;
+                    color: #ffffff;
                 }
             """)
             self.thumbnail_label.setStyleSheet("border: 1px solid #3a4350; background: #101317; color: #aeb8c2;")
@@ -969,6 +1531,7 @@ class MainWindow(QMainWindow):
             "done": self._emoji_html("✅"),
             "missing": self._emoji_html("❌"),
             "downloading": self._emoji_html("⬇️"),
+            "disabled": self._emoji_html("🚫"),
             "idle": self._emoji_html("😴"),
         }.get(status or "idle", self._emoji_html("😴"))
 
@@ -1075,6 +1638,9 @@ class MainWindow(QMainWindow):
     def refresh_channels(self):
         self._clear_layout(self.channels_grid)
         self.channel_cards = {}
+        self.channel_rules = self.load_channel_rules()
+        for row in range(self.channels_grid.rowCount()):
+            self.channels_grid.setRowMinimumHeight(row, 0)
 
         channels = self._read_channels()
         for idx, channel in enumerate(channels):
@@ -1092,6 +1658,9 @@ class MainWindow(QMainWindow):
         plus_col = len(channels) % 4
         self.channels_grid.addWidget(self.create_add_channel_card(), plus_row, plus_col)
 
+        total_rows = ((len(channels) + 1) + 3) // 4
+        for row in range(total_rows):
+            self.channels_grid.setRowMinimumHeight(row, 276)
         for col in range(4):
             self.channels_grid.setColumnStretch(col, 1)
 
@@ -1117,6 +1686,10 @@ class MainWindow(QMainWindow):
     def remove_channel(self, channel: str):
         channels = [item for item in self._read_channels() if item != channel]
         self.save_channel_urls(channels)
+        key = self.normalize_channel_key(channel)
+        if key in self.channel_rules:
+            self.channel_rules.pop(key, None)
+            self.save_channel_rules()
         self.refresh_channels()
         self.refresh_overview()
 
@@ -1127,9 +1700,61 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.warning(self, "Каналы", str(e))
 
+    def normalize_channel_key(self, channel: str):
+        return str(channel or "").strip().rstrip("/")
+
+    def load_channel_rules(self):
+        try:
+            if not self.launcher.channel_rules_file.exists():
+                return {}
+            data = json.loads(self.launcher.channel_rules_file.read_text(encoding="utf-8"))
+            if not isinstance(data, dict):
+                return {}
+            rules = {}
+            for channel, values in data.items():
+                key = self.normalize_channel_key(channel)
+                if not key or not isinstance(values, dict):
+                    continue
+                channel_rules = {}
+                for type_name, default in CHANNEL_TYPE_DEFAULTS.items():
+                    channel_rules[type_name] = bool(values.get(type_name, default))
+                if channel_rules != CHANNEL_TYPE_DEFAULTS:
+                    rules[key] = channel_rules
+            return rules
+        except Exception:
+            return {}
+
+    def save_channel_rules(self):
+        try:
+            self.launcher.channel_rules_file.parent.mkdir(parents=True, exist_ok=True)
+            self.launcher.channel_rules_file.write_text(
+                json.dumps(self.channel_rules, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+        except Exception as e:
+            QMessageBox.warning(self, "Каналы", str(e))
+
+    def channel_rule(self, channel: str):
+        key = self.normalize_channel_key(channel)
+        rules = dict(CHANNEL_TYPE_DEFAULTS)
+        rules.update(self.channel_rules.get(key, {}))
+        return rules
+
+    def set_channel_type_enabled(self, channel: str, type_name: str, enabled: bool):
+        if type_name not in CHANNEL_TYPE_DEFAULTS:
+            return
+        key = self.normalize_channel_key(channel)
+        rules = self.channel_rule(channel)
+        rules[type_name] = bool(enabled)
+        if rules == CHANNEL_TYPE_DEFAULTS:
+            self.channel_rules.pop(key, None)
+        else:
+            self.channel_rules[key] = rules
+        self.save_channel_rules()
+
     def create_channel_card(self, channel: str):
         card = QWidget()
-        card.setFixedSize(190, 230)
+        card.setFixedSize(190, 264)
         layout = QVBoxLayout(card)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(8)
@@ -1164,9 +1789,43 @@ class MainWindow(QMainWindow):
         delete_btn.clicked.connect(lambda checked=False, c=channel: self.remove_channel(c))
         delete_btn.raise_()
 
+        rules = self.channel_rule(channel)
+        for idx, (type_name, emoji, label) in enumerate(CHANNEL_TYPE_BUTTONS):
+            type_btn = QPushButton(emoji, image_box)
+            type_btn.setCheckable(True)
+            type_btn.setChecked(rules.get(type_name, True))
+            type_btn.setGeometry(156, 38 + idx * 34, 30, 30)
+            type_btn.setToolTip(f"{label}: включить / отключить скачивание")
+            type_btn.setStyleSheet("""
+                QPushButton {
+                    background: rgba(185, 48, 48, 190);
+                    color: white;
+                    border: none;
+                    font-family: "Noto Sans", "DejaVu Sans", "Noto Color Emoji", sans-serif;
+                    font-size: 18px;
+                    font-weight: bold;
+                    padding: 0;
+                    text-align: center;
+                }
+                QPushButton:checked {
+                    background: rgba(37, 150, 80, 190);
+                }
+                QPushButton:hover {
+                    background: rgba(180, 40, 40, 210);
+                }
+                QPushButton:checked:hover {
+                    background: rgba(37, 150, 80, 220);
+                }
+            """)
+            type_btn.clicked.connect(
+                lambda checked=False, c=channel, t=type_name: self.set_channel_type_enabled(c, t, checked)
+            )
+            type_btn.raise_()
+
         title = QLabel(self.channel_title_from_url(channel))
         title.setAlignment(Qt.AlignCenter)
         title.setWordWrap(True)
+        title.setFixedHeight(58)
         font = QFont("Serif")
         font.setPointSize(12)
         font.setBold(True)
@@ -1181,7 +1840,7 @@ class MainWindow(QMainWindow):
 
     def create_add_channel_card(self):
         card = QWidget()
-        card.setFixedSize(190, 230)
+        card.setFixedSize(190, 264)
         layout = QVBoxLayout(card)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(8)
@@ -1202,7 +1861,7 @@ class MainWindow(QMainWindow):
             }
         """)
         title = QLabel("")
-        title.setFixedHeight(34)
+        title.setFixedHeight(58)
         layout.addWidget(button)
         layout.addWidget(title)
         return card
@@ -1312,13 +1971,20 @@ class MainWindow(QMainWindow):
 
     def refresh_schedules(self):
         self.schedule_list.clear()
+        enabled_count = 0
         for idx, sched in enumerate(self.launcher.schedules):
-            enabled = "ON" if sched.get("enabled", True) else "OFF"
+            is_enabled = sched.get("enabled", True)
+            enabled_count += 1 if is_enabled else 0
+            enabled = "ВКЛ" if is_enabled else "ВЫКЛ"
             hour = int(sched.get("hour", 0))
             marker = sched.get("last_run_marker", "")
-            item = QListWidgetItem(f"{hour:02d}:00  [{enabled}]  {marker}")
+            last_run = marker if marker else "не запускался"
+            item = QListWidgetItem(f"{hour:02d}:00    {enabled}    {last_run}")
             item.setData(Qt.UserRole, idx)
             self.schedule_list.addItem(item)
+        if hasattr(self, "schedule_summary_label"):
+            total = len(self.launcher.schedules)
+            self.schedule_summary_label.setText(f"{enabled_count} включено / {total} всего")
 
     def add_schedule(self):
         entry = {
@@ -1328,6 +1994,7 @@ class MainWindow(QMainWindow):
         }
         self.launcher.schedules.append(entry)
         self.launcher.save_schedules()
+        self.refresh_schedules()
 
     def toggle_selected_schedule(self):
         idx = self._selected_schedule_index()
@@ -1335,6 +2002,7 @@ class MainWindow(QMainWindow):
             return
         self.launcher.schedules[idx]["enabled"] = not self.launcher.schedules[idx].get("enabled", True)
         self.launcher.save_schedules()
+        self.refresh_schedules()
 
     def remove_selected_schedule(self):
         idx = self._selected_schedule_index()
@@ -1342,6 +2010,7 @@ class MainWindow(QMainWindow):
             return
         self.launcher.schedules.pop(idx)
         self.launcher.save_schedules()
+        self.refresh_schedules()
 
     def schedule_video_preview(self):
         self.current_preview = {}
@@ -1458,6 +2127,15 @@ class MainWindow(QMainWindow):
         self.queue_list.clear()
         for url in self._read_queue():
             self.queue_list.addItem(url)
+        if hasattr(self, "queue_summary_label"):
+            count = self.queue_list.count()
+            if count == 1:
+                text = "1 видео"
+            elif 2 <= count % 10 <= 4 and not 12 <= count % 100 <= 14:
+                text = f"{count} видео"
+            else:
+                text = f"{count} видео"
+            self.queue_summary_label.setText(text)
 
     def remove_selected_queued_video(self):
         row = self.queue_list.currentRow()
@@ -1466,6 +2144,7 @@ class MainWindow(QMainWindow):
             return
         self.queue_list.takeItem(row)
         self._save_queue([self.queue_list.item(i).text() for i in range(self.queue_list.count())])
+        self.refresh_queue()
         self.refresh_overview()
 
     def refresh_logs(self):

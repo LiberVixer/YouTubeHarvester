@@ -23,6 +23,7 @@ install -m 0644 "$ROOT_DIR/assets/YTH-logo.png" "$APP_DIR/assets/YTH-logo.png"
 install -m 0644 "$ROOT_DIR/assets/yt-harvester.png" "$APP_DIR/assets/yt-harvester.png"
 install -m 0644 "$ROOT_DIR/assets/overview-logo.png" "$APP_DIR/assets/overview-logo.png"
 install -m 0644 "$ROOT_DIR/assets/video-placeholder.png" "$APP_DIR/assets/video-placeholder.png"
+install -m 0644 "$ROOT_DIR/assets/queue-scheduler.png" "$APP_DIR/assets/queue-scheduler.png"
 install -m 0644 "$ROOT_DIR/assets/YTH-logo.png" "$ICON_DIR/yt-harvester.png"
 
 cat > "$BIN_DIR/yt-harvester" <<'EOF'
@@ -53,8 +54,11 @@ export YTD_DATA_DIR="$DATA_DIR"
 export YTD_CONFIG_DIR="$CONFIG_DIR"
 export YTD_CACHE_DIR="$CACHE_DIR"
 export YTD_ENV_FILE="$CONFIG_DIR/.env"
-export YTD_TEMP_DIR="${YTD_TEMP_DIR:-$DATA_DIR/temp}"
-export YTD_FINAL_DIR="${YTD_FINAL_DIR:-$HOME/Videos/YT Harvester}"
+export YTD_SETTINGS_FILE="$CONFIG_DIR/settings.json"
+export YTD_SCHEDULES_FILE="$CONFIG_DIR/schedules.json"
+export YTD_CHANNEL_RULES_FILE="$CONFIG_DIR/channel_rules.json"
+export YTD_TEMP_DIR="${YTD_TEMP_DIR:-$HOME/temp/YTH}"
+export YTD_FINAL_DIR="${YTD_FINAL_DIR:-$HOME/Downloads/YouTubeHarvester}"
 
 exec python3 "$APP_DIR/tray_launcher.py" "$@"
 EOF

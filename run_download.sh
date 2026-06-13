@@ -25,9 +25,10 @@ ENV_FILE="${YTD_ENV_FILE:-$CONFIG_DIR/.env}"
 STATUS_FILE="${YTD_STATUS_FILE:-$DATA_DIR/status.json}"
 STOP_FILE="${YTD_STOP_FILE:-$DATA_DIR/stop_requested}"
 LAST_DOWNLOAD_FILE="${YTD_LAST_DOWNLOAD_FILE:-$DATA_DIR/last_download_at.txt}"
+CHANNEL_RULES="${YTD_CHANNEL_RULES_FILE:-$CONFIG_DIR/channel_rules.json}"
 
-TEMP_DIR="${YTD_TEMP_DIR:-/media/sf_T/!/DWN/YTD}"
-FINAL_DIR="${YTD_FINAL_DIR:-/media/sf_T/!/DWN/Смотреть}"
+TEMP_DIR="${YTD_TEMP_DIR:-$HOME/temp/YTH}"
+FINAL_DIR="${YTD_FINAL_DIR:-$HOME/Downloads/YouTubeHarvester}"
 
 LOGFILE="${YTD_LOG_FILE:-$DATA_DIR/download.log}"
 TEMP_LOG=$(mktemp)
@@ -39,15 +40,14 @@ if [ -f "$ENV_FILE" ]; then
     . "$ENV_FILE"
 fi
 
-if [ -z "${BOT_TOKEN:-}" ]; then
-    echo "BOT_TOKEN is not set. Add it to $ENV_FILE" >&2
-    exit 1
-fi
-
-if [ -z "${CHANNEL_ID:-}" ]; then
-    echo "CHANNEL_ID is not set. Add it to $ENV_FILE" >&2
-    exit 1
-fi
+TELEGRAM_ENABLED="${YTD_TELEGRAM_ENABLED:-${TELEGRAM_ENABLED:-1}}"
+VIDEOS_LIMIT="${YTD_VIDEOS_LIMIT:-${VIDEOS_LIMIT:-5}}"
+SHORTS_LIMIT="${YTD_SHORTS_LIMIT:-${SHORTS_LIMIT:-5}}"
+STREAMS_LIMIT="${YTD_STREAMS_LIMIT:-${STREAMS_LIMIT:-5}}"
+MAX_RESOLUTION="${YTD_MAX_RESOLUTION:-${MAX_RESOLUTION:-1080}}"
+LOG_KEEP_COUNT="${YTD_LOG_KEEP_COUNT:-${LOG_KEEP_COUNT:-3}}"
+CLEANUP_TEMP="${YTD_CLEANUP_TEMP:-${CLEANUP_TEMP:-1}}"
+RETRY_FAILED_QUEUE="${YTD_RETRY_FAILED_QUEUE:-${RETRY_FAILED_QUEUE:-1}}"
 
 PROXY_ARGS=()
 if [ -n "${PROXY_URL:-}" ]; then
@@ -70,6 +70,63 @@ STATUS_VIDEO_THUMBNAIL=""
 
 log_console() {
     printf '%s\n' "$@" | tee -a "$LOGFILE"
+}
+
+is_truthy() {
+    case "$(printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]')" in
+        1|true|yes|on|да) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+positive_int_or_default() {
+    VALUE="$1"
+    DEFAULT="$2"
+    if printf '%s' "$VALUE" | grep -Eq '^[0-9]+$' && [ "$VALUE" -gt 0 ]; then
+        printf '%s' "$VALUE"
+    else
+        printf '%s' "$DEFAULT"
+    fi
+}
+
+VIDEOS_LIMIT=$(positive_int_or_default "$VIDEOS_LIMIT" 5)
+SHORTS_LIMIT=$(positive_int_or_default "$SHORTS_LIMIT" 5)
+STREAMS_LIMIT=$(positive_int_or_default "$STREAMS_LIMIT" 5)
+LOG_KEEP_COUNT=$(positive_int_or_default "$LOG_KEEP_COUNT" 3)
+
+case "$MAX_RESOLUTION" in
+    480|720|1080|1440|2160)
+        FORMAT_SELECTOR="bestvideo[ext=mp4][height<=${MAX_RESOLUTION}]+bestaudio[ext=m4a]/best[ext=mp4][height<=${MAX_RESOLUTION}]/best[height<=${MAX_RESOLUTION}]"
+        ;;
+    best|BEST|Best)
+        FORMAT_SELECTOR="bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best"
+        MAX_RESOLUTION="best"
+        ;;
+    *)
+        MAX_RESOLUTION="1080"
+        FORMAT_SELECTOR="bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/best[ext=mp4][height<=1080]/best[height<=1080]"
+        ;;
+esac
+
+if is_truthy "$TELEGRAM_ENABLED"; then
+    if [ -z "${BOT_TOKEN:-}" ]; then
+        echo "BOT_TOKEN is not set. Add it to $ENV_FILE or disable Telegram notifications" >&2
+        exit 1
+    fi
+
+    if [ -z "${CHANNEL_ID:-}" ]; then
+        echo "CHANNEL_ID is not set. Add it to $ENV_FILE or disable Telegram notifications" >&2
+        exit 1
+    fi
+fi
+
+type_limit() {
+    case "$1" in
+        videos) printf '%s' "$VIDEOS_LIMIT" ;;
+        shorts) printf '%s' "$SHORTS_LIMIT" ;;
+        streams) printf '%s' "$STREAMS_LIMIT" ;;
+        *) printf '%s' 5 ;;
+    esac
 }
 
 cleanup_temp_dir() {
@@ -96,7 +153,7 @@ rotate_logs_and_exit() {
     mv -f "$LOGFILE" "$ARCHIVED_LOG" 2>/dev/null || true
     find "$DATA_DIR" -maxdepth 1 -type f -name 'download_*.log' -printf '%T@ %p\n' 2>/dev/null \
         | sort -nr \
-        | awk 'NR > 3 {sub(/^[^ ]+ /, ""); print}' \
+        | awk -v keep="$LOG_KEEP_COUNT" 'NR > keep {sub(/^[^ ]+ /, ""); print}' \
         | xargs -r rm -f -- 2>/dev/null || true
 
     exit "$EXIT_CODE"
@@ -183,6 +240,48 @@ set_type_status() {
         shorts) STATUS_SHORTS="$2" ;;
         streams) STATUS_STREAMS="$2" ;;
     esac
+}
+
+channel_type_enabled() {
+    CHANNEL_RULE_CHANNEL="${1%/}"
+    CHANNEL_RULE_TYPE="$2"
+    [ -s "$CHANNEL_RULES" ] || return 0
+
+    python3 - "$CHANNEL_RULES" "$CHANNEL_RULE_CHANNEL" "$CHANNEL_RULE_TYPE" <<'PY'
+import json
+import sys
+
+path, channel, type_name = sys.argv[1:4]
+channel = channel.rstrip("/")
+
+try:
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+except Exception:
+    sys.exit(0)
+
+rules = None
+if isinstance(data, dict):
+    rules = data.get(channel)
+    if rules is None:
+        for key, value in data.items():
+            if str(key).rstrip("/") == channel:
+                rules = value
+                break
+
+if not isinstance(rules, dict):
+    sys.exit(0)
+
+value = rules.get(type_name, True)
+if value is False:
+    sys.exit(1)
+if isinstance(value, str) and value.strip().lower() in {"0", "false", "no", "off"}:
+    sys.exit(1)
+
+sys.exit(0)
+PY
+    [ "$?" -eq 1 ] && return 1
+    return 0
 }
 
 status_title_from_path() {
@@ -327,7 +426,10 @@ process_type_log() {
 
         POST=$(printf '%s <a href="%s">%s</a>\n👤 <a href="%s">%s</a>' "$EMOJI" "$VIDEO_URL_HTML" "$VIDEO_TITLE_HTML" "$CHANNEL_LINK_HTML" "$UPLOADER_HTML")
 
-        if send_telegram_message "$POST"; then
+        if ! is_truthy "$TELEGRAM_ENABLED"; then
+            log_console "   🔕 Telegram отключён"
+            SENT_OK=1
+        elif send_telegram_message "$POST"; then
             log_console "   📨 Отправлено в канал"
             SENT_OK=1
         else
@@ -389,7 +491,7 @@ if [ -s "$QUEUE" ]; then
         log_console "📥 Очередь: $queued_url"
         TYPE_LOG=$(mktemp)
         yt-dlp \
-          -f "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/best[ext=mp4]" \
+          -f "$FORMAT_SELECTOR" \
           --merge-output-format mp4 \
           --write-thumbnail --embed-thumbnail --convert-thumbnails jpg \
           --download-archive "$ARCHIVE" \
@@ -407,9 +509,13 @@ if [ -s "$QUEUE" ]; then
         BEFORE_QUEUE_COUNT="$NEW_COUNT"
         process_type_log "$TYPE_LOG" "$queued_url" "Очередь"
         if [ "$NEW_COUNT" -eq "$BEFORE_QUEUE_COUNT" ] && ! grep -q 'has already been recorded in the archive' "$TYPE_LOG"; then
-            printf '%s\n' "$queued_url" >> "$QUEUE"
+            if is_truthy "$RETRY_FAILED_QUEUE"; then
+                printf '%s\n' "$queued_url" >> "$QUEUE"
+                log_console "   ⚠️ Не скачано из очереди, оставлено для повтора"
+            else
+                log_console "   ⚠️ Не скачано из очереди, повтор отключён"
+            fi
             FAILED_COUNT=$((FAILED_COUNT + 1))
-            log_console "   ⚠️ Не скачано из очереди, оставлено для повтора"
         fi
         rm -f "$TYPE_LOG"
         check_stop_requested
@@ -441,10 +547,22 @@ while IFS= read -r channel || [ -n "$channel" ]; do
     for type in videos shorts streams; do
         check_stop_requested
         case $type in
-            videos) EMOJI="🎬" ;;
-            shorts) EMOJI="📱" ;;
-            streams) EMOJI="🔴" ;;
+            videos) EMOJI="🎬"; TYPE_LABEL="Видео" ;;
+            shorts) EMOJI="📱"; TYPE_LABEL="Shorts" ;;
+            streams) EMOJI="🔴"; TYPE_LABEL="Streams" ;;
         esac
+
+        if ! channel_type_enabled "$channel" "$type"; then
+            STATUS_STATE="searching"
+            STATUS_CURRENT_TYPE="$type"
+            STATUS_VIDEO_TITLE=""
+            STATUS_VIDEO_THUMBNAIL=""
+            set_type_status "$type" "disabled"
+            write_status
+            log_console "-${EMOJI} Пропускаем - ${TYPE_LABEL} отключены для канала"
+            continue
+        fi
+
         STATUS_STATE="searching"
         STATUS_CURRENT_TYPE="$type"
         STATUS_VIDEO_TITLE=""
@@ -452,16 +570,17 @@ while IFS= read -r channel || [ -n "$channel" ]; do
         set_type_status "$type" "searching"
         write_status
 
-        log_console "-${EMOJI} Ищем - ${type^}"
+        log_console "-${EMOJI} Ищем - ${TYPE_LABEL}"
 
         # Полный вывод yt-dlp ТОЛЬКО в лог + temp для парсинга
+        TYPE_LIMIT=$(type_limit "$type")
         TYPE_LOG=$(mktemp)
         yt-dlp \
-          -f "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/best[ext=mp4]" \
+          -f "$FORMAT_SELECTOR" \
           --merge-output-format mp4 \
           --write-thumbnail --embed-thumbnail --convert-thumbnails jpg \
           --download-archive "$ARCHIVE" \
-          --playlist-items 1-5 \
+          --playlist-items "1-${TYPE_LIMIT}" \
           --match-filter "!is_live" \
           -o "$TEMP_DIR/%(title)s - %(uploader)s [%(id)s] [${type}] [%(height)sp].%(ext)s" \
           --embed-subs --embed-metadata --embed-chapters \
@@ -493,7 +612,11 @@ done < "$CHANNELS"
 # ====================== ПОИСК НОВЫХ ======================
 if [ "${NEW_COUNT:-0}" -eq 0 ]; then
     log_console "   📌Новых видео не найдено"
-    cleanup_temp_dir
+    if is_truthy "$CLEANUP_TEMP"; then
+        cleanup_temp_dir
+    else
+        log_console "🧹 Очистка TEMP отключена"
+    fi
     rotate_logs_and_exit 0
 fi
 
@@ -501,7 +624,11 @@ log_console "✳️ Найдено новых видео: $NEW_COUNT"
 
 # ====================== ЗАЧИСТКА ======================
 if [ "${FAILED_COUNT:-0}" -eq 0 ]; then
-    cleanup_temp_dir
+    if is_truthy "$CLEANUP_TEMP"; then
+        cleanup_temp_dir
+    else
+        log_console "🧹 Очистка TEMP отключена"
+    fi
 else
     log_console "⚠️ Были ошибки обработки: $FAILED_COUNT"
     log_console "⚠️ TEMP_DIR не очищен, чтобы не потерять файлы для повтора/ручной проверки"
