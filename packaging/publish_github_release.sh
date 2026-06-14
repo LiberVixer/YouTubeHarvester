@@ -10,6 +10,7 @@ BUNDLE_ROOT="${YTH_RELEASE_ROOT:-/media/sf_Data/Git/YouTubeHarvester-0.2.2-beta-
 LINUX_DIR="$BUNDLE_ROOT/release-linux"
 WINDOWS_DIR="$BUNDLE_ROOT/release-windows"
 BODY_FILE="${YTH_RELEASE_BODY:-$ROOT_DIR/docs/releases/0.2.2-beta.md}"
+TOKEN_FILE="${GITHUB_TOKEN_FILE:-$HOME/.config/youtube-harvester/github-token}"
 
 ASSETS=(
     "$WINDOWS_DIR/YouTubeHarvester_0.2.2-beta_windows_portable.zip"
@@ -43,6 +44,10 @@ fi
 if [ -z "${GITHUB_USERNAME:-}" ]; then
     read -r -p "GitHub username [LiberVixer]: " GITHUB_USERNAME
     GITHUB_USERNAME="${GITHUB_USERNAME:-LiberVixer}"
+fi
+
+if [ -z "${GITHUB_TOKEN:-}" ] && [ -f "$TOKEN_FILE" ]; then
+    GITHUB_TOKEN="$(tr -d '\r\n' < "$TOKEN_FILE")"
 fi
 
 if [ -z "${GITHUB_TOKEN:-}" ]; then
