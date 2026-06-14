@@ -44,8 +44,8 @@ if [ ! -f "$CONFIG_DIR/.env" ]; then
     cat > "$CONFIG_DIR/.env" <<'ENVEOF'
 # Telegram settings for YouTube Harvester.
 # Fill these values before running downloads:
-# BOT_TOKEN=123456:telegram-bot-token
-# CHANNEL_ID=-1001234567890
+# BOT_TOKEN=your-telegram-bot-token
+# CHANNEL_ID=your-telegram-channel-id
 #
 # Optional:
 # PROXY_URL=127.0.0.1:9050
@@ -92,7 +92,7 @@ Section: net
 Priority: optional
 Architecture: $ARCH
 Depends: python3, python3-pyqt5, yt-dlp, curl, bash, coreutils, findutils, grep, sed
-Maintainer: YouTube Harvester <root@localhost>
+Maintainer: YouTube Harvester <noreply@users.noreply.github.com>
 Description: YouTube downloader with tray interface
  YouTube Harvester watches configured YouTube channels and a manual queue,
  downloads new videos through yt-dlp, and can notify a Telegram channel.

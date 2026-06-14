@@ -6,11 +6,17 @@ REPO="${GITHUB_REPOSITORY:-LiberVixer/YouTubeHarvester}"
 TARGET_BRANCH="${YTH_RELEASE_TARGET:-main}"
 TAG="${YTH_RELEASE_TAG:-v0.2.2-beta}"
 TITLE="${YTH_RELEASE_TITLE:-YouTube Harvester 0.2.2 Beta}"
-BUNDLE_ROOT="${YTH_RELEASE_ROOT:-/media/sf_Data/Git/YouTubeHarvester-0.2.2-beta-offline}"
+if [ -z "${YTH_RELEASE_ROOT:-}" ]; then
+    echo "YTH_RELEASE_ROOT is required." >&2
+    echo "Set it to a release bundle that contains release-linux/ and release-windows/." >&2
+    exit 1
+fi
+BUNDLE_ROOT="$YTH_RELEASE_ROOT"
 LINUX_DIR="$BUNDLE_ROOT/release-linux"
 WINDOWS_DIR="$BUNDLE_ROOT/release-windows"
 BODY_FILE="${YTH_RELEASE_BODY:-$ROOT_DIR/docs/releases/0.2.2-beta.md}"
 TOKEN_FILE="${GITHUB_TOKEN_FILE:-$HOME/.config/youtube-harvester/github-token}"
+PRERELEASE="${YTH_RELEASE_PRERELEASE:-false}"
 
 ASSETS=(
     "$WINDOWS_DIR/YouTubeHarvester_0.2.2-beta_windows_portable.zip"
@@ -84,7 +90,7 @@ GIT_ASKPASS="$ASKPASS" GIT_TERMINAL_PROMPT=0 git push "$REMOTE_URL" HEAD:"$TARGE
 echo "Pushing tag $TAG"
 GIT_ASKPASS="$ASKPASS" GIT_TERMINAL_PROMPT=0 git push "$REMOTE_URL" "$TAG"
 
-export GITHUB_TOKEN REPO TARGET_BRANCH TAG TITLE BODY_FILE
+export GITHUB_TOKEN REPO TARGET_BRANCH TAG TITLE BODY_FILE PRERELEASE
 
 python3 - "${ASSETS[@]}" <<'PY'
 import json
@@ -141,7 +147,7 @@ release_payload = {
     "name": title,
     "body": body_file.read_text(encoding="utf-8"),
     "draft": False,
-    "prerelease": True,
+    "prerelease": os.environ.get("PRERELEASE", "false").lower() in {"1", "true", "yes"},
 }
 
 status, release = call("GET", f"{api_base}/releases/tags/{parse.quote(tag, safe='')}")

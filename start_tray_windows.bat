@@ -24,8 +24,8 @@ if not exist "%YTD_FINAL_DIR%" mkdir "%YTD_FINAL_DIR%"
 
 if not exist "%YTD_ENV_FILE%" (
     > "%YTD_ENV_FILE%" echo # Telegram settings for YouTube Harvester.
-    >> "%YTD_ENV_FILE%" echo # BOT_TOKEN=123456:telegram-bot-token
-    >> "%YTD_ENV_FILE%" echo # CHANNEL_ID=-1001234567890
+    >> "%YTD_ENV_FILE%" echo # BOT_TOKEN=your-telegram-bot-token
+    >> "%YTD_ENV_FILE%" echo # CHANNEL_ID=your-telegram-channel-id
     >> "%YTD_ENV_FILE%" echo # PROXY_URL=127.0.0.1:9050
 )
 

@@ -55,8 +55,8 @@ nano ~/.config/yt-harvester/.env
 Fill these values:
 
 ```bash
-BOT_TOKEN=123456:telegram-bot-token
-CHANNEL_ID=-1001234567890
+BOT_TOKEN=your-telegram-bot-token
+CHANNEL_ID=your-telegram-channel-id
 ```
 
 Then start **YouTube Harvester** from the Internet menu or run:
@@ -207,8 +207,8 @@ nano ~/.config/yt-harvester/.env
 Нужно указать:
 
 ```bash
-BOT_TOKEN=123456:telegram-bot-token
-CHANNEL_ID=-1001234567890
+BOT_TOKEN=your-telegram-bot-token
+CHANNEL_ID=your-telegram-channel-id
 ```
 
 После этого запустите **YouTube Harvester** из раздела Internet/Интернет или командой:
