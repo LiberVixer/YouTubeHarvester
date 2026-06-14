@@ -59,6 +59,7 @@ if [ -z "$GITHUB_TOKEN" ]; then
     echo "GitHub token is empty." >&2
     exit 1
 fi
+export GITHUB_USERNAME GITHUB_TOKEN
 
 ASKPASS="$(mktemp)"
 cleanup() {
