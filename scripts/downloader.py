@@ -55,6 +55,19 @@ def positive_int(value: str | None, default: int) -> int:
     return parsed if parsed > 0 else default
 
 
+def safe_print(message: object, *, file=None) -> None:
+    stream = file if file is not None else sys.stdout
+    if stream is None:
+        return
+    text = str(message)
+    try:
+        print(text, file=stream)
+    except UnicodeEncodeError:
+        encoding = getattr(stream, "encoding", None) or "ascii"
+        safe_text = text.encode(encoding, errors="replace").decode(encoding, errors="replace")
+        print(safe_text, file=stream)
+
+
 def env_quote_value(line: str) -> tuple[str, str] | None:
     text = line.strip()
     if not text or text.startswith("#"):
@@ -249,7 +262,7 @@ class Downloader:
             pass
 
     def log(self, message: str) -> None:
-        print(message)
+        safe_print(message)
         try:
             with self.log_file.open("a", encoding="utf-8") as log:
                 log.write(message + "\n")
@@ -823,10 +836,16 @@ class Downloader:
         if not self.telegram_enabled:
             return True
         if not self.bot_token:
-            print(f"BOT_TOKEN is not set. Add it to {self.env_file} or disable Telegram notifications", file=sys.stderr)
+            safe_print(
+                f"BOT_TOKEN is not set. Add it to {self.env_file} or disable Telegram notifications",
+                file=sys.stderr,
+            )
             return False
         if not self.channel_id:
-            print(f"CHANNEL_ID is not set. Add it to {self.env_file} or disable Telegram notifications", file=sys.stderr)
+            safe_print(
+                f"CHANNEL_ID is not set. Add it to {self.env_file} or disable Telegram notifications",
+                file=sys.stderr,
+            )
             return False
         return True
 
@@ -869,7 +888,7 @@ class Downloader:
 def main() -> int:
     lock = SingleInstanceLock()
     if not lock.acquire():
-        print("Already running")
+        safe_print("Already running")
         return 0
     try:
         return Downloader().run()

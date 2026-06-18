@@ -555,6 +555,8 @@ class TrayLauncher:
     def script_environment(self):
         env = os.environ.copy()
         env.update({
+            "PYTHONIOENCODING": "utf-8",
+            "PYTHONUTF8": "1",
             "YTD_APP_DIR": str(self.app_dir),
             "YTD_DATA_DIR": str(self.data_dir),
             "YTD_CONFIG_DIR": str(self.config_dir),
@@ -4039,6 +4041,13 @@ def run_python_script_helper(script_name: str, args: list[str]) -> int:
         if sys.stderr is None:
             fallback_stderr = open(os.devnull, "w", encoding="utf-8")
             sys.stderr = fallback_stderr
+        for stream in (sys.stdout, sys.stderr):
+            reconfigure = getattr(stream, "reconfigure", None)
+            if callable(reconfigure):
+                try:
+                    reconfigure(errors="replace")
+                except (OSError, ValueError):
+                    pass
         sys.argv = [str(script_path)] + list(args)
         spec.loader.exec_module(module)
         main_func = getattr(module, "main", None)

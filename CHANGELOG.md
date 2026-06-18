@@ -29,6 +29,7 @@ All notable changes to **YouTube Harvester** are documented here.
 
 - Manual queue now refuses videos already present in the archive.
 - Downloader skips already archived queued videos and avoids duplicate detailed archive entries.
+- Windows Python downloader no longer crashes when the system console encoding cannot represent emoji.
 
 ### Русский
 
@@ -55,6 +56,7 @@ All notable changes to **YouTube Harvester** are documented here.
 
 - Ручная очередь больше не принимает видео, которое уже есть в архиве.
 - Скрипт скачивания пропускает уже архивные ссылки из очереди и не создаёт дубли в подробном архиве.
+- Python-движок на Windows больше не падает, если системная кодировка консоли не поддерживает emoji.
 
 ## [0.2.0-beta.1] - 2026-06-12
 
