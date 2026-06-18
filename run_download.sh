@@ -72,7 +72,10 @@ STATUS_DOWNLOAD_PERCENT=""
 STATUS_DOWNLOAD_SPEED=""
 STATUS_DOWNLOAD_ETA=""
 STATUS_DOWNLOAD_SIZE=""
+STATUS_DOWNLOAD_STAGE=""
 STATUS_PROGRESS_BUCKET=""
+STATUS_CHANNELS_TOTAL=0
+STATUS_CHANNELS_CHECKED=0
 
 log_console() {
     printf '%s\n' "$@" | tee -a "$LOGFILE"
@@ -295,6 +298,9 @@ write_status() {
   "download_speed": "$(json_escape "$STATUS_DOWNLOAD_SPEED")",
   "download_eta": "$(json_escape "$STATUS_DOWNLOAD_ETA")",
   "download_size": "$(json_escape "$STATUS_DOWNLOAD_SIZE")",
+  "download_stage": "$(json_escape "$STATUS_DOWNLOAD_STAGE")",
+  "channels_total": $STATUS_CHANNELS_TOTAL,
+  "channels_checked": $STATUS_CHANNELS_CHECKED,
   "last_download_at": "$(json_escape "$STATUS_LAST_DOWNLOAD")",
   "stop_requested": $STATUS_STOP_REQUESTED,
   "updated_at": $(date +%s)
@@ -316,6 +322,7 @@ reset_download_progress() {
     STATUS_DOWNLOAD_SPEED=""
     STATUS_DOWNLOAD_ETA=""
     STATUS_DOWNLOAD_SIZE=""
+    STATUS_DOWNLOAD_STAGE=""
     STATUS_PROGRESS_BUCKET=""
 }
 
@@ -426,6 +433,7 @@ update_status_from_progress_line() {
     [ -n "$PROGRESS_PERCENT" ] || return 1
 
     STATUS_DOWNLOAD_PERCENT="$PROGRESS_PERCENT"
+    [ -n "$STATUS_DOWNLOAD_STAGE" ] || STATUS_DOWNLOAD_STAGE="download"
     STATUS_DOWNLOAD_SIZE=$(printf '%s\n' "$PROGRESS_LINE" | sed -nE 's/.* of[[:space:]]+~?([^[:space:]]+).*/\1/p' | head -n 1)
     STATUS_DOWNLOAD_SPEED=$(printf '%s\n' "$PROGRESS_LINE" | sed -nE 's/.* at[[:space:]]+([^[:space:]]+\/s).*/\1/p' | head -n 1)
     STATUS_DOWNLOAD_ETA=$(printf '%s\n' "$PROGRESS_LINE" | sed -nE 's/.* ETA[[:space:]]+([^[:space:]]+).*/\1/p' | head -n 1)
@@ -448,14 +456,35 @@ update_status_from_ytdlp_line() {
     TYPE_NAME="$2"
 
     update_status_from_thumbnail_line "$YTDLP_LINE"
+    if printf '%s' "$YTDLP_LINE" | grep -q 'Destination: ' \
+        && printf '%s' "$YTDLP_LINE" | grep -Eiq '\.(jpe?g|png|webp)(["'\'']?|)$'; then
+        return 0
+    fi
     update_status_from_progress_line "$YTDLP_LINE" "$TYPE_NAME" && return 0
 
-    printf '%s' "$YTDLP_LINE" | grep -Eq 'Merging formats into|Destination: ' || return 0
+    if printf '%s' "$YTDLP_LINE" | grep -q 'Merging formats into'; then
+        STATUS_DOWNLOAD_STAGE="merge"
+    elif printf '%s' "$YTDLP_LINE" | grep -Eq '\[(EmbedThumbnail|Metadata|ModifyChapters|FFmpeg|VideoConvertor)\]'; then
+        STATUS_DOWNLOAD_STAGE="postprocess"
+    elif printf '%s' "$YTDLP_LINE" | grep -q 'Destination: ' \
+        && ! printf '%s' "$YTDLP_LINE" | grep -Eiq '\.(jpe?g|png|webp)(["'\'']?|)$'; then
+        if [ "$STATUS_DOWNLOAD_STAGE" = "video" ]; then
+            STATUS_DOWNLOAD_STAGE="audio"
+        else
+            STATUS_DOWNLOAD_STAGE="video"
+        fi
+    fi
+
+    printf '%s' "$YTDLP_LINE" | grep -Eq 'Merging formats into|Destination: |\[(EmbedThumbnail|Metadata|ModifyChapters|FFmpeg|VideoConvertor)\]' || return 0
 
     STATUS_STATE="downloading"
     STATUS_CURRENT_TYPE="$TYPE_NAME"
     set_type_status "$TYPE_NAME" "downloading"
-    printf '%s' "$YTDLP_LINE" | grep -q 'Destination: ' && reset_download_progress
+    if printf '%s' "$YTDLP_LINE" | grep -q 'Destination: '; then
+        DOWNLOAD_STAGE="$STATUS_DOWNLOAD_STAGE"
+        reset_download_progress
+        STATUS_DOWNLOAD_STAGE="$DOWNLOAD_STAGE"
+    fi
 
     STATUS_FILE_FROM_LINE=$(printf '%s\n' "$YTDLP_LINE" | sed -nE 's/.*Merging formats into "?([^"]+)"?.*/\1/p; s/.*Destination: (.*)/\1/p' | head -n 1)
     if [ -n "$STATUS_FILE_FROM_LINE" ]; then
@@ -657,6 +686,9 @@ if [ -s "$QUEUE" ]; then
 fi
 
 # ====================== СКАЧИВАНИЕ ======================
+STATUS_CHANNELS_TOTAL=$(awk '{sub(/^\xef\xbb\xbf/, ""); gsub(/^[[:space:]]+|[[:space:]]+$/, ""); if ($0 != "" && $0 !~ /^#/) count++} END {print count + 0}' "$CHANNELS")
+STATUS_CHANNELS_CHECKED=0
+write_status
 while IFS= read -r channel || [ -n "$channel" ]; do
     channel=$(echo "$channel" | sed 's/^\xef\xbb\xbf//')
     [[ -z "$channel" || "$channel" =~ ^# ]] && continue
@@ -756,6 +788,11 @@ while IFS= read -r channel || [ -n "$channel" ]; do
         fi
         check_stop_requested
     done
+    STATUS_CHANNELS_CHECKED=$((STATUS_CHANNELS_CHECKED + 1))
+    STATUS_STATE="searching"
+    STATUS_CURRENT_TYPE=""
+    reset_download_progress
+    write_status
 done < "$CHANNELS"
 
 # ====================== ПОИСК НОВЫХ ======================

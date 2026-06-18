@@ -234,7 +234,10 @@ class Downloader:
         self.download_speed = ""
         self.download_eta = ""
         self.download_size = ""
+        self.download_stage = ""
         self.progress_bucket = ""
+        self.channels_total = 0
+        self.channels_checked = 0
         self.new_count = 0
         self.failed_count = 0
         self.archived_log = self.data_dir / f"download_{_dt.datetime.now():%Y-%m-%d_%H-%M}.log"
@@ -274,6 +277,7 @@ class Downloader:
         self.download_speed = ""
         self.download_eta = ""
         self.download_size = ""
+        self.download_stage = ""
         self.progress_bucket = ""
 
     def write_status(self) -> None:
@@ -297,6 +301,9 @@ class Downloader:
             "download_speed": self.download_speed,
             "download_eta": self.download_eta,
             "download_size": self.download_size,
+            "download_stage": self.download_stage,
+            "channels_total": self.channels_total,
+            "channels_checked": self.channels_checked,
             "last_download_at": last_download,
             "stop_requested": self.stop_file.exists(),
             "updated_at": int(time.time()),
@@ -495,6 +502,17 @@ class Downloader:
         return str(max(files, key=lambda item: item.stat().st_mtime))
 
     def update_status_from_line(self, line: str, type_name: str) -> None:
+        is_thumbnail_destination = bool(
+            "Destination: " in line
+            and re.search(r"\.(?:jpe?g|png|webp)(?:$|[\"'])", line, re.IGNORECASE)
+        )
+        if "Merging formats into" in line:
+            self.download_stage = "merge"
+        elif re.search(r"\[(?:EmbedThumbnail|Metadata|ModifyChapters|FFmpeg|VideoConvertor)\]", line):
+            self.download_stage = "postprocess"
+        elif "Destination: " in line and not is_thumbnail_destination:
+            self.download_stage = "audio" if self.download_stage == "video" else "video"
+
         thumbnail_match = re.search(
             r"[Ww]riting video thumbnail [0-9]+ to: (.*)$|[Cc]onverting thumbnail \"?([^\"]+)\"? to |[Dd]estination: (.*\.(jpg|jpeg|png|webp))",
             line,
@@ -505,9 +523,13 @@ class Downloader:
                 jpg = str(Path(thumb).with_suffix(".jpg"))
                 self.video_thumbnail = jpg if Path(jpg).exists() else thumb
                 self.write_status()
+        if is_thumbnail_destination:
+            return
 
         progress = re.match(r"^\[download\]\s+([0-9]+(?:\.[0-9]+)?)%.*", line)
         if progress:
+            if not self.download_stage:
+                self.download_stage = "download"
             self.download_percent = progress.group(1)
             size = re.search(r"\sof\s+~?(\S+)", line)
             speed = re.search(r"\sat\s+(\S+/s)", line)
@@ -524,12 +546,18 @@ class Downloader:
                 self.write_status()
             return
 
-        if "Merging formats into" in line or "Destination: " in line:
+        if (
+            "Merging formats into" in line
+            or "Destination: " in line
+            or re.search(r"\[(?:EmbedThumbnail|Metadata|ModifyChapters|FFmpeg|VideoConvertor)\]", line)
+        ):
             self.state = "downloading"
             self.current_type = type_name
             self.set_type_status(type_name, "downloading")
             if "Destination: " in line:
+                stage = self.download_stage
                 self.reset_progress()
+                self.download_stage = stage
             file_match = re.search(r'Merging formats into "?([^"]+)"?', line) or re.search(r"Destination: (.*)", line)
             if file_match:
                 path = file_match.group(1).strip()
@@ -736,7 +764,11 @@ class Downloader:
                 self.failed_count += 1
 
     def process_channels(self) -> None:
-        for channel in self.read_nonempty_lines(self.channels_file):
+        channels = self.read_nonempty_lines(self.channels_file)
+        self.channels_total = len(channels)
+        self.channels_checked = 0
+        self.write_status()
+        for channel in channels:
             self.check_stop()
             channel = channel.rstrip("/")
             self.state = "searching"
@@ -794,6 +826,11 @@ class Downloader:
                     self.write_status()
                 if type_name == "streams":
                     time.sleep(1)
+            self.channels_checked += 1
+            self.state = "searching"
+            self.current_type = ""
+            self.reset_progress()
+            self.write_status()
 
     def cleanup_temp_dir(self) -> None:
         self.log("Жёсткая очистка временной папки...")

@@ -21,6 +21,9 @@ All notable changes to **YouTube Harvester** are documented here.
 
 - Settings media limits are back on one compact line.
 - Overview event list now has more vertical space, and idle download status says that the app is waiting for a download.
+- Overview search status now shows checked channels as a progress bar.
+- Download progress now names the active stage: video, audio, merging, or post-processing.
+- The idle overview no longer shows an empty download progress section.
 - Linux desktop launcher metadata now uses the final app name and localized labels.
 - README now includes expanded responsible-use and third-party component notes.
 - Windows runs the Python downloader engine only; Bash remains a Linux option.
@@ -48,6 +51,9 @@ All notable changes to **YouTube Harvester** are documented here.
 
 - Лимиты типов во вкладке настроек снова отображаются в одну компактную строку.
 - На главном экране блок событий стал выше, а простой блока скачивания показывает ожидание скачивания.
+- Во время поиска верхняя плашка показывает прогресс проверенных каналов.
+- При скачивании блок прогресса показывает текущий этап: видео, аудио, объединение или обработка.
+- В простое пустой блок прогресса скачивания больше не отображается.
 - Метаданные ярлыка Linux приведены к финальному названию программы и русским подписям.
 - README расширен правилами ответственного использования и сведениями о внешних компонентах.
 - На Windows используется только Python-движок; Bash остаётся вариантом для Linux.

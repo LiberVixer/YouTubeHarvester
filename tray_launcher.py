@@ -1351,12 +1351,14 @@ class MainWindow(QMainWindow):
         activity_layout = QVBoxLayout(activity_panel)
         activity_layout.setContentsMargins(12, 10, 12, 10)
         activity_layout.setSpacing(7)
-        self.overview_activity_label = QLabel()
-        self.overview_activity_label.setObjectName("overviewActivityTitle")
-        self.overview_activity_label.setTextFormat(Qt.RichText)
-        self.overview_activity_label.setAlignment(Qt.AlignCenter)
-        self.overview_activity_label.setFixedHeight(34)
-        activity_layout.addWidget(self.overview_activity_label)
+        self.overview_activity_bar = QProgressBar()
+        self.overview_activity_bar.setObjectName("overviewActivityBar")
+        self.overview_activity_bar.setRange(0, 100)
+        self.overview_activity_bar.setValue(0)
+        self.overview_activity_bar.setTextVisible(True)
+        self.overview_activity_bar.setAlignment(Qt.AlignCenter)
+        self.overview_activity_bar.setFixedHeight(34)
+        activity_layout.addWidget(self.overview_activity_bar)
 
         status_grid = QGridLayout()
         status_grid.setContentsMargins(0, 2, 0, 2)
@@ -1404,7 +1406,7 @@ class MainWindow(QMainWindow):
         progress_layout = QVBoxLayout(self.overview_progress_panel)
         progress_layout.setContentsMargins(0, 0, 0, 0)
         progress_layout.setSpacing(5)
-        self.overview_progress_header_label = QLabel("Прогресс")
+        self.overview_progress_header_label = QLabel()
         self.overview_progress_header_label.setObjectName("subtleText")
         self.overview_progress_bar = QProgressBar()
         self.overview_progress_bar.setObjectName("overviewProgressBar")
@@ -2345,15 +2347,19 @@ class MainWindow(QMainWindow):
                     font-weight: bold;
                     font-size: 12px;
                 }
-                QLabel#overviewActivityTitle {
+                QProgressBar#overviewActivityBar {
                     background: #f2f5f8;
                     color: #17202a;
                     border: 1px solid #d7dfe7;
                     border-radius: 4px;
-                    padding: 0 8px;
+                    text-align: center;
                     font-family: "Noto Sans", "DejaVu Sans", "Noto Color Emoji", sans-serif;
-                    font-size: 18px;
+                    font-size: 15px;
                     font-weight: bold;
+                }
+                QProgressBar#overviewActivityBar::chunk {
+                    background: #8fc2ed;
+                    border-radius: 3px;
                 }
                 QLabel#overviewProgramTitle {
                     background: transparent;
@@ -2582,15 +2588,19 @@ class MainWindow(QMainWindow):
                     font-weight: bold;
                     font-size: 12px;
                 }
-                QLabel#overviewActivityTitle {
+                QProgressBar#overviewActivityBar {
                     background: #151a20;
                     color: #f0f4f8;
                     border: 1px solid #303844;
                     border-radius: 4px;
-                    padding: 0 8px;
+                    text-align: center;
                     font-family: "Noto Sans", "DejaVu Sans", "Noto Color Emoji", sans-serif;
-                    font-size: 18px;
+                    font-size: 15px;
                     font-weight: bold;
+                }
+                QProgressBar#overviewActivityBar::chunk {
+                    background: #2f6f9f;
+                    border-radius: 3px;
                 }
                 QLabel#overviewProgramTitle {
                     background: transparent;
@@ -2813,7 +2823,6 @@ class MainWindow(QMainWindow):
         else:
             state = "sleep"
 
-        state_text = self._overview_state_text(state)
         self.overview_channels_label.setText(f"{self._emoji_html('📺')} Каналов: {channels_count}")
         self.overview_queue_label.setText(f"{self._emoji_html('📥')} Очередь: {queue_count}")
         self.overview_archive_label.setText(f"{self._emoji_html('🗃')} Архив: {archive_count}")
@@ -2857,7 +2866,7 @@ class MainWindow(QMainWindow):
         else:
             self.overview_video_image.hide()
 
-        self.overview_activity_label.setText(state_text)
+        self._refresh_overview_activity(status_info, state, channels_count)
         if channel_name and self.launcher.is_running:
             self.overview_channel_label.setText(self._html_text(channel_name))
             self.overview_channel_label.setToolTip(channel_name)
@@ -2905,6 +2914,37 @@ class MainWindow(QMainWindow):
             "stopped": f"{self._emoji_html('⏹')} Остановлено",
         }.get(state, f"{self._emoji_html('😴')} Сон")
 
+    def _refresh_overview_activity(self, status_info: dict, state: str, channels_count: int):
+        if state == "searching":
+            try:
+                total = max(0, int(status_info.get("channels_total") or channels_count))
+                checked = max(0, min(total, int(status_info.get("channels_checked") or 0)))
+            except (TypeError, ValueError):
+                total, checked = channels_count, 0
+            self.overview_activity_bar.setRange(0, max(1, total))
+            self.overview_activity_bar.setValue(checked)
+            self.overview_activity_bar.setFormat(f"Проверено каналов: {checked} / {total}")
+            return
+
+        self.overview_activity_bar.setRange(0, 100)
+        if state == "downloading":
+            percent_text = str(status_info.get("download_percent") or "").replace(",", ".").strip()
+            try:
+                value = max(0, min(100, int(round(float(percent_text)))))
+            except (TypeError, ValueError):
+                value = 0
+            self.overview_activity_bar.setValue(value)
+            self.overview_activity_bar.setFormat("Идет скачивание")
+        elif state == "stopping":
+            self.overview_activity_bar.setValue(100)
+            self.overview_activity_bar.setFormat("Остановка")
+        elif state == "stopped":
+            self.overview_activity_bar.setValue(0)
+            self.overview_activity_bar.setFormat("Остановлено")
+        else:
+            self.overview_activity_bar.setValue(0)
+            self.overview_activity_bar.setFormat("Сон")
+
     def _overview_header_state_text(self, state: str):
         return {
             "sleep": self._emoji_html("😴"),
@@ -2936,13 +2976,30 @@ class MainWindow(QMainWindow):
         return f"{self._emoji_html(emoji)} {self._html_text(text)}"
 
     def _refresh_overview_progress(self, status_info: dict, state: str):
+        self.overview_progress_panel.setVisible(state == "downloading")
+        if state != "downloading":
+            self.overview_progress_bar.setValue(0)
+            self.overview_progress_header_label.clear()
+            self.overview_progress_detail_label.clear()
+            return
+
+        stage = str(status_info.get("download_stage") or "download").strip().lower()
+        stage_text = {
+            "video": "Скачивается видео",
+            "audio": "Скачивается аудио",
+            "merge": "Объединение видео и аудио",
+            "postprocess": "Обработка файла",
+            "download": "Скачивание",
+        }.get(stage, "Скачивание")
+        self.overview_progress_header_label.setText(stage_text)
+
         percent_text = str(status_info.get("download_percent") or "").replace(",", ".").strip()
         try:
             percent = max(0.0, min(100.0, float(percent_text)))
         except (TypeError, ValueError):
             percent = None
 
-        if state == "downloading" and percent is not None:
+        if percent is not None:
             self.overview_progress_bar.setValue(int(round(percent)))
             percent_label = f"{percent:.1f}".rstrip("0").rstrip(".")
             details = [f"{percent_label}%"]
@@ -2956,12 +3013,9 @@ class MainWindow(QMainWindow):
             if size:
                 details.append(f"{self._emoji_html('💾')} {self._html_text(size)}")
             self.overview_progress_detail_label.setText(" &nbsp; ".join(details))
-        elif state == "downloading":
-            self.overview_progress_bar.setValue(0)
-            self.overview_progress_detail_label.setText("Ожидаю данные прогресса от yt-dlp")
         else:
             self.overview_progress_bar.setValue(0)
-            self.overview_progress_detail_label.setText("Прогресс появится во время скачивания")
+            self.overview_progress_detail_label.setText("Ожидаю данные прогресса от yt-dlp")
 
     def _recent_events_html(self, limit: int = 6):
         try:
