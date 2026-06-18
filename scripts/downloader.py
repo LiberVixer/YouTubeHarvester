@@ -824,8 +824,7 @@ class Downloader:
                     self.current_type = type_name
                     self.reset_progress()
                     self.write_status()
-                if type_name == "streams":
-                    time.sleep(1)
+                time.sleep(1)
             self.channels_checked += 1
             self.state = "searching"
             self.current_type = ""

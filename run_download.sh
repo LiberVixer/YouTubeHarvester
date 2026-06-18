@@ -783,9 +783,7 @@ while IFS= read -r channel || [ -n "$channel" ]; do
             write_status
         fi
         rm -f "$TYPE_LOG"
-        if [ "$type" = "streams" ]; then
-            sleep 1
-        fi
+        sleep 1
         check_stop_requested
     done
     STATUS_CHANNELS_CHECKED=$((STATUS_CHANNELS_CHECKED + 1))
