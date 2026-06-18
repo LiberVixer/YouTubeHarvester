@@ -1,6 +1,6 @@
 param(
-    [string]$Version = "0.2.2-beta",
-    [string]$MsiVersion = "0.2.2",
+    [string]$Version = "0.2.3-beta",
+    [string]$MsiVersion = "0.2.3",
     [switch]$Offline,
     [string]$Wheelhouse = ""
 )

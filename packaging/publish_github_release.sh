@@ -4,8 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO="${GITHUB_REPOSITORY:-LiberVixer/YouTubeHarvester}"
 TARGET_BRANCH="${YTH_RELEASE_TARGET:-main}"
-TAG="${YTH_RELEASE_TAG:-v0.2.2-beta}"
-TITLE="${YTH_RELEASE_TITLE:-YouTube Harvester 0.2.2 Beta}"
+TAG="${YTH_RELEASE_TAG:-v0.2.3-beta}"
+TITLE="${YTH_RELEASE_TITLE:-YouTube Harvester 0.2.3 Beta}"
 if [ -z "${YTH_RELEASE_ROOT:-}" ]; then
     echo "YTH_RELEASE_ROOT is required." >&2
     echo "Set it to a release bundle that contains release-linux/ and release-windows/." >&2
@@ -14,17 +14,17 @@ fi
 BUNDLE_ROOT="$YTH_RELEASE_ROOT"
 LINUX_DIR="$BUNDLE_ROOT/release-linux"
 WINDOWS_DIR="$BUNDLE_ROOT/release-windows"
-BODY_FILE="${YTH_RELEASE_BODY:-$ROOT_DIR/docs/releases/0.2.2-beta.md}"
+BODY_FILE="${YTH_RELEASE_BODY:-$ROOT_DIR/docs/releases/0.2.3-beta.md}"
 TOKEN_FILE="${GITHUB_TOKEN_FILE:-$HOME/.config/youtube-harvester/github-token}"
 PRERELEASE="${YTH_RELEASE_PRERELEASE:-false}"
 
 ASSETS=(
-    "$WINDOWS_DIR/YouTubeHarvester_0.2.2-beta_windows_portable.zip"
-    "$WINDOWS_DIR/YouTubeHarvester_0.2.2-beta_windows_setup.exe"
-    "$WINDOWS_DIR/YouTubeHarvester_0.2.2-beta_windows_x64.msi"
+    "$WINDOWS_DIR/YouTubeHarvester_0.2.3-beta_windows_portable.zip"
+    "$WINDOWS_DIR/YouTubeHarvester_0.2.3-beta_windows_setup.exe"
+    "$WINDOWS_DIR/YouTubeHarvester_0.2.3-beta_windows_x64.msi"
     "$WINDOWS_DIR/SHA256SUMS-windows.txt"
-    "$LINUX_DIR/YouTubeHarvester_0.2.2-beta_linux_all.deb"
-    "$LINUX_DIR/YouTubeHarvester_0.2.2-beta_source.tar.gz"
+    "$LINUX_DIR/YouTubeHarvester_0.2.3-beta_linux_all.deb"
+    "$LINUX_DIR/YouTubeHarvester_0.2.3-beta_source.tar.gz"
     "$LINUX_DIR/SHA256SUMS-linux.txt"
 )
 

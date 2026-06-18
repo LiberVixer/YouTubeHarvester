@@ -75,12 +75,12 @@ CHANNEL_TYPE_DEFAULTS = {
 
 CHANNEL_TYPE_BUTTONS = (
     ("videos", "🎬", "Видео"),
-    ("shorts", "📱", "Shorts"),
+    ("shorts", "⚡", "Shorts"),
     ("streams", "🔴", "Трансляция"),
 )
 
 APP_NAME = "YouTube Harvester"
-APP_VERSION = "0.2.2-beta"
+APP_VERSION = "0.2.3-beta"
 APP_TITLE = f"{APP_NAME} {APP_VERSION}"
 USAGE_RULES_VERSION = "2026-06-13"
 
@@ -727,13 +727,13 @@ class TrayLauncher:
 class ArchiveWindow(QMainWindow):
     TYPE_LABELS = {
         "videos": "🎬 Видео",
-        "shorts": "📱 Shorts",
+        "shorts": "⚡ Shorts",
         "streams": "🔴 Трансляция",
         "queue": "📥 Очередь",
     }
     TYPE_EMOJIS = {
         "videos": "🎬",
-        "shorts": "📱",
+        "shorts": "⚡",
         "streams": "●",
         "queue": "📥",
     }
@@ -1366,7 +1366,7 @@ class MainWindow(QMainWindow):
         status_grid.setVerticalSpacing(5)
         self.overview_channel_label = self._overview_type_status_row(status_grid, 0, "📺", "Канал")
         self.overview_video_status_label = self._overview_type_status_row(status_grid, 1, "🎬", "Видео")
-        self.overview_shorts_status_label = self._overview_type_status_row(status_grid, 2, "📱", "Shorts")
+        self.overview_shorts_status_label = self._overview_type_status_row(status_grid, 2, "⚡", "Shorts")
         self.overview_streams_status_label = self._overview_type_status_row(status_grid, 3, "🔴", "Трансляция")
         activity_layout.addLayout(status_grid)
 
@@ -1690,7 +1690,7 @@ class MainWindow(QMainWindow):
         limits_row.addWidget(limits_title)
         for label_text, spin, label_width in (
             ("🎬Видео", self.videos_limit_spin, 64),
-            ("📱Shorts", self.shorts_limit_spin, 66),
+            ("⚡Shorts", self.shorts_limit_spin, 66),
             ("🔴Трансляции", self.streams_limit_spin, 136),
         ):
             spin.setButtonSymbols(QSpinBox.NoButtons)
@@ -2916,7 +2916,7 @@ class MainWindow(QMainWindow):
         }.get(state, f"{self._emoji_html('😴')} Сон")
 
     def _refresh_overview_activity(self, status_info: dict, state: str, channels_count: int):
-        if state == "searching":
+        if state in {"searching", "downloading"}:
             try:
                 total = max(0, int(status_info.get("channels_total") or channels_count))
                 checked = max(0, min(total, int(status_info.get("channels_checked") or 0)))
@@ -2928,15 +2928,7 @@ class MainWindow(QMainWindow):
             return
 
         self.overview_activity_bar.setRange(0, 100)
-        if state == "downloading":
-            percent_text = str(status_info.get("download_percent") or "").replace(",", ".").strip()
-            try:
-                value = max(0, min(100, int(round(float(percent_text)))))
-            except (TypeError, ValueError):
-                value = 0
-            self.overview_activity_bar.setValue(value)
-            self.overview_activity_bar.setFormat("Идет скачивание")
-        elif state == "stopping":
+        if state == "stopping":
             self.overview_activity_bar.setValue(100)
             self.overview_activity_bar.setFormat("Остановка")
         elif state == "stopped":
@@ -3067,7 +3059,7 @@ class MainWindow(QMainWindow):
         if total:
             media_counts = (
                 f"{self._emoji_html('🎬')} {count('last_run_videos')}"
-                f" &nbsp; {self._emoji_html('📱')} {count('last_run_shorts')}"
+                f" &nbsp; {self._emoji_html('⚡')} {count('last_run_shorts')}"
                 f" &nbsp; {self._emoji_html('🔴')} {count('last_run_streams')}"
             )
             queue_count = count("last_run_queue")

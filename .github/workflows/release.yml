@@ -10,9 +10,9 @@ permissions:
   contents: write
 
 env:
-  APP_VERSION: 0.2.2-beta
-  DEB_VERSION: 0.2.2~beta
-  MSI_VERSION: 0.2.2
+  APP_VERSION: 0.2.3-beta
+  DEB_VERSION: 0.2.3~beta
+  MSI_VERSION: 0.2.3
 
 jobs:
   linux:

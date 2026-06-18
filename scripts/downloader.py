@@ -27,7 +27,7 @@ from pathlib import Path
 
 TYPE_LABELS = {
     "videos": ("🎬", "Видео"),
-    "shorts": ("📱", "Shorts"),
+    "shorts": ("⚡", "Shorts"),
     "streams": ("🔴", "Трансляция"),
     "queue": ("📥", "Очередь"),
 }

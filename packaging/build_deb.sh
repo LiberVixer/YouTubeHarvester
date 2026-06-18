@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PACKAGE="yt-harvester"
-VERSION="${1:-0.2.2~beta}"
+VERSION="${1:-0.2.3~beta}"
 ARCH="all"
 BUILD_DIR="$ROOT_DIR/dist/deb-build"
 PKG_DIR="$BUILD_DIR/${PACKAGE}_${VERSION}_${ARCH}"

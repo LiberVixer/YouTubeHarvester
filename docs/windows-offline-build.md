@@ -1,6 +1,6 @@
 # Offline Windows Build
 
-Target machine used for the 0.2.2 Beta Windows build:
+Target machine used for the 0.2.3 Beta Windows build:
 
 - Python 3.11 x64 or Python 3.12 x64
 - Git for Windows x64
@@ -62,9 +62,9 @@ powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 -
 Expected output files:
 
 ```text
-dist\release\YouTubeHarvester_0.2.2-beta_windows_portable.zip
-dist\release\YouTubeHarvester_0.2.2-beta_windows_setup.exe
-dist\release\YouTubeHarvester_0.2.2-beta_windows_x64.msi
+dist\release\YouTubeHarvester_0.2.3-beta_windows_portable.zip
+dist\release\YouTubeHarvester_0.2.3-beta_windows_setup.exe
+dist\release\YouTubeHarvester_0.2.3-beta_windows_x64.msi
 dist\release\SHA256SUMS-windows.txt
 ```
 

@@ -10,8 +10,8 @@ if not exist "%WHEELHOUSE%" (
     echo Wheelhouse not found: "%WHEELHOUSE%"
     echo.
     echo Put the wheelhouse folder next to the source folder:
-    echo   YouTubeHarvester-0.2.2-beta-offline\wheelhouse
-    echo   YouTubeHarvester-0.2.2-beta-offline\source
+    echo   YouTubeHarvester-0.2.3-beta-offline\wheelhouse
+    echo   YouTubeHarvester-0.2.3-beta-offline\source
     exit /b 1
 )
 
@@ -23,7 +23,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%SOURCE_DIR%packaging\windo
 if errorlevel 1 exit /b %errorlevel%
 
 if not exist "%WINDOWS_RELEASE%" mkdir "%WINDOWS_RELEASE%"
-copy /Y "%SOURCE_DIR%dist\release\YouTubeHarvester_0.2.2-beta_windows*" "%WINDOWS_RELEASE%\" >nul 2>nul
+copy /Y "%SOURCE_DIR%dist\release\YouTubeHarvester_0.2.3-beta_windows*" "%WINDOWS_RELEASE%\" >nul 2>nul
 copy /Y "%SOURCE_DIR%dist\release\SHA256SUMS-windows.txt" "%WINDOWS_RELEASE%\" >nul 2>nul
 
 echo.

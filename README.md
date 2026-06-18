@@ -43,7 +43,7 @@
 Download the latest package from [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases) or use the package from `dist/`:
 
 ```bash
-sudo apt install ./yt-harvester_0.2.2~beta_all.deb
+sudo apt install ./yt-harvester_0.2.3~beta_all.deb
 ```
 
 After installation, configure Telegram delivery:
@@ -98,9 +98,9 @@ powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1
 
 The release files will be created in `dist\release`:
 
-- `YouTubeHarvester_0.2.2-beta_windows_setup.exe`
-- `YouTubeHarvester_0.2.2-beta_windows_x64.msi`
-- `YouTubeHarvester_0.2.2-beta_windows_portable.zip`
+- `YouTubeHarvester_0.2.3-beta_windows_setup.exe`
+- `YouTubeHarvester_0.2.3-beta_windows_x64.msi`
+- `YouTubeHarvester_0.2.3-beta_windows_portable.zip`
 
 The Windows autostart checkbox writes the Current User registry key:
 
@@ -113,7 +113,7 @@ HKCU\Software\Microsoft\Windows\CurrentVersion\Run
 Each channel card has three small toggles:
 
 - `🎬` videos
-- `📱` Shorts
+- `⚡` Shorts
 - `🔴` streams
 
 Green means enabled, red means disabled. Rules are saved separately from `channels.txt`, so the channel list stays clean and easy to edit.
@@ -131,13 +131,13 @@ Source-tree runs use the current project directory by default.
 ### Build Linux Release Files
 
 ```bash
-packaging/build_release.sh 0.2.2~beta 0.2.2-beta
+packaging/build_release.sh 0.2.3~beta 0.2.3-beta
 ```
 
 The release files will be written to `dist/release`:
 
-- `YouTubeHarvester_0.2.2-beta_linux_all.deb`
-- `YouTubeHarvester_0.2.2-beta_source.tar.gz`
+- `YouTubeHarvester_0.2.3-beta_linux_all.deb`
+- `YouTubeHarvester_0.2.3-beta_source.tar.gz`
 
 ### Responsible Use
 
@@ -195,7 +195,7 @@ This README is a practical notice, not legal advice. If you are unsure whether a
 Скачайте пакет из [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases) или используйте файл из `dist/`:
 
 ```bash
-sudo apt install ./yt-harvester_0.2.2~beta_all.deb
+sudo apt install ./yt-harvester_0.2.3~beta_all.deb
 ```
 
 После установки заполните настройки Telegram:
@@ -250,9 +250,9 @@ powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1
 
 Файлы появятся в `dist\release`:
 
-- `YouTubeHarvester_0.2.2-beta_windows_setup.exe`
-- `YouTubeHarvester_0.2.2-beta_windows_x64.msi`
-- `YouTubeHarvester_0.2.2-beta_windows_portable.zip`
+- `YouTubeHarvester_0.2.3-beta_windows_setup.exe`
+- `YouTubeHarvester_0.2.3-beta_windows_x64.msi`
+- `YouTubeHarvester_0.2.3-beta_windows_portable.zip`
 
 Галочка автозапуска на Windows пишет запись в реестр текущего пользователя:
 
@@ -265,7 +265,7 @@ HKCU\Software\Microsoft\Windows\CurrentVersion\Run
 На каждой карточке канала есть три маленькие кнопки:
 
 - `🎬` видео
-- `📱` Shorts
+- `⚡` Shorts
 - `🔴` Трансляция
 
 Зелёная подложка значит “скачивать”, красная — “не скачивать”. Эти настройки хранятся отдельно от `channels.txt`, поэтому список каналов остаётся простым и чистым.
@@ -283,13 +283,13 @@ HKCU\Software\Microsoft\Windows\CurrentVersion\Run
 ### Сборка Linux-Файлов Релиза
 
 ```bash
-packaging/build_release.sh 0.2.2~beta 0.2.2-beta
+packaging/build_release.sh 0.2.3~beta 0.2.3-beta
 ```
 
 Файлы появятся в `dist/release`:
 
-- `YouTubeHarvester_0.2.2-beta_linux_all.deb`
-- `YouTubeHarvester_0.2.2-beta_source.tar.gz`
+- `YouTubeHarvester_0.2.3-beta_linux_all.deb`
+- `YouTubeHarvester_0.2.3-beta_source.tar.gz`
 
 ### Ответственное Использование
 

@@ -2,8 +2,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DEB_VERSION="${1:-0.2.2~beta}"
-RELEASE_VERSION="${2:-0.2.2-beta}"
+DEB_VERSION="${1:-0.2.3~beta}"
+RELEASE_VERSION="${2:-0.2.3-beta}"
 RELEASE_DIR="$ROOT_DIR/dist/release"
 SOURCE_TAR="$RELEASE_DIR/YouTubeHarvester_${RELEASE_VERSION}_source.tar.gz"
 DEB_SOURCE="$ROOT_DIR/dist/yt-harvester_${DEB_VERSION}_all.deb"

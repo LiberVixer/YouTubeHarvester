@@ -2,6 +2,22 @@
 
 All notable changes to **YouTube Harvester** are documented here.
 
+## [0.2.3-beta] - 2026-06-18
+
+### English
+
+#### Changed
+
+- The upper overview progress bar keeps showing checked channels while a video is downloading.
+- Shorts now use a clear lightning icon throughout the interface and downloader messages.
+
+### Русский
+
+#### Изменено
+
+- Верхний прогресс-бар продолжает показывать проверенные каналы во время скачивания видео.
+- Для Shorts во всём интерфейсе и сообщениях движков используется понятная иконка молнии.
+
 ## [0.2.2-beta] - 2026-06-13
 
 ### English

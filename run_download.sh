@@ -544,7 +544,7 @@ process_type_log() {
         EMOJI="🎬"
         STATUS_TYPE="videos"
         [[ "$BASENAME" == *"[streams]"* ]] && EMOJI="🔴" && STATUS_TYPE="streams"
-        [[ "$BASENAME" == *"[shorts]"* ]] && EMOJI="📱" && STATUS_TYPE="shorts"
+        [[ "$BASENAME" == *"[shorts]"* ]] && EMOJI="⚡" && STATUS_TYPE="shorts"
         [[ "$BASENAME" == *"[queue]"* ]] && EMOJI="📥" && STATUS_TYPE="queue"
 
         VIDEO_ID=$(printf '%s\n' "$BASENAME" | sed -nE 's/.* \[([A-Za-z0-9_-]{11})\] \[(videos|shorts|streams|queue)\] \[[^]]+\]\.mp4$/\1/p')
@@ -741,7 +741,7 @@ while IFS= read -r channel || [ -n "$channel" ]; do
         check_stop_requested
         case $type in
             videos) EMOJI="🎬"; TYPE_LABEL="Видео" ;;
-            shorts) EMOJI="📱"; TYPE_LABEL="Shorts" ;;
+            shorts) EMOJI="⚡"; TYPE_LABEL="Shorts" ;;
             streams) EMOJI="🔴"; TYPE_LABEL="Трансляция" ;;
         esac
 
