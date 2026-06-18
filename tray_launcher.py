@@ -1374,6 +1374,7 @@ class MainWindow(QMainWindow):
         self.overview_events_label.setObjectName("overviewEvents")
         self.overview_events_label.setTextFormat(Qt.RichText)
         self.overview_events_label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        self.overview_events_label.setWordWrap(True)
         self.overview_events_label.setMinimumHeight(112)
         activity_layout.addWidget(self.overview_events_label, 1)
 
@@ -2903,7 +2904,7 @@ class MainWindow(QMainWindow):
             self.overview_download_title_label.setToolTip("")
 
         self._refresh_overview_progress(status_info, state)
-        self.overview_events_label.setText(self._recent_events_html())
+        self.overview_events_label.setText(self._recent_events_html(status_info, state))
 
     def _overview_state_text(self, state: str):
         return {
@@ -3017,7 +3018,12 @@ class MainWindow(QMainWindow):
             self.overview_progress_bar.setValue(0)
             self.overview_progress_detail_label.setText("Ожидаю данные прогресса от yt-dlp")
 
-    def _recent_events_html(self, limit: int = 6):
+    def _recent_events_html(self, status_info: dict, state: str, limit: int = 6):
+        if not self.launcher.is_running and state in {"sleep", "stopped"}:
+            report = self._last_run_report_html(status_info)
+            if report:
+                return report
+
         try:
             lines = self.launcher.log_file.read_text(encoding="utf-8", errors="ignore").splitlines()
         except Exception:
@@ -3034,6 +3040,52 @@ class MainWindow(QMainWindow):
         if not events:
             return self._html_text("Событий пока нет")
         return "<br>".join(self._html_text(line) for line in reversed(events))
+
+    def _last_run_report_html(self, status_info: dict):
+        completed_at = self._valid_timestamp(status_info.get("last_run_completed_at"))
+        if not completed_at:
+            return ""
+
+        def count(key: str) -> int:
+            try:
+                return max(0, int(status_info.get(key) or 0))
+            except (TypeError, ValueError):
+                return 0
+
+        stopped = bool(status_info.get("last_run_stopped"))
+        title_emoji = "⏹" if stopped else "✅"
+        title = "Последняя проверка остановлена" if stopped else "Последняя проверка завершена"
+        finished = time.strftime("%d.%m.%Y в %H:%M", time.localtime(completed_at))
+        lines = [
+            (
+                f"{self._emoji_html(title_emoji)} <b>{self._html_text(title)}</b>"
+                f" &nbsp; {self._emoji_html('🕒')} {self._html_text(finished)}"
+            ),
+        ]
+
+        total = count("last_run_new_count")
+        if total:
+            media_counts = (
+                f"{self._emoji_html('🎬')} {count('last_run_videos')}"
+                f" &nbsp; {self._emoji_html('📱')} {count('last_run_shorts')}"
+                f" &nbsp; {self._emoji_html('🔴')} {count('last_run_streams')}"
+            )
+            queue_count = count("last_run_queue")
+            if queue_count:
+                media_counts += f" &nbsp; {self._emoji_html('📥')} {queue_count}"
+            lines.append(f"{self._emoji_html('📦')} Скачано: <b>{total}</b> &nbsp; {media_counts}")
+        else:
+            lines.append(f"{self._emoji_html('📭')} Новых видео не найдено")
+
+        checked = count("last_run_channels_checked")
+        channels_total = count("last_run_channels_total")
+        failed = count("last_run_failed_count")
+        lines.append(
+            f"{self._emoji_html('📺')} Проверено каналов: {checked} / {channels_total}"
+            f" &nbsp; {self._emoji_html('⚠️' if failed else '✨')} "
+            f"{self._html_text(f'Ошибок: {failed}' if failed else 'Без ошибок')}"
+        )
+        return "<br>".join(lines)
 
     def _last_download_text(self, status_info: dict):
         timestamps = []

@@ -240,6 +240,8 @@ class Downloader:
         self.channels_checked = 0
         self.new_count = 0
         self.failed_count = 0
+        self.downloaded_counts = {"videos": 0, "shorts": 0, "streams": 0, "queue": 0}
+        self.run_completed_at = 0
         self.archived_log = self.data_dir / f"download_{_dt.datetime.now():%Y-%m-%d_%H-%M}.log"
 
     def build_format_selector(self, value: str) -> str:
@@ -304,6 +306,16 @@ class Downloader:
             "download_stage": self.download_stage,
             "channels_total": self.channels_total,
             "channels_checked": self.channels_checked,
+            "last_run_completed_at": self.run_completed_at,
+            "last_run_stopped": self.state == "stopped",
+            "last_run_new_count": sum(self.downloaded_counts.values()),
+            "last_run_failed_count": self.failed_count,
+            "last_run_videos": self.downloaded_counts["videos"],
+            "last_run_shorts": self.downloaded_counts["shorts"],
+            "last_run_streams": self.downloaded_counts["streams"],
+            "last_run_queue": self.downloaded_counts["queue"],
+            "last_run_channels_total": self.channels_total,
+            "last_run_channels_checked": self.channels_checked,
             "last_download_at": last_download,
             "stop_requested": self.stop_file.exists(),
             "updated_at": int(time.time()),
@@ -675,6 +687,7 @@ class Downloader:
                     final_path = self.final_dir / basename
                     shutil.move(str(file_path), str(final_path))
                     self.append_archive_details(video_id, video_url, title, uploader, channel_link, status_type, final_path)
+                    self.downloaded_counts[status_type] = self.downloaded_counts.get(status_type, 0) + 1
                     self.log("   ⚓ Видео перемещено")
                 except Exception:
                     self.log("   ❌ Видео не перемещено")
@@ -851,6 +864,7 @@ class Downloader:
             self.state = "stopped"
         elif self.state != "stopped":
             self.state = "sleep"
+        self.run_completed_at = int(time.time())
         self.current_type = ""
         self.reset_progress()
         self.write_status()

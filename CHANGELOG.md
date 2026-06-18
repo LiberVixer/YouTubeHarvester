@@ -25,6 +25,7 @@ All notable changes to **YouTube Harvester** are documented here.
 - Download progress now names the active stage: video, audio, merging, or post-processing.
 - The idle overview no longer shows an empty download progress section.
 - Channel scanning pauses for one second after each checked Videos, Shorts, and Streams section.
+- The idle event panel now shows a clean emoji summary of the latest download run.
 - Linux desktop launcher metadata now uses the final app name and localized labels.
 - README now includes expanded responsible-use and third-party component notes.
 - Windows runs the Python downloader engine only; Bash remains a Linux option.
@@ -56,6 +57,7 @@ All notable changes to **YouTube Harvester** are documented here.
 - При скачивании блок прогресса показывает текущий этап: видео, аудио, объединение или обработка.
 - В простое пустой блок прогресса скачивания больше не отображается.
 - После проверки каждого включённого раздела Видео, Shorts и Трансляции выдерживается пауза в одну секунду.
+- В простое панель событий показывает чистый отчёт с эмодзи о последнем запуске скачивания.
 - Метаданные ярлыка Linux приведены к финальному названию программы и русским подписям.
 - README расширен правилами ответственного использования и сведениями о внешних компонентах.
 - На Windows используется только Python-движок; Bash остаётся вариантом для Linux.

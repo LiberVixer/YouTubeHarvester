@@ -76,6 +76,11 @@ STATUS_DOWNLOAD_STAGE=""
 STATUS_PROGRESS_BUCKET=""
 STATUS_CHANNELS_TOTAL=0
 STATUS_CHANNELS_CHECKED=0
+STATUS_RUN_COMPLETED_AT=0
+STATUS_DOWNLOADED_VIDEOS=0
+STATUS_DOWNLOADED_SHORTS=0
+STATUS_DOWNLOADED_STREAMS=0
+STATUS_DOWNLOADED_QUEUE=0
 
 log_console() {
     printf '%s\n' "$@" | tee -a "$LOGFILE"
@@ -155,6 +160,7 @@ rotate_logs_and_exit() {
     elif [ "$STATUS_STATE" != "stopped" ]; then
         STATUS_STATE="sleep"
     fi
+    STATUS_RUN_COMPLETED_AT=$(date +%s)
     STATUS_CURRENT_TYPE=""
     reset_download_progress
     write_status
@@ -301,6 +307,16 @@ write_status() {
   "download_stage": "$(json_escape "$STATUS_DOWNLOAD_STAGE")",
   "channels_total": $STATUS_CHANNELS_TOTAL,
   "channels_checked": $STATUS_CHANNELS_CHECKED,
+  "last_run_completed_at": $STATUS_RUN_COMPLETED_AT,
+  "last_run_stopped": $([ "$STATUS_STATE" = "stopped" ] && printf true || printf false),
+  "last_run_new_count": $((STATUS_DOWNLOADED_VIDEOS + STATUS_DOWNLOADED_SHORTS + STATUS_DOWNLOADED_STREAMS + STATUS_DOWNLOADED_QUEUE)),
+  "last_run_failed_count": $FAILED_COUNT,
+  "last_run_videos": $STATUS_DOWNLOADED_VIDEOS,
+  "last_run_shorts": $STATUS_DOWNLOADED_SHORTS,
+  "last_run_streams": $STATUS_DOWNLOADED_STREAMS,
+  "last_run_queue": $STATUS_DOWNLOADED_QUEUE,
+  "last_run_channels_total": $STATUS_CHANNELS_TOTAL,
+  "last_run_channels_checked": $STATUS_CHANNELS_CHECKED,
   "last_download_at": "$(json_escape "$STATUS_LAST_DOWNLOAD")",
   "stop_requested": $STATUS_STOP_REQUESTED,
   "updated_at": $(date +%s)
@@ -586,6 +602,12 @@ process_type_log() {
             if mv -f "$NEW_FILE" "$FINAL_DIR/" 2>/dev/null; then
                 FINAL_FILE_PATH="$FINAL_DIR/$BASENAME"
                 append_archive_details "$VIDEO_ID" "$VIDEO_URL" "$VIDEO_TITLE" "$UPLOADER" "$CHANNEL_LINK" "$STATUS_TYPE" "$FINAL_FILE_PATH" "$BASENAME"
+                case "$STATUS_TYPE" in
+                    videos) STATUS_DOWNLOADED_VIDEOS=$((STATUS_DOWNLOADED_VIDEOS + 1)) ;;
+                    shorts) STATUS_DOWNLOADED_SHORTS=$((STATUS_DOWNLOADED_SHORTS + 1)) ;;
+                    streams) STATUS_DOWNLOADED_STREAMS=$((STATUS_DOWNLOADED_STREAMS + 1)) ;;
+                    queue) STATUS_DOWNLOADED_QUEUE=$((STATUS_DOWNLOADED_QUEUE + 1)) ;;
+                esac
                 log_console "   ⚓ Видео перемещено"
             else
                 log_console "   ❌ Видео не перемещено"
