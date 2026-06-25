@@ -170,10 +170,11 @@ New-Item -ItemType Directory -Force -Path $ReleaseDir | Out-Null
 
 $buildWindowsScript = Join-Path $ScriptDir "build_windows.ps1"
 $buildWindowsArgs = @()
-if ($Offline -or $Wheelhouse) {
-    $buildWindowsArgs += @("-Offline", "-Wheelhouse", "$Wheelhouse")
-} else {
-    $buildWindowsArgs = @()
+if ($Offline.IsPresent) {
+    $buildWindowsArgs += "-Offline"
+}
+if (-not [string]::IsNullOrWhiteSpace($Wheelhouse)) {
+    $buildWindowsArgs += @("-Wheelhouse", "$Wheelhouse")
 }
 if (-not [string]::IsNullOrWhiteSpace($FfmpegDir)) {
     $buildWindowsArgs += @("-FfmpegDir", "$FfmpegDir")
