@@ -169,32 +169,32 @@ function Write-Wix7Source {
 New-Item -ItemType Directory -Force -Path $ReleaseDir | Out-Null
 
 $buildWindowsScript = Join-Path $ScriptDir "build_windows.ps1"
-$buildWindowsArgs = @()
+$buildWindowsParams = @{}
 if ($Offline.IsPresent) {
-    $buildWindowsArgs += "-Offline"
+    $buildWindowsParams["Offline"] = $true
 }
 if (-not [string]::IsNullOrWhiteSpace($Wheelhouse)) {
-    $buildWindowsArgs += @("-Wheelhouse", "$Wheelhouse")
+    $buildWindowsParams["Wheelhouse"] = "$Wheelhouse"
 }
 if (-not [string]::IsNullOrWhiteSpace($FfmpegDir)) {
-    $buildWindowsArgs += @("-FfmpegDir", "$FfmpegDir")
+    $buildWindowsParams["FfmpegDir"] = "$FfmpegDir"
 }
 if (-not [string]::IsNullOrWhiteSpace($FfmpegUrl)) {
-    $buildWindowsArgs += @("-FfmpegUrl", "$FfmpegUrl")
+    $buildWindowsParams["FfmpegUrl"] = "$FfmpegUrl"
 }
 if ($SkipFfmpegDownload) {
-    $buildWindowsArgs += "-SkipFfmpegDownload"
+    $buildWindowsParams["SkipFfmpegDownload"] = $true
 }
 if (-not [string]::IsNullOrWhiteSpace($DenoDir)) {
-    $buildWindowsArgs += @("-DenoDir", "$DenoDir")
+    $buildWindowsParams["DenoDir"] = "$DenoDir"
 }
 if (-not [string]::IsNullOrWhiteSpace($DenoUrl)) {
-    $buildWindowsArgs += @("-DenoUrl", "$DenoUrl")
+    $buildWindowsParams["DenoUrl"] = "$DenoUrl"
 }
 if ($SkipDenoDownload) {
-    $buildWindowsArgs += "-SkipDenoDownload"
+    $buildWindowsParams["SkipDenoDownload"] = $true
 }
-& $buildWindowsScript @buildWindowsArgs
+& $buildWindowsScript @buildWindowsParams
 if (-not $?) {
     throw "Windows application build failed."
 }
