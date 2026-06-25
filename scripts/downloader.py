@@ -100,14 +100,32 @@ def read_env_file(path: Path) -> dict[str, str]:
 
 
 def yt_dlp_command() -> list[str]:
+    configured_json = os.environ.get("YTD_YT_DLP_COMMAND_JSON", "").strip()
+    if configured_json:
+        try:
+            configured = json.loads(configured_json)
+            if isinstance(configured, list) and all(isinstance(item, str) for item in configured):
+                return configured
+        except json.JSONDecodeError:
+            pass
     configured = os.environ.get("YTD_YT_DLP_COMMAND", "").strip()
     if configured:
         try:
-            return shlex.split(configured, posix=(os.name != "nt"))
+            parts = shlex.split(configured, posix=(os.name != "nt"))
+            if os.name == "nt":
+                parts = [part[1:-1] if len(part) >= 2 and part[0] == part[-1] == '"' else part for part in parts]
+            return parts
         except ValueError:
             return [configured]
     found = shutil.which("yt-dlp")
     return [found] if found else ["yt-dlp"]
+
+
+def utf8_subprocess_env() -> dict[str, str]:
+    env = os.environ.copy()
+    env["PYTHONUTF8"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
+    return env
 
 
 def short_channel_name(channel: str) -> str:
@@ -204,6 +222,8 @@ class Downloader:
         self.channel_rules_file = Path(os.environ.get("YTD_CHANNEL_RULES_FILE", self.config_dir / "channel_rules.json"))
         self.temp_dir = Path(os.environ.get("YTD_TEMP_DIR", Path.home() / "temp" / "YTH"))
         self.final_dir = Path(os.environ.get("YTD_FINAL_DIR", Path.home() / "Downloads" / "YouTubeHarvester"))
+        self.ffmpeg_dir = self.detect_ffmpeg_dir()
+        self.deno_path = self.detect_deno_path()
         self.log_file = Path(os.environ.get("YTD_LOG_FILE", self.data_dir / "download.log"))
 
         env_values = read_env_file(self.env_file)
@@ -254,6 +274,57 @@ class Downloader:
         if self.max_resolution == "best":
             return "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best"
         return "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/best[ext=mp4][height<=1080]/best[height<=1080]"
+
+    def detect_ffmpeg_dir(self) -> Path | None:
+        configured = os.environ.get("YTD_FFMPEG_DIR", "").strip()
+        candidates: list[Path] = []
+        if configured:
+            candidates.append(Path(configured))
+        candidates.extend([
+            self.base_dir / "ffmpeg",
+            self.base_dir / "ffmpeg" / "bin",
+            self.base_dir / "bin",
+            self.base_dir / "tools" / "windows" / "ffmpeg" / "bin",
+            self.base_dir / "tools" / "windows" / "ffmpeg",
+        ])
+        ffmpeg_path = shutil.which("ffmpeg")
+        ffprobe_path = shutil.which("ffprobe")
+        if ffmpeg_path and ffprobe_path and Path(ffmpeg_path).parent == Path(ffprobe_path).parent:
+            candidates.append(Path(ffmpeg_path).parent)
+
+        ffmpeg_name = "ffmpeg.exe" if os.name == "nt" else "ffmpeg"
+        ffprobe_name = "ffprobe.exe" if os.name == "nt" else "ffprobe"
+        for candidate in candidates:
+            if (candidate / ffmpeg_name).exists() and (candidate / ffprobe_name).exists():
+                return candidate
+        return None
+
+    def detect_deno_path(self) -> Path | None:
+        configured = os.environ.get("YTD_DENO_PATH", "").strip()
+        candidates: list[Path] = []
+        if configured:
+            candidates.append(Path(configured))
+        deno_name = "deno.exe" if os.name == "nt" else "deno"
+        candidates.extend([
+            self.base_dir / "deno" / deno_name,
+            self.base_dir / "deno" / "bin" / deno_name,
+            self.base_dir / "bin" / deno_name,
+            self.base_dir / "tools" / "windows" / "deno" / deno_name,
+            self.base_dir / "tools" / "windows" / "deno" / "bin" / deno_name,
+        ])
+        deno_path = shutil.which("deno")
+        if deno_path:
+            candidates.append(Path(deno_path))
+
+        for candidate in candidates:
+            if candidate.is_file():
+                return candidate
+        return None
+
+    def js_runtime_arg(self) -> str:
+        if self.deno_path:
+            return f"deno:{self.deno_path}"
+        return "deno"
 
     def prepare(self) -> None:
         for path in (self.data_dir, self.config_dir, self.temp_dir, self.final_dir):
@@ -475,7 +546,17 @@ class Downloader:
         if self.proxy_url:
             command[1:1] = ["--socks5-hostname", self.proxy_url]
         try:
-            result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=60, check=False)
+            result = subprocess.run(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                env=utf8_subprocess_env(),
+                timeout=60,
+                check=False,
+            )
         except Exception as exc:
             self.log(f"   ❌ Telegram API error: {exc}")
             return False
@@ -588,6 +669,7 @@ class Downloader:
                 command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
+                env=utf8_subprocess_env(),
                 text=True,
                 encoding="utf-8",
                 errors="replace",
@@ -605,7 +687,10 @@ class Downloader:
             if not re.match(r"^\[download\]\s+[0-9]+(?:\.[0-9]+)?%", line):
                 self.log(line)
                 lines.append(line)
-        proc.wait()
+        return_code = proc.wait()
+        if return_code != 0:
+            self.failed_count += 1
+            self.log(f"   ❌ yt-dlp завершился с кодом {return_code}")
         return lines
 
     def downloaded_files_from_lines(self, lines: list[str]) -> list[Path]:
@@ -626,8 +711,63 @@ class Downloader:
                 found.add(Path(item))
         return sorted(found, key=lambda item: str(item))
 
-    def process_type_lines(self, lines: list[str], channel_link: str, channel_name: str) -> int:
-        files = self.downloaded_files_from_lines(lines)
+    def downloaded_files_from_temp(self, expected_type: str) -> list[Path]:
+        found: list[Path] = []
+        try:
+            candidates = sorted(self.temp_dir.glob("*.mp4"), key=lambda item: item.stat().st_mtime)
+        except OSError:
+            return found
+        for path in candidates:
+            if not path.is_file() or re.search(r"\.f[0-9]+\.mp4$", path.name):
+                continue
+            match = MEDIA_FILE_RE.match(path.name)
+            if expected_type and (not match or match.group("type") != expected_type):
+                continue
+            found.append(path)
+        return found
+
+    def downloaded_files(self, lines: list[str], expected_type: str) -> list[Path]:
+        found: dict[str, Path] = {}
+        missing_from_log = False
+        for path in self.downloaded_files_from_lines(lines):
+            if path.exists():
+                found[str(path.resolve())] = path
+            else:
+                missing_from_log = True
+        fallback_files = self.downloaded_files_from_temp(expected_type) if (missing_from_log or not found) else []
+        for path in fallback_files:
+            found.setdefault(str(path.resolve()), path)
+        if missing_from_log and fallback_files:
+            self.log("   🧭 Готовый файл найден в temp по фактическому имени")
+        return sorted(found.values(), key=lambda item: str(item))
+
+    def unique_final_path(self, basename: str) -> Path:
+        basename = self.short_final_basename(basename)
+        candidate = self.final_dir / basename
+        if not candidate.exists():
+            return candidate
+        stem = candidate.stem
+        suffix = candidate.suffix
+        for index in range(1, 1000):
+            alternate = self.final_dir / f"{stem} ({index}){suffix}"
+            if not alternate.exists():
+                return alternate
+        return self.final_dir / f"{stem} ({int(time.time())}){suffix}"
+
+    def short_final_basename(self, basename: str) -> str:
+        if os.name != "nt":
+            return basename
+        max_path_length = 240
+        budget = max_path_length - len(str(self.final_dir)) - 1
+        if budget >= len(basename):
+            return basename
+        suffix = Path(basename).suffix
+        stem = Path(basename).stem
+        keep = max(40, budget - len(suffix))
+        return stem[:keep].rstrip(" .") + suffix
+
+    def process_type_lines(self, lines: list[str], channel_link: str, channel_name: str, expected_type: str) -> int:
+        files = self.downloaded_files(lines, expected_type)
         if not files:
             return 0
 
@@ -684,13 +824,14 @@ class Downloader:
 
             if sent_ok:
                 try:
-                    final_path = self.final_dir / basename
+                    self.final_dir.mkdir(parents=True, exist_ok=True)
+                    final_path = self.unique_final_path(basename)
                     shutil.move(str(file_path), str(final_path))
                     self.append_archive_details(video_id, video_url, title, uploader, channel_link, status_type, final_path)
                     self.downloaded_counts[status_type] = self.downloaded_counts.get(status_type, 0) + 1
-                    self.log("   ⚓ Видео перемещено")
-                except Exception:
-                    self.log("   ❌ Видео не перемещено")
+                    self.log(f"   ⚓ Видео перемещено: {final_path}")
+                except Exception as exc:
+                    self.log(f"   ❌ Видео не перемещено: {exc}")
                     self.failed_count += 1
                     self.remove_video_from_archive(video_id)
             else:
@@ -705,7 +846,7 @@ class Downloader:
         return processed
 
     def yt_dlp_base_command(self, output_template: str) -> list[str]:
-        return yt_dlp_command() + [
+        command = yt_dlp_command() + [
             "-f",
             self.format_selector,
             "--merge-output-format",
@@ -732,9 +873,14 @@ class Downloader:
             "20",
             "--no-cache-dir",
             "--js-runtimes",
-            "deno",
+            self.js_runtime_arg(),
             "--newline",
         ]
+        if self.ffmpeg_dir:
+            command.extend(["--ffmpeg-location", str(self.ffmpeg_dir)])
+        if os.name == "nt":
+            command.append("--windows-filenames")
+        return command
 
     def process_queue(self) -> None:
         queued_urls = self.read_nonempty_lines(self.queue_file)
@@ -762,11 +908,11 @@ class Downloader:
                 continue
 
             before = self.new_count
-            command = self.yt_dlp_base_command(str(self.temp_dir / "%(title)s - %(uploader)s [%(id)s] [queue] [%(height)sp].%(ext)s"))
+            command = self.yt_dlp_base_command(str(self.temp_dir / "%(title).150s - %(uploader).80s [%(id)s] [queue] [%(height)sp].%(ext)s"))
             command.append("--no-playlist")
             command.append(url)
             lines = self.run_yt_dlp(command, "queue")
-            self.process_type_lines(lines, url, "Очередь")
+            self.process_type_lines(lines, url, "Очередь", "queue")
             if self.new_count == before and not any("has already been recorded in the archive" in line for line in lines):
                 if self.retry_failed_queue:
                     with self.queue_file.open("a", encoding="utf-8") as queue:
@@ -822,11 +968,11 @@ class Downloader:
                 self.log(f"-{emoji} Ищем - {label}")
 
                 before = self.new_count
-                output_template = str(self.temp_dir / f"%(title)s - %(uploader)s [%(id)s] [{type_name}] [%(height)sp].%(ext)s")
+                output_template = str(self.temp_dir / f"%(title).150s - %(uploader).80s [%(id)s] [{type_name}] [%(height)sp].%(ext)s")
                 command = self.yt_dlp_base_command(output_template)
                 command.extend(["--playlist-items", f"1-{self.type_limit(type_name)}", f"{channel}/{type_name}"])
                 lines = self.run_yt_dlp(command, type_name)
-                self.process_type_lines(lines, channel, self.channel_name)
+                self.process_type_lines(lines, channel, self.channel_name, type_name)
 
                 if self.new_count == before:
                     if any(MISSING_PAGE_RE.search(line) for line in lines):
@@ -903,6 +1049,14 @@ class Downloader:
         self.prepare()
         if not self.validate_telegram():
             return 1
+        if os.name == "nt" and not self.ffmpeg_dir:
+            self.log("❌ ffmpeg.exe и ffprobe.exe не найдены")
+            self.log("   Windows-сборке нужны bundled ffmpeg/ffprobe для склейки видео и аудио")
+            return self.rotate_logs(1)
+        if os.name == "nt" and not self.deno_path:
+            self.log("❌ deno.exe не найден")
+            self.log("   Windows-сборке нужен bundled Deno для полной поддержки YouTube")
+            return self.rotate_logs(1)
         self.log(f"=== Жатва началась {_dt.datetime.now():%Y-%m-%d %H:%M:%S} ===")
         self.log("🧩 Движок: Python")
         self.state = "searching"
@@ -917,7 +1071,10 @@ class Downloader:
 
         if self.new_count == 0:
             self.log("   📌Новых видео не найдено")
-            if self.cleanup_temp:
+            if self.failed_count:
+                self.log(f"⚠️ Были ошибки обработки: {self.failed_count}")
+                self.log("⚠️ Временная папка не очищена, чтобы не потерять файлы для повтора/ручной проверки")
+            elif self.cleanup_temp:
                 self.cleanup_temp_dir()
             else:
                 self.log("🧹 Очистка временной папки отключена")

@@ -31,19 +31,49 @@ def channel_section_url(channel: str, section: str) -> str:
 
 
 def yt_dlp_command() -> list[str]:
+    configured_json = os.environ.get("YTD_YT_DLP_COMMAND_JSON", "").strip()
+    if configured_json:
+        try:
+            configured = json.loads(configured_json)
+            if isinstance(configured, list) and all(isinstance(item, str) for item in configured):
+                return configured
+        except json.JSONDecodeError:
+            pass
     configured = os.environ.get("YTD_YT_DLP_COMMAND", "").strip()
     if configured:
         try:
-            return shlex.split(configured, posix=(os.name != "nt"))
+            parts = shlex.split(configured, posix=(os.name != "nt"))
+            if os.name == "nt":
+                parts = [part[1:-1] if len(part) >= 2 and part[0] == part[-1] == '"' else part for part in parts]
+            return parts
         except ValueError:
             return [configured]
     found = shutil.which("yt-dlp")
     return [found] if found else []
 
 
+def deno_runtime_arg() -> str:
+    configured = os.environ.get("YTD_DENO_PATH", "").strip()
+    if configured and Path(configured).is_file():
+        return f"deno:{configured}"
+    found = shutil.which("deno")
+    if found:
+        return f"deno:{found}"
+    return "deno"
+
+
+def utf8_subprocess_env() -> dict[str, str]:
+    env = os.environ.copy()
+    env["PYTHONUTF8"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
+    return env
+
+
 def collect_ids(yt_dlp: list[str], channel: str, section: str, limit: int) -> tuple[list[str], str]:
     url = channel_section_url(channel, section)
     command = yt_dlp + [
+        "--js-runtimes",
+        deno_runtime_arg(),
         "--flat-playlist",
         "--playlist-items",
         f"1-{limit}",
@@ -59,6 +89,9 @@ def collect_ids(yt_dlp: list[str], channel: str, section: str, limit: int) -> tu
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            encoding="utf-8",
+            errors="replace",
+            env=utf8_subprocess_env(),
             timeout=120,
             check=False,
         )

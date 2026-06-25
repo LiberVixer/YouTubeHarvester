@@ -2,6 +2,50 @@
 
 All notable changes to **YouTube Harvester** are documented here.
 
+## [0.2.4-beta] - 2026-06-25
+
+### English
+
+#### Added
+
+- Windows beta builds now bundle `ffmpeg.exe`, `ffprobe.exe`, and `deno.exe`.
+- GitHub release notes are included with the automated release workflow.
+- README thanks Windows beta tester Dmitry 'minion' Pogorily.
+
+#### Changed
+
+- README, offline Windows instructions, and screenshots were refreshed for the `0.2.4-beta` release.
+- Windows Python downloads now pass bundled media tools and the Deno JavaScript runtime directly to `yt-dlp`.
+- Release workflow uses `0.2.4-beta` names for Linux, Windows, source, and checksum artifacts.
+
+#### Fixed
+
+- Windows subprocess output is decoded as UTF-8 to avoid broken Cyrillic titles and console encoding crashes.
+- Quoted `yt-dlp` paths with spaces are handled correctly in bundled Windows builds.
+- Failed Windows downloads no longer clean the temp directory as if the media had been moved successfully.
+- Windows output names are shortened and use Windows-safe filename rules to reduce path-length failures.
+
+### Русский
+
+#### Добавлено
+
+- Windows beta-сборки теперь кладут внутрь `ffmpeg.exe`, `ffprobe.exe` и `deno.exe`.
+- Автоматический GitHub release получает отдельное описание релиза.
+- В README добавлена благодарность бета-тестеру Windows-версии Дмитрию 'minion' Погорилому.
+
+#### Изменено
+
+- README, инструкция офлайн-сборки Windows и скриншоты обновлены под релиз `0.2.4-beta`.
+- Windows Python-движок передаёт bundled media-инструменты и Deno JavaScript runtime прямо в `yt-dlp`.
+- GitHub Actions собирает Linux, Windows, исходники и checksum-файлы с именами `0.2.4-beta`.
+
+#### Исправлено
+
+- Вывод Windows-процессов читается как UTF-8, чтобы не ломались кириллические названия и emoji.
+- Пути к `yt-dlp` в кавычках и с пробелами корректно работают в bundled Windows-сборке.
+- При ошибке скачивания Windows-сборка больше не чистит temp-папку так, будто файл успешно перенесён.
+- Имена выходных файлов на Windows сокращаются и приводятся к Windows-safe правилам, чтобы реже упираться в длину пути.
+
 ## [0.2.3-beta] - 2026-06-18
 
 ### English

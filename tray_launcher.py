@@ -14,12 +14,11 @@ import time
 import shlex
 import shutil
 import importlib.util
-import io
-import contextlib
 from pathlib import Path
 import urllib.request
 import urllib.parse
 import html
+import tempfile
 from PyQt5.QtWidgets import (
     QApplication,
     QSystemTrayIcon,
@@ -51,9 +50,10 @@ from PyQt5.QtWidgets import (
     QAbstractItemView,
     QDialog,
     QDialogButtonBox,
+    QSizePolicy,
 )
 from PyQt5.QtGui import QIcon, QPixmap, QPainter, QColor, QBrush, QFont, QPen, QDesktopServices, QTextCursor, QPalette
-from PyQt5.QtCore import Qt, QTimer, QTime, QDate, QUrl, QPoint, pyqtSignal
+from PyQt5.QtCore import Qt, QTimer, QTime, QDate, QUrl, QPoint, QSize, pyqtSignal
 import json
 import glob
 
@@ -80,7 +80,7 @@ CHANNEL_TYPE_BUTTONS = (
 )
 
 APP_NAME = "YouTube Harvester"
-APP_VERSION = "0.2.3-beta"
+APP_VERSION = "0.2.4-beta"
 APP_TITLE = f"{APP_NAME} {APP_VERSION}"
 USAGE_RULES_VERSION = "2026-06-13"
 
@@ -195,6 +195,8 @@ class TrayLauncher:
         self.overview_logo_path = Path(os.environ.get("YTD_OVERVIEW_LOGO", self.app_dir / "assets" / "overview-logo.png"))
         self.video_placeholder_path = Path(os.environ.get("YTD_VIDEO_PLACEHOLDER", self.app_dir / "assets" / "video-placeholder.png"))
         self.queue_art_path = Path(os.environ.get("YTD_QUEUE_ART", self.app_dir / "assets" / "queue-scheduler.png"))
+        self.ffmpeg_dir = self.detect_ffmpeg_dir()
+        self.deno_path = self.detect_deno_path()
         self.is_running = False
         self.state = "idle"
         self.current_process = None
@@ -430,11 +432,79 @@ class TrayLauncher:
     def command_exists(self, command: str):
         return shutil.which(command) is not None
 
+    def detect_ffmpeg_dir(self):
+        configured = os.environ.get("YTD_FFMPEG_DIR", "").strip()
+        candidates = []
+        if configured:
+            candidates.append(Path(configured))
+        candidates.extend([
+            self.app_dir / "ffmpeg",
+            self.app_dir / "ffmpeg" / "bin",
+            self.app_dir / "bin",
+            Path(sys.executable).resolve().parent / "ffmpeg",
+            Path(sys.executable).resolve().parent / "ffmpeg" / "bin",
+            Path(sys.executable).resolve().parent / "bin",
+            self.app_dir / "tools" / "windows" / "ffmpeg" / "bin",
+            self.app_dir / "tools" / "windows" / "ffmpeg",
+        ])
+        ffmpeg_path = shutil.which("ffmpeg")
+        ffprobe_path = shutil.which("ffprobe")
+        if ffmpeg_path and ffprobe_path and Path(ffmpeg_path).parent == Path(ffprobe_path).parent:
+            candidates.append(Path(ffmpeg_path).parent)
+
+        ffmpeg_name = "ffmpeg.exe" if self.is_windows else "ffmpeg"
+        ffprobe_name = "ffprobe.exe" if self.is_windows else "ffprobe"
+        for candidate in candidates:
+            if (candidate / ffmpeg_name).exists() and (candidate / ffprobe_name).exists():
+                return candidate
+        return None
+
+    def detect_deno_path(self):
+        configured = os.environ.get("YTD_DENO_PATH", "").strip()
+        candidates = []
+        if configured:
+            candidates.append(Path(configured))
+        deno_name = "deno.exe" if self.is_windows else "deno"
+        candidates.extend([
+            self.app_dir / "deno" / deno_name,
+            self.app_dir / "deno" / "bin" / deno_name,
+            self.app_dir / "bin" / deno_name,
+            Path(sys.executable).resolve().parent / "deno" / deno_name,
+            Path(sys.executable).resolve().parent / "deno" / "bin" / deno_name,
+            Path(sys.executable).resolve().parent / "bin" / deno_name,
+            self.app_dir / "tools" / "windows" / "deno" / deno_name,
+            self.app_dir / "tools" / "windows" / "deno" / "bin" / deno_name,
+        ])
+        deno_path = shutil.which("deno")
+        if deno_path:
+            candidates.append(Path(deno_path))
+
+        for candidate in candidates:
+            if candidate.is_file():
+                return candidate
+        return None
+
+    def yt_dlp_js_runtime_args(self):
+        if self.deno_path:
+            return ["--js-runtimes", f"deno:{self.deno_path}"]
+        return ["--js-runtimes", "deno"]
+
     def yt_dlp_command(self):
+        configured_json = os.environ.get("YTD_YT_DLP_COMMAND_JSON", "").strip()
+        if configured_json:
+            try:
+                configured = json.loads(configured_json)
+                if isinstance(configured, list) and all(isinstance(item, str) for item in configured):
+                    return configured
+            except json.JSONDecodeError:
+                pass
         configured = os.environ.get("YTD_YT_DLP_COMMAND", "").strip()
         if configured:
             try:
-                return shlex.split(configured, posix=(os.name != "nt"))
+                parts = shlex.split(configured, posix=(os.name != "nt"))
+                if os.name == "nt":
+                    parts = [part[1:-1] if len(part) >= 2 and part[0] == part[-1] == '"' else part for part in parts]
+                return parts
             except ValueError:
                 return [configured]
         if getattr(sys, "frozen", False):
@@ -455,24 +525,16 @@ class TrayLauncher:
 
     def run_python_script_capture(self, script_path: Path, args: list[str], timeout: int):
         script_path = Path(script_path)
-        if getattr(sys, "frozen", False):
-            stdout = io.StringIO()
-            stderr = io.StringIO()
-            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
-                return_code = run_python_script_helper(script_path.name, args)
-            return subprocess.CompletedProcess(
-                self.python_script_command(script_path) + list(args),
-                return_code,
-                stdout.getvalue(),
-                stderr.getvalue(),
-            )
         return subprocess.run(
             self.python_script_command(script_path) + list(args),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=timeout,
             check=False,
+            env=self.script_environment(),
         )
 
     def _setting_path(self, settings: dict, key: str, env_key: str, default_path: Path):
@@ -540,6 +602,20 @@ class TrayLauncher:
             if not self.python_downloader_path.exists():
                 self.show_notification("❌", "Python-движок", f"Не найден файл: {self.python_downloader_path}")
                 return False
+            if self.is_windows and not self.ffmpeg_dir:
+                self.show_notification(
+                    "❌",
+                    "ffmpeg не найден",
+                    "Windows-сборке нужны bundled ffmpeg.exe и ffprobe.exe",
+                )
+                return False
+            if self.is_windows and not self.deno_path:
+                self.show_notification(
+                    "❌",
+                    "Deno не найден",
+                    "Windows-сборке нужен bundled deno.exe для YouTube JS",
+                )
+                return False
         else:
             if not self.script_path.exists():
                 self.show_notification("❌", "Bash-движок", f"Не найден файл: {self.script_path}")
@@ -547,13 +623,19 @@ class TrayLauncher:
             if not self.command_exists("bash"):
                 self.show_notification("❌", "Bash не найден", "Выберите Python-движок в настройках")
                 return False
-        if not getattr(sys, "frozen", False) and not os.environ.get("YTD_YT_DLP_COMMAND") and not self.command_exists("yt-dlp"):
+        if (
+            not getattr(sys, "frozen", False)
+            and not os.environ.get("YTD_YT_DLP_COMMAND")
+            and not os.environ.get("YTD_YT_DLP_COMMAND_JSON")
+            and not self.command_exists("yt-dlp")
+        ):
             self.show_notification("❌", "yt-dlp не найден", "Установите yt-dlp и проверьте PATH")
             return False
         return True
 
     def script_environment(self):
         env = os.environ.copy()
+        yt_dlp_command = self.yt_dlp_command()
         env.update({
             "PYTHONIOENCODING": "utf-8",
             "PYTHONUTF8": "1",
@@ -575,8 +657,13 @@ class TrayLauncher:
             "YTD_RETRY_FAILED_QUEUE": "1" if self.retry_failed_queue else "0",
             "YTD_TELEGRAM_ENABLED": "1" if self.telegram_enabled else "0",
             "YTD_DOWNLOAD_ENGINE": self.download_engine,
-            "YTD_YT_DLP_COMMAND": subprocess.list2cmdline(self.yt_dlp_command()),
+            "YTD_YT_DLP_COMMAND": subprocess.list2cmdline(yt_dlp_command),
+            "YTD_YT_DLP_COMMAND_JSON": json.dumps(yt_dlp_command, ensure_ascii=False),
         })
+        if self.ffmpeg_dir:
+            env["YTD_FFMPEG_DIR"] = str(self.ffmpeg_dir)
+        if self.deno_path:
+            env["YTD_DENO_PATH"] = str(self.deno_path)
         return env
 
     def run_script(self):
@@ -1198,7 +1285,10 @@ class MainWindow(QMainWindow):
         if self.launcher.app_icon_path.exists():
             self.setWindowIcon(QIcon(str(self.launcher.app_icon_path)))
         self.preview_request_id = 0
+        self.preview_request_context = "queue"
+        self.pending_preview_context = "queue"
         self.current_preview = {}
+        self.current_previews = {"overview": {}, "queue": {}}
         self.ui_settings = self.load_ui_settings()
         self._window_position_ready = False
         self.theme = self.ui_settings.get("theme", "dark")
@@ -1262,11 +1352,11 @@ class MainWindow(QMainWindow):
         header_panel = QWidget()
         header_panel.setObjectName("overviewHeaderPanel")
         header_layout = QVBoxLayout(header_panel)
-        header_layout.setContentsMargins(10, 8, 10, 8)
-        header_layout.setSpacing(8)
+        header_layout.setContentsMargins(10, 8, 10, 10)
+        header_layout.setSpacing(7)
 
-        metrics = QHBoxLayout()
-        metrics.setSpacing(6)
+        top_row = QHBoxLayout()
+        top_row.setSpacing(5)
         self.overview_channels_label = QLabel()
         self.overview_queue_label = QLabel()
         self.overview_archive_label = QLabel()
@@ -1282,6 +1372,9 @@ class MainWindow(QMainWindow):
             label.setObjectName("overviewMetricPill")
             label.setTextFormat(Qt.RichText)
             label.setWordWrap(False)
+            label.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        metrics_row = QHBoxLayout()
+        metrics_row.setSpacing(5)
         for label in (
             self.overview_channels_label,
             self.overview_queue_label,
@@ -1289,38 +1382,50 @@ class MainWindow(QMainWindow):
             self.overview_last_download_label,
             self.overview_temp_label,
         ):
-            metrics.addWidget(label)
-        metrics.addStretch()
-        header_layout.addLayout(metrics)
+            metrics_row.addWidget(label)
 
-        buttons = QHBoxLayout()
-        buttons.setSpacing(8)
-        self.run_button = QPushButton("⏬ Скачать")
-        self.run_button.setObjectName("overviewButton")
-        self.run_button.setFixedHeight(32)
+        self.run_button = QPushButton()
+        self.run_button.setObjectName("primaryRunButton")
+        self.run_button.setFixedSize(54, 54)
+        self.run_button.setIconSize(QSize(50, 50))
         self.run_button.setToolTip("Запустить проверку очереди и каналов")
         self.run_button.clicked.connect(self.toggle_download)
-        final_btn = QPushButton("📁 Загрузки")
+        final_btn = QPushButton("📁")
         final_btn.setObjectName("overviewButton")
-        final_btn.setFixedHeight(32)
+        final_btn.setFixedSize(38, 32)
         final_btn.setToolTip("Открыть папку загрузок")
         final_btn.clicked.connect(lambda: self.open_folder(self.launcher.final_dir))
-        temp_btn = QPushButton("⌛ Врем.")
+        temp_btn = QPushButton("⌛")
         temp_btn.setObjectName("overviewButton")
-        temp_btn.setFixedHeight(32)
+        temp_btn.setFixedSize(38, 32)
         temp_btn.setToolTip("Открыть временную папку")
         temp_btn.clicked.connect(lambda: self.open_folder(self.launcher.temp_dir))
-        archive_btn = QPushButton("🗃 Архив")
+        archive_btn = QPushButton("🗃")
         archive_btn.setObjectName("overviewButton")
-        archive_btn.setFixedHeight(32)
+        archive_btn.setFixedSize(38, 32)
         archive_btn.setToolTip("Открыть подробный архив скачиваний")
         archive_btn.clicked.connect(self.open_archive_window)
-        buttons.addWidget(self.run_button)
-        buttons.addWidget(final_btn)
-        buttons.addWidget(temp_btn)
-        buttons.addWidget(archive_btn)
-        buttons.addStretch()
-        header_layout.addLayout(buttons)
+        top_row.addWidget(self.run_button, 0, Qt.AlignLeft | Qt.AlignTop)
+        for button in (final_btn, temp_btn, archive_btn):
+            top_row.addWidget(button, 0, Qt.AlignLeft | Qt.AlignVCenter)
+        top_row.addStretch(1)
+        top_row.addLayout(metrics_row)
+        header_layout.addLayout(top_row)
+
+        overview_queue_row = QHBoxLayout()
+        overview_queue_row.setSpacing(8)
+        self.overview_video_url_input = QLineEdit()
+        self.overview_video_url_input.setPlaceholderText("YouTube URL")
+        self.overview_video_url_input.textChanged.connect(lambda: self.schedule_video_preview("overview"))
+        self.overview_add_video_button = QPushButton("Добавить в очередь")
+        self.overview_add_video_button.setFixedHeight(30)
+        self.overview_add_video_button.setToolTip("Добавить указанное YouTube-видео в очередь скачивания")
+        self.overview_add_video_button.setEnabled(False)
+        self.overview_add_video_button.clicked.connect(lambda: self.add_video_to_queue("overview"))
+        overview_queue_row.addWidget(self.overview_video_url_input, 1)
+        overview_queue_row.addWidget(self.overview_add_video_button, 0)
+        header_layout.addLayout(overview_queue_row)
+
         layout.addWidget(header_panel)
 
         content = QHBoxLayout()
@@ -1329,20 +1434,14 @@ class MainWindow(QMainWindow):
         media_panel = QWidget()
         media_panel.setObjectName("overviewMediaPanel")
         media_layout = QVBoxLayout(media_panel)
-        media_layout.setContentsMargins(10, 10, 10, 10)
-        media_layout.setSpacing(8)
-        self.overview_program_title_label = QLabel(APP_NAME)
-        self.overview_program_title_label.setObjectName("overviewProgramTitle")
-        self.overview_program_title_label.setAlignment(Qt.AlignCenter)
-        self.overview_program_title_label.setFixedHeight(24)
+        media_layout.setContentsMargins(10, 12, 10, 8)
+        media_layout.setSpacing(0)
         self.overview_main_image = QLabel()
         self.overview_main_image.setObjectName("overviewMainImage")
         self.overview_main_image.setAlignment(Qt.AlignCenter)
-        self.overview_main_image.setFixedSize(230, 230)
+        self.overview_main_image.setFixedSize(232, 232)
 
-        media_layout.addWidget(self.overview_program_title_label, 0, Qt.AlignHCenter | Qt.AlignTop)
-        media_layout.addSpacing(6)
-        media_layout.addWidget(self.overview_main_image, 0, Qt.AlignHCenter | Qt.AlignTop)
+        media_layout.addWidget(self.overview_main_image, 0, Qt.AlignHCenter | Qt.AlignVCenter)
         media_layout.addStretch()
         content.addWidget(media_panel, 0)
 
@@ -1401,6 +1500,14 @@ class MainWindow(QMainWindow):
         self.overview_download_title_label.setFixedHeight(42)
         self.overview_download_title_label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         download_details.addWidget(self.overview_download_title_label)
+        self.overview_idle_uploader_label = QLabel("")
+        self.overview_idle_uploader_label.setObjectName("subtleText")
+        self.overview_idle_uploader_label.setTextFormat(Qt.RichText)
+        self.overview_idle_status_label = QLabel("")
+        self.overview_idle_status_label.setObjectName("subtleText")
+        self.overview_idle_status_label.setTextFormat(Qt.RichText)
+        download_details.addWidget(self.overview_idle_uploader_label)
+        download_details.addWidget(self.overview_idle_status_label)
 
         self.overview_progress_panel = QWidget()
         self.overview_progress_panel.setObjectName("overviewProgressPanel")
@@ -1577,12 +1684,12 @@ class MainWindow(QMainWindow):
         input_row.setSpacing(8)
         self.video_url_input = QLineEdit()
         self.video_url_input.setPlaceholderText("https://www.youtube.com/watch?v=...")
-        self.video_url_input.textChanged.connect(self.schedule_video_preview)
+        self.video_url_input.textChanged.connect(lambda: self.schedule_video_preview("queue"))
         self.add_video_button = QPushButton("Добавить в очередь")
         self.add_video_button.setFixedHeight(30)
         self.add_video_button.setToolTip("Добавить указанное YouTube-видео в очередь скачивания")
         self.add_video_button.setEnabled(False)
-        self.add_video_button.clicked.connect(self.add_video_to_queue)
+        self.add_video_button.clicked.connect(lambda: self.add_video_to_queue("queue"))
         input_row.addWidget(self.video_url_input)
         input_row.addWidget(self.add_video_button)
         queue_layout.addLayout(input_row)
@@ -2312,6 +2419,19 @@ class MainWindow(QMainWindow):
                     font-weight: bold;
                     padding: 4px 10px;
                 }
+                QPushButton#primaryRunButton {
+                    background: transparent;
+                    border: none;
+                    border-radius: 27px;
+                    padding: 0;
+                    margin-top: 0;
+                }
+                QPushButton#primaryRunButton:hover {
+                    background: rgba(50, 190, 108, 58);
+                }
+                QPushButton#primaryRunButton[danger="true"]:hover {
+                    background: rgba(235, 75, 75, 64);
+                }
                 QPushButton#telegramToggleButton {
                     font-family: "Noto Color Emoji", "Noto Sans", "DejaVu Sans", sans-serif;
                     font-size: 13px;
@@ -2419,6 +2539,16 @@ class MainWindow(QMainWindow):
                     background: #ffffff;
                     border: 1px solid #b9c3cc;
                 }
+                QWidget#overviewQueuePreview {
+                    background: transparent;
+                    border: none;
+                }
+                QLabel#overviewPreviewTitle {
+                    background: transparent;
+                    color: #17202a;
+                    font-size: 13px;
+                    font-weight: bold;
+                }
                 QLabel#queueArt {
                     background: transparent;
                     border: none;
@@ -2457,7 +2587,7 @@ class MainWindow(QMainWindow):
                     color: #ffffff;
                 }
             """)
-            self.thumbnail_label.setStyleSheet("border: 1px solid #b9c3cc; background: #ffffff; color: #5c6670;")
+            self._apply_preview_thumbnail_style("border: 1px solid #b9c3cc; background: #ffffff; color: #5c6670;")
         else:
             self.setStyleSheet("""
                 QMainWindow, QWidget {
@@ -2552,6 +2682,19 @@ class MainWindow(QMainWindow):
                     font-size: 15px;
                     font-weight: bold;
                     padding: 4px 10px;
+                }
+                QPushButton#primaryRunButton {
+                    background: transparent;
+                    border: none;
+                    border-radius: 27px;
+                    padding: 0;
+                    margin-top: 0;
+                }
+                QPushButton#primaryRunButton:hover {
+                    background: rgba(54, 210, 122, 58);
+                }
+                QPushButton#primaryRunButton[danger="true"]:hover {
+                    background: rgba(238, 82, 82, 70);
                 }
                 QPushButton#telegramToggleButton {
                     font-family: "Noto Color Emoji", "Noto Sans", "DejaVu Sans", sans-serif;
@@ -2660,6 +2803,16 @@ class MainWindow(QMainWindow):
                     background: #101317;
                     border: 1px solid #3a4350;
                 }
+                QWidget#overviewQueuePreview {
+                    background: transparent;
+                    border: none;
+                }
+                QLabel#overviewPreviewTitle {
+                    background: transparent;
+                    color: #f0f4f8;
+                    font-size: 13px;
+                    font-weight: bold;
+                }
                 QLabel#queueArt {
                     background: transparent;
                     border: none;
@@ -2698,10 +2851,16 @@ class MainWindow(QMainWindow):
                     color: #ffffff;
                 }
             """)
-            self.thumbnail_label.setStyleSheet("border: 1px solid #3a4350; background: #101317; color: #aeb8c2;")
+            self._apply_preview_thumbnail_style("border: 1px solid #3a4350; background: #101317; color: #aeb8c2;")
 
         if self.archive_window is not None:
             self.archive_window.setStyleSheet(self.styleSheet())
+
+    def _apply_preview_thumbnail_style(self, style: str):
+        for label_name in ("thumbnail_label", "overview_thumbnail_label"):
+            label = getattr(self, label_name, None)
+            if label is not None:
+                label.setStyleSheet(style)
 
     def effective_theme(self):
         if self.theme != "system":
@@ -2806,6 +2965,39 @@ class MainWindow(QMainWindow):
     def _html_text(self, text):
         return html.escape(str(text), quote=False)
 
+    def _run_button_icon(self, stopping: bool = False):
+        pixmap = QPixmap(50, 50)
+        pixmap.fill(Qt.transparent)
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        circle_color = QColor("#df4b4b" if stopping else "#2f8de4")
+        border_color = QColor("#8fd0ff" if not stopping else "#ffb1b1")
+        painter.setPen(QPen(border_color, 2))
+        painter.setBrush(QBrush(circle_color))
+        painter.drawEllipse(4, 4, 42, 42)
+
+        painter.setPen(QPen(QColor("#ffffff"), 4, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        if stopping:
+            painter.setBrush(QBrush(QColor("#ffffff")))
+            painter.drawRoundedRect(18, 18, 14, 14, 2, 2)
+        else:
+            painter.drawLine(25, 12, 25, 30)
+            painter.drawLine(16, 22, 25, 31)
+            painter.drawLine(34, 22, 25, 31)
+            painter.setPen(QPen(QColor("#ffffff"), 3, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+            painter.drawLine(15, 38, 35, 38)
+        painter.end()
+        return QIcon(pixmap)
+
+    def _set_run_button_state(self, stopping: bool, enabled: bool, tooltip: str):
+        self.run_button.setText("")
+        self.run_button.setIcon(self._run_button_icon(stopping))
+        self.run_button.setToolTip(tooltip)
+        self.run_button.setEnabled(enabled)
+        self.run_button.setProperty("danger", "true" if stopping else "false")
+        self.run_button.style().unpolish(self.run_button)
+        self.run_button.style().polish(self.run_button)
+
     def refresh_overview(self):
         status_info = self.read_status()
         temp_count = self._count_files(self.launcher.temp_dir)
@@ -2827,25 +3019,34 @@ class MainWindow(QMainWindow):
         self.overview_channels_label.setText(f"{self._emoji_html('📺')} Каналов: {channels_count}")
         self.overview_queue_label.setText(f"{self._emoji_html('📥')} Очередь: {queue_count}")
         self.overview_archive_label.setText(f"{self._emoji_html('🗃')} Архив: {archive_count}")
+        last_download_text = self._last_download_text(status_info)
         self.overview_last_download_label.setText(
-            f"{self._emoji_html('⏱')} Последнее: {self._html_text(self._last_download_text(status_info))}"
+            f"{self._emoji_html('⏱️')}: {self._html_text(last_download_text)}"
+        )
+        self.overview_last_download_label.setToolTip(
+            f"Последнее скаченное видео: {last_download_text}"
         )
         self.overview_temp_label.setText(
-            f"{self._emoji_html('⌛')} Врем.: {temp_count}  {self._emoji_html('⚠')} Недокаченных: {part_count}"
+            f"Файлы{self._emoji_html('⌛')}:{temp_count}  {self._emoji_html('⚠')}:{part_count}"
+        )
+        self.overview_temp_label.setToolTip(
+            f"Временных файлов: {temp_count}\nНедокачанных файлов: {part_count}"
         )
 
         if self.launcher.is_running and stop_requested:
-            self.run_button.setText("⏹ Останавливается")
-            self.run_button.setToolTip("Остановка уже запрошена; скрипт завершится на безопасном шаге")
-            self.run_button.setEnabled(False)
+            self._set_run_button_state(
+                True,
+                False,
+                "Остановка уже запрошена; скрипт завершится на безопасном шаге",
+            )
         elif self.launcher.is_running:
-            self.run_button.setText("⏹ Остановить")
-            self.run_button.setToolTip("Мягко остановить скачивание после текущего безопасного шага")
-            self.run_button.setEnabled(True)
+            self._set_run_button_state(
+                True,
+                True,
+                "Мягко остановить скачивание после текущего безопасного шага",
+            )
         else:
-            self.run_button.setText("⏬ Скачать")
-            self.run_button.setToolTip("Запустить проверку очереди и каналов")
-            self.run_button.setEnabled(True)
+            self._set_run_button_state(False, True, "Запустить проверку очереди и каналов")
 
         channel_url = status_info.get("channel_url") or ""
         channel_name = self._channel_display_name(channel_url, status_info.get("channel_name") or "")
@@ -2856,9 +3057,15 @@ class MainWindow(QMainWindow):
             main_image = self.launcher.overview_logo_path
         self._set_label_image(self.overview_main_image, main_image, channel_name or "YT")
 
+        overview_preview = self.current_previews.get("overview", {})
+        overview_url = self.overview_video_url_input.text().strip() if hasattr(self, "overview_video_url_input") else ""
         thumb_path = None
         if self.launcher.is_running and state == "downloading":
             thumb_path = self._current_video_thumbnail_path(status_info)
+        elif overview_preview.get("thumbnail_path"):
+            candidate = Path(overview_preview.get("thumbnail_path"))
+            if candidate.is_file():
+                thumb_path = candidate
         if not thumb_path and self.launcher.video_placeholder_path.exists():
             thumb_path = self.launcher.video_placeholder_path
         if thumb_path:
@@ -2898,10 +3105,24 @@ class MainWindow(QMainWindow):
             self.overview_download_title_label.show()
             self.overview_download_title_label.setText(f"Скачивается видео: {self._html_text(title)}")
             self.overview_download_title_label.setToolTip(title)
+            self.overview_idle_uploader_label.clear()
+            self.overview_idle_status_label.clear()
+        elif overview_url or overview_preview:
+            preview_title = overview_preview.get("title") or self.overview_download_title_label.text() or "Загрузка данных..."
+            self.overview_download_title_label.show()
+            self.overview_download_title_label.setText(self._html_text(preview_title))
+            self.overview_download_title_label.setToolTip(preview_title)
+            uploader = overview_preview.get("uploader") or ""
+            self.overview_idle_uploader_label.setText(f"Канал: {self._html_text(uploader)}" if uploader else "")
+            if not self.overview_idle_status_label.text():
+                self.overview_idle_status_label.setText("Готово к добавлению в очередь" if overview_preview else "Читаю название и обложку...")
         else:
             self.overview_download_title_label.show()
             self.overview_download_title_label.setText("Ожидаем скачивания")
             self.overview_download_title_label.setToolTip("")
+            self.overview_idle_uploader_label.clear()
+            if self.overview_idle_status_label.text() != "Добавлено в очередь":
+                self.overview_idle_status_label.clear()
 
         self._refresh_overview_progress(status_info, state)
         self.overview_events_label.setText(self._recent_events_html(status_info, state))
@@ -3695,10 +3916,15 @@ class MainWindow(QMainWindow):
         try:
             metadata_url = f"{channel.rstrip('/')}/videos"
             result = subprocess.run(
-                self.launcher.yt_dlp_command() + ["--dump-single-json", "--skip-download", "--flat-playlist", "--playlist-items", "1", metadata_url],
+                self.launcher.yt_dlp_command()
+                + self.launcher.yt_dlp_js_runtime_args()
+                + ["--dump-single-json", "--skip-download", "--flat-playlist", "--playlist-items", "1", metadata_url],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
+                env=self.launcher.script_environment(),
                 timeout=45,
             )
             if result.returncode != 0:
@@ -3819,44 +4045,87 @@ class MainWindow(QMainWindow):
         self.launcher.save_schedules()
         self.refresh_schedules()
 
-    def schedule_video_preview(self):
-        self.current_preview = {}
-        self.video_status_label.setText("")
-        self.video_uploader_label.setText("")
-        self.thumbnail_label.setPixmap(QPixmap())
-        self.thumbnail_label.setText("Обложка")
-        text = self.video_url_input.text().strip()
-        self.add_video_button.setEnabled(self._looks_like_youtube_url(text))
+    def _preview_widgets(self, context: str):
+        if context == "overview":
+            return {
+                "input": self.overview_video_url_input,
+                "button": self.overview_add_video_button,
+                "thumbnail": self.overview_video_image,
+                "title": self.overview_download_title_label,
+                "uploader": self.overview_idle_uploader_label,
+                "status": self.overview_idle_status_label,
+            }
+        return {
+            "input": self.video_url_input,
+            "button": self.add_video_button,
+            "thumbnail": self.thumbnail_label,
+            "title": self.video_title_label,
+            "uploader": self.video_uploader_label,
+            "status": self.video_status_label,
+        }
+
+    def _clear_video_preview(self, context: str):
+        widgets = self._preview_widgets(context)
+        self.current_previews[context] = {}
+        if context == "queue":
+            self.current_preview = {}
+        widgets["status"].setText("")
+        widgets["uploader"].setText("")
+        widgets["thumbnail"].setPixmap(QPixmap())
+        widgets["thumbnail"].setText("Обложка")
+        widgets["button"].setEnabled(False)
+        widgets["title"].setText("Введите адрес YouTube-видео")
+
+    def schedule_video_preview(self, context: str = "queue"):
+        widgets = self._preview_widgets(context)
+        self.current_previews[context] = {}
+        if context == "queue":
+            self.current_preview = {}
+        widgets["status"].setText("")
+        widgets["uploader"].setText("")
+        widgets["thumbnail"].setPixmap(QPixmap())
+        widgets["thumbnail"].setText("Обложка")
+        text = widgets["input"].text().strip()
+        widgets["button"].setEnabled(self._looks_like_youtube_url(text))
         if not text:
-            self.video_title_label.setText("Введите адрес YouTube-видео")
+            widgets["title"].setText("Введите адрес YouTube-видео")
             return
         if not self._looks_like_youtube_url(text):
-            self.video_title_label.setText("Введите ссылку на YouTube-видео")
+            widgets["title"].setText("Введите ссылку на YouTube-видео")
             return
-        self.video_title_label.setText("Загрузка данных...")
+        widgets["title"].setText("Загрузка данных...")
+        self.pending_preview_context = context
         self.preview_timer.start(800)
 
     def fetch_video_preview(self):
-        url = self.video_url_input.text().strip()
+        context = self.pending_preview_context
+        widgets = self._preview_widgets(context)
+        url = widgets["input"].text().strip()
         if not self._looks_like_youtube_url(url):
-            self.video_title_label.setText("Введите ссылку на YouTube-видео")
-            self.video_status_label.setText("")
+            widgets["title"].setText("Введите ссылку на YouTube-видео")
+            widgets["status"].setText("")
             return
 
         self.preview_request_id += 1
         request_id = self.preview_request_id
-        self.video_status_label.setText("Читаю название и обложку...")
+        self.preview_request_context = context
+        widgets["status"].setText("Читаю название и обложку...")
 
-        thread = threading.Thread(target=self._metadata_worker, args=(request_id, url), daemon=True)
+        thread = threading.Thread(target=self._metadata_worker, args=(request_id, context, url), daemon=True)
         thread.start()
 
-    def _metadata_worker(self, request_id: int, url: str):
+    def _metadata_worker(self, request_id: int, context: str, url: str):
         try:
             result = subprocess.run(
-                self.launcher.yt_dlp_command() + ["--dump-single-json", "--no-playlist", "--skip-download", url],
+                self.launcher.yt_dlp_command()
+                + self.launcher.yt_dlp_js_runtime_args()
+                + ["--dump-single-json", "--no-playlist", "--skip-download", url],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
+                env=self.launcher.script_environment(),
                 timeout=45,
             )
             if result.returncode != 0:
@@ -3868,14 +4137,22 @@ class MainWindow(QMainWindow):
             thumbnail_url = data.get("thumbnail") or ""
             thumbnail_path = ""
             if thumbnail_url:
-                thumbnail_path = f"/tmp/ytd_preview_{request_id}.jpg"
+                preview_dir = self.launcher.cache_dir / "previews"
+                preview_dir.mkdir(parents=True, exist_ok=True)
+                thumbnail_path = str(preview_dir / f"ytd_preview_{request_id}.jpg")
                 try:
                     urllib.request.urlretrieve(thumbnail_url, thumbnail_path)
                 except Exception:
-                    thumbnail_path = ""
+                    fallback_path = Path(tempfile.gettempdir()) / f"ytd_preview_{request_id}.jpg"
+                    try:
+                        urllib.request.urlretrieve(thumbnail_url, str(fallback_path))
+                        thumbnail_path = str(fallback_path)
+                    except Exception:
+                        thumbnail_path = ""
 
             self.metadata_loaded.emit({
                 "request_id": request_id,
+                "context": context,
                 "url": data.get("webpage_url") or url,
                 "video_id": data.get("id") or self.youtube_video_id_from_url(url),
                 "title": data.get("title") or "Без названия",
@@ -3888,38 +4165,49 @@ class MainWindow(QMainWindow):
     def on_metadata_loaded(self, info: dict):
         if info.get("request_id") != self.preview_request_id:
             return
-        self.current_preview = info
-        self.video_title_label.setText(info.get("title", "Без названия"))
+        context = info.get("context") or self.preview_request_context
+        widgets = self._preview_widgets(context)
+        self.current_previews[context] = info
+        if context == "queue":
+            self.current_preview = info
+        widgets["title"].setText(info.get("title", "Без названия"))
         uploader = info.get("uploader") or ""
-        self.video_uploader_label.setText(f"Канал: {uploader}" if uploader else "")
-        self.video_status_label.setText("Готово к добавлению в очередь")
-        self.add_video_button.setEnabled(True)
+        widgets["uploader"].setText(f"Канал: {uploader}" if uploader else "")
+        widgets["status"].setText("Готово к добавлению в очередь")
+        widgets["button"].setEnabled(True)
 
         thumbnail_path = info.get("thumbnail_path")
         if thumbnail_path:
             pixmap = QPixmap(thumbnail_path)
             if not pixmap.isNull():
-                self.thumbnail_label.setText("")
-                self.thumbnail_label.setPixmap(pixmap.scaled(self.thumbnail_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                thumbnail = widgets["thumbnail"]
+                thumbnail.setText("")
+                thumbnail.setPixmap(pixmap.scaled(thumbnail.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
 
     def on_metadata_failed(self, request_id: int, message: str):
         if request_id != self.preview_request_id:
             return
-        self.current_preview = {}
-        self.add_video_button.setEnabled(self._looks_like_youtube_url(self.video_url_input.text().strip()))
-        self.video_title_label.setText("Не удалось прочитать видео")
-        self.video_status_label.setText(f"{message}\nМожно добавить ссылку в очередь без предпросмотра.")
+        context = self.preview_request_context
+        widgets = self._preview_widgets(context)
+        self.current_previews[context] = {}
+        if context == "queue":
+            self.current_preview = {}
+        widgets["button"].setEnabled(self._looks_like_youtube_url(widgets["input"].text().strip()))
+        widgets["title"].setText("Не удалось прочитать видео")
+        widgets["status"].setText(f"{message}\nМожно добавить ссылку в очередь без предпросмотра.")
 
-    def add_video_to_queue(self):
-        url = (self.current_preview.get("url") or self.video_url_input.text()).strip()
+    def add_video_to_queue(self, context: str = "queue"):
+        widgets = self._preview_widgets(context)
+        preview = self.current_previews.get(context, {})
+        url = (preview.get("url") or widgets["input"].text()).strip()
         if not self._looks_like_youtube_url(url):
             QMessageBox.warning(self, "Очередь", "Нужна ссылка на YouTube-видео")
             return
 
-        video_id = (self.current_preview.get("video_id") or self.youtube_video_id_from_url(url)).strip()
+        video_id = (preview.get("video_id") or self.youtube_video_id_from_url(url)).strip()
         if video_id and self.archive_contains_video(video_id):
             QMessageBox.information(self, "Очередь", "Это видео уже есть в архиве")
-            self.video_status_label.setText("Видео уже есть в архиве")
+            widgets["status"].setText("Видео уже есть в архиве")
             return
 
         queued = self._read_queue()
@@ -3932,9 +4220,11 @@ class MainWindow(QMainWindow):
             self.launcher.queue_file.parent.mkdir(parents=True, exist_ok=True)
             with open(self.launcher.queue_file, "a", encoding="utf-8") as f:
                 f.write(url + "\n")
-            self.video_status_label.setText("Добавлено в очередь")
             self.refresh_queue()
             self.refresh_overview()
+            widgets["input"].clear()
+            self._clear_video_preview(context)
+            widgets["status"].setText("Добавлено в очередь")
         except Exception as e:
             QMessageBox.warning(self, "Очередь", str(e))
 
@@ -4143,7 +4433,7 @@ def run_python_script_helper(script_name: str, args: list[str]) -> int:
             reconfigure = getattr(stream, "reconfigure", None)
             if callable(reconfigure):
                 try:
-                    reconfigure(errors="replace")
+                    reconfigure(encoding="utf-8", errors="replace")
                 except (OSError, ValueError):
                     pass
         sys.argv = [str(script_path)] + list(args)
@@ -4171,6 +4461,13 @@ def run_python_script_helper(script_name: str, args: list[str]) -> int:
 
 
 def run_yt_dlp_helper(args: list[str]) -> int:
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            try:
+                reconfigure(encoding="utf-8", errors="replace")
+            except (OSError, ValueError):
+                pass
     try:
         from yt_dlp import main as yt_dlp_main
     except Exception as exc:

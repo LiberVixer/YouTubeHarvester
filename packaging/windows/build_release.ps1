@@ -1,8 +1,15 @@
 param(
-    [string]$Version = "0.2.3-beta",
-    [string]$MsiVersion = "0.2.3",
+    [string]$Version = "0.2.4-beta",
+    [string]$MsiVersion = "0.2.4",
     [switch]$Offline,
-    [string]$Wheelhouse = ""
+    [string]$Wheelhouse = "",
+    [string]$FfmpegDir = "",
+    [string]$FfmpegUrl = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip",
+    [switch]$SkipFfmpegDownload,
+    [string]$DenoDir = "",
+    [string]$DenoUrl = "",
+    [switch]$SkipDenoDownload,
+    [switch]$SkipMsi
 )
 
 $ErrorActionPreference = "Stop"
@@ -74,6 +81,19 @@ function Invoke-NativeChecked {
     & $FilePath @Arguments
     if ($LASTEXITCODE -ne 0) {
         throw "Command failed with exit code ${LASTEXITCODE}: $FilePath $($Arguments -join ' ')"
+    }
+}
+
+function Try-AcceptWix7Eula {
+    param([string]$WixPath)
+
+    try {
+        & $WixPath "eula" "accept" "wix7"
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "Could not auto-accept WiX v7 OSMF/EULA terms; MSI build may be skipped."
+        }
+    } catch {
+        Write-Warning "Could not auto-accept WiX v7 OSMF/EULA terms: $_"
     }
 }
 
@@ -149,11 +169,31 @@ function Write-Wix7Source {
 New-Item -ItemType Directory -Force -Path $ReleaseDir | Out-Null
 
 $buildWindowsScript = Join-Path $ScriptDir "build_windows.ps1"
+$buildWindowsArgs = @()
 if ($Offline -or $Wheelhouse) {
-    & $buildWindowsScript -Offline -Wheelhouse "$Wheelhouse"
+    $buildWindowsArgs += @("-Offline", "-Wheelhouse", "$Wheelhouse")
 } else {
-    & $buildWindowsScript
+    $buildWindowsArgs = @()
 }
+if (-not [string]::IsNullOrWhiteSpace($FfmpegDir)) {
+    $buildWindowsArgs += @("-FfmpegDir", "$FfmpegDir")
+}
+if (-not [string]::IsNullOrWhiteSpace($FfmpegUrl)) {
+    $buildWindowsArgs += @("-FfmpegUrl", "$FfmpegUrl")
+}
+if ($SkipFfmpegDownload) {
+    $buildWindowsArgs += "-SkipFfmpegDownload"
+}
+if (-not [string]::IsNullOrWhiteSpace($DenoDir)) {
+    $buildWindowsArgs += @("-DenoDir", "$DenoDir")
+}
+if (-not [string]::IsNullOrWhiteSpace($DenoUrl)) {
+    $buildWindowsArgs += @("-DenoUrl", "$DenoUrl")
+}
+if ($SkipDenoDownload) {
+    $buildWindowsArgs += "-SkipDenoDownload"
+}
+& $buildWindowsScript @buildWindowsArgs
 if (-not $?) {
     throw "Windows application build failed."
 }
@@ -199,41 +239,51 @@ $lightPath = Find-ToolPath "light.exe" @(
     (Join-OptionalPath ${env:ProgramFiles(x86)} "WiX Toolset v3.11\bin\light.exe"),
     (Join-OptionalPath $env:ProgramFiles "WiX Toolset v3.11\bin\light.exe")
 )
-if ($wixPath) {
-    Write-Wix7Source -AppDir $AppDir -OutputPath $GeneratedWixSource -MsiVersion $MsiVersion
-    Write-Host "Building MSI with WiX Toolset 7."
-    Write-Host "If WiX reports WIX7015, review the WiX OSMF/EULA terms and run: wix eula accept wix7"
-    Invoke-NativeChecked $wixPath @(
-        "build",
-        "$GeneratedWixSource",
-        "-arch", "x64",
-        "-o", (Join-Path $ReleaseDir "YouTubeHarvester_${Version}_windows_x64.msi")
-    )
+if ($SkipMsi) {
+    Write-Warning "MSI build was skipped by -SkipMsi."
+} elseif ($wixPath) {
+    try {
+        Try-AcceptWix7Eula $wixPath
+        Write-Wix7Source -AppDir $AppDir -OutputPath $GeneratedWixSource -MsiVersion $MsiVersion
+        Write-Host "Building MSI with WiX Toolset 7."
+        Invoke-NativeChecked $wixPath @(
+            "build",
+            "$GeneratedWixSource",
+            "-arch", "x64",
+            "-o", (Join-Path $ReleaseDir "YouTubeHarvester_${Version}_windows_x64.msi")
+        )
+    } catch {
+        Write-Warning "Windows MSI was not built: $_"
+    }
 } elseif ($heatPath -and $candlePath -and $lightPath) {
-    New-Item -ItemType Directory -Force -Path $WixObjDir | Out-Null
-    Invoke-NativeChecked $heatPath @(
-        "dir", "$AppDir",
-        "-cg", "AppFiles",
-        "-dr", "INSTALLFOLDER",
-        "-srd",
-        "-sreg",
-        "-gg",
-        "-var", "var.AppDir",
-        "-out", "$HarvestedWxs"
-    )
-    Invoke-NativeChecked $candlePath @(
-        "-dAppDir=$AppDir",
-        "-dMsiVersion=$MsiVersion",
-        "-out", "$WixObjDir\",
-        "$WixProduct",
-        "$HarvestedWxs"
-    )
-    Invoke-NativeChecked $lightPath @(
-        "-ext", "WixUIExtension",
-        "-out", (Join-Path $ReleaseDir "YouTubeHarvester_${Version}_windows_x64.msi"),
-        (Join-Path $WixObjDir "Product.wixobj"),
-        (Join-Path $WixObjDir "harvested.wixobj")
-    )
+    try {
+        New-Item -ItemType Directory -Force -Path $WixObjDir | Out-Null
+        Invoke-NativeChecked $heatPath @(
+            "dir", "$AppDir",
+            "-cg", "AppFiles",
+            "-dr", "INSTALLFOLDER",
+            "-srd",
+            "-sreg",
+            "-gg",
+            "-var", "var.AppDir",
+            "-out", "$HarvestedWxs"
+        )
+        Invoke-NativeChecked $candlePath @(
+            "-dAppDir=$AppDir",
+            "-dMsiVersion=$MsiVersion",
+            "-out", "$WixObjDir\",
+            "$WixProduct",
+            "$HarvestedWxs"
+        )
+        Invoke-NativeChecked $lightPath @(
+            "-ext", "WixUIExtension",
+            "-out", (Join-Path $ReleaseDir "YouTubeHarvester_${Version}_windows_x64.msi"),
+            (Join-Path $WixObjDir "Product.wixobj"),
+            (Join-Path $WixObjDir "harvested.wixobj")
+        )
+    } catch {
+        Write-Warning "Windows MSI was not built: $_"
+    }
 } else {
     Write-Warning "WiX Toolset was not found; Windows MSI was not built."
 }

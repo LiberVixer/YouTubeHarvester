@@ -10,9 +10,9 @@ permissions:
   contents: write
 
 env:
-  APP_VERSION: 0.2.3-beta
-  DEB_VERSION: 0.2.3~beta
-  MSI_VERSION: 0.2.3
+  APP_VERSION: 0.2.4-beta
+  DEB_VERSION: 0.2.4~beta
+  MSI_VERSION: 0.2.4
 
 jobs:
   linux:
@@ -48,6 +48,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          body_path: docs/releases/${{ env.APP_VERSION }}.md
           files: |
             dist/release/YouTubeHarvester_${{ env.APP_VERSION }}_linux_all.deb
             dist/release/YouTubeHarvester_${{ env.APP_VERSION }}_source.tar.gz
@@ -68,6 +69,13 @@ jobs:
         shell: powershell
         run: |
           choco install innosetup wixtoolset -y
+          $wix = Get-Command wix.exe -ErrorAction SilentlyContinue
+          if ($wix) {
+            & $wix.Source eula accept wix7
+            if ($LASTEXITCODE -ne 0) {
+              Write-Warning "Could not auto-accept WiX v7 OSMF/EULA terms; setup EXE and ZIP can still be built."
+            }
+          }
 
       - name: Validate Python files
         shell: powershell
@@ -93,6 +101,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          body_path: docs/releases/${{ env.APP_VERSION }}.md
           files: |
             dist/release/YouTubeHarvester_${{ env.APP_VERSION }}_windows_portable.zip
             dist/release/YouTubeHarvester_${{ env.APP_VERSION }}_windows_setup.exe
