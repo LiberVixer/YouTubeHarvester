@@ -7,7 +7,7 @@ param(
     [string]$FfmpegUrl = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip",
     [switch]$SkipFfmpegDownload,
     [string]$DenoDir = "",
-    [string]$DenoUrl = "",
+    [string]$DenoUrl = "https://github.com/denoland/deno/releases/latest/download/deno-x86_64-pc-windows-msvc.zip",
     [switch]$SkipDenoDownload,
     [switch]$SkipMsi
 )
