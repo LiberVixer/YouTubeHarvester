@@ -36,9 +36,13 @@ Special thanks to Windows beta tester Dmitry 'minion' Pogorily.
 
 ### Screenshots
 
-| Channels | Queue & Scheduler | Settings & Logs |
-| --- | --- | --- |
-| ![Channels](docs/screenshots/channels.png) | ![Queue and scheduler](docs/screenshots/queue.png) | ![Settings and logs](docs/screenshots/logs.png) |
+| Overview | Channels |
+| --- | --- |
+| ![Overview](docs/screenshots/overview.png) | ![Channels](docs/screenshots/channels.png) |
+
+| Queue & Scheduler | Settings & Logs |
+| --- | --- |
+| ![Queue and scheduler](docs/screenshots/queue.png) | ![Settings and logs](docs/screenshots/logs.png) |
 
 ### Install From Deb
 
@@ -199,9 +203,13 @@ This README is a practical notice, not legal advice. If you are unsure whether a
 
 ### Скриншоты
 
-| Каналы | Очередь и планировщик | Настройки и логи |
-| --- | --- | --- |
-| ![Каналы](docs/screenshots/channels.png) | ![Очередь и планировщик](docs/screenshots/queue.png) | ![Настройки и логи](docs/screenshots/logs.png) |
+| Обзор | Каналы |
+| --- | --- |
+| ![Обзор](docs/screenshots/overview.png) | ![Каналы](docs/screenshots/channels.png) |
+
+| Очередь и планировщик | Настройки и логи |
+| --- | --- |
+| ![Очередь и планировщик](docs/screenshots/queue.png) | ![Настройки и логи](docs/screenshots/logs.png) |
 
 ### Установка Deb
 
