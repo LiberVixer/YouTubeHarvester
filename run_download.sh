@@ -49,6 +49,7 @@ MAX_RESOLUTION="${YTD_MAX_RESOLUTION:-${MAX_RESOLUTION:-1080}}"
 LOG_KEEP_COUNT="${YTD_LOG_KEEP_COUNT:-${LOG_KEEP_COUNT:-3}}"
 CLEANUP_TEMP="${YTD_CLEANUP_TEMP:-${CLEANUP_TEMP:-1}}"
 RETRY_FAILED_QUEUE="${YTD_RETRY_FAILED_QUEUE:-${RETRY_FAILED_QUEUE:-1}}"
+SINGLE_QUEUE_URL="${YTD_SINGLE_QUEUE_URL:-}"
 
 PROXY_ARGS=()
 if [ -n "${PROXY_URL:-}" ]; then
@@ -639,11 +640,19 @@ write_status
 check_stop_requested
 
 # ====================== ОЧЕРЕДЬ ВИДЕО ======================
-if [ -s "$QUEUE" ]; then
+QUEUE_WORK=""
+QUEUE_RETRY_FAILED="$RETRY_FAILED_QUEUE"
+if [ -n "$SINGLE_QUEUE_URL" ]; then
+    QUEUE_WORK=$(mktemp)
+    printf '%s\n' "$SINGLE_QUEUE_URL" > "$QUEUE_WORK"
+    QUEUE_RETRY_FAILED=0
+elif [ -s "$QUEUE" ]; then
     QUEUE_WORK=$(mktemp)
     cp "$QUEUE" "$QUEUE_WORK"
     : > "$QUEUE"
+fi
 
+if [ -n "$QUEUE_WORK" ]; then
     while IFS= read -r queued_url || [ -n "$queued_url" ]; do
         queued_url=$(printf '%s' "$queued_url" | sed 's/^\xef\xbb\xbf//; s/^[[:space:]]*//; s/[[:space:]]*$//')
         [[ -z "$queued_url" || "$queued_url" =~ ^# ]] && continue
@@ -692,7 +701,7 @@ if [ -s "$QUEUE" ]; then
         BEFORE_QUEUE_COUNT="$NEW_COUNT"
         process_type_log "$TYPE_LOG" "$queued_url" "Очередь"
         if [ "$NEW_COUNT" -eq "$BEFORE_QUEUE_COUNT" ] && ! grep -q 'has already been recorded in the archive' "$TYPE_LOG"; then
-            if is_truthy "$RETRY_FAILED_QUEUE"; then
+            if is_truthy "$QUEUE_RETRY_FAILED"; then
                 printf '%s\n' "$queued_url" >> "$QUEUE"
                 log_console "   ⚠️ Не скачано из очереди, оставлено для повтора"
             else
@@ -708,6 +717,7 @@ if [ -s "$QUEUE" ]; then
 fi
 
 # ====================== СКАЧИВАНИЕ ======================
+if [ -z "$SINGLE_QUEUE_URL" ]; then
 STATUS_CHANNELS_TOTAL=$(awk '{sub(/^\xef\xbb\xbf/, ""); gsub(/^[[:space:]]+|[[:space:]]+$/, ""); if ($0 != "" && $0 !~ /^#/) count++} END {print count + 0}' "$CHANNELS")
 STATUS_CHANNELS_CHECKED=0
 write_status
@@ -814,6 +824,7 @@ while IFS= read -r channel || [ -n "$channel" ]; do
     reset_download_progress
     write_status
 done < "$CHANNELS"
+fi
 
 # ====================== ПОИСК НОВЫХ ======================
 if [ "${NEW_COUNT:-0}" -eq 0 ]; then

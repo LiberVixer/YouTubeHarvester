@@ -65,7 +65,9 @@ def deno_runtime_arg() -> str:
 def utf8_subprocess_env() -> dict[str, str]:
     env = os.environ.copy()
     env["PYTHONUTF8"] = "1"
-    env["PYTHONIOENCODING"] = "utf-8"
+    env["PYTHONIOENCODING"] = "utf-8:replace"
+    env["PYTHONLEGACYWINDOWSSTDIO"] = "0"
+    env["PYTHONUNBUFFERED"] = "1"
     return env
 
 

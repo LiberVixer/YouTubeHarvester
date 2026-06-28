@@ -1,6 +1,6 @@
 # Offline Windows Build
 
-Target machine used for the 0.2.4 Beta Windows build:
+Target machine used for the 0.2.5 Beta Windows build:
 
 - Python 3.11 x64 or Python 3.12 x64
 - Git for Windows x64
@@ -26,7 +26,7 @@ Download Windows x64 Deno from the Deno GitHub releases and put `deno.exe` into
 a folder named `deno`. Download `deno`, not `denort`.
 
 ```text
-YouTubeHarvester-0.2.4-beta-offline\
+YouTubeHarvester-0.2.5-beta-offline\
   deno\
     deno.exe
   ffmpeg\
@@ -88,9 +88,9 @@ powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 -
 Expected output files:
 
 ```text
-dist\release\YouTubeHarvester_0.2.4-beta_windows_portable.zip
-dist\release\YouTubeHarvester_0.2.4-beta_windows_setup.exe
-dist\release\YouTubeHarvester_0.2.4-beta_windows_x64.msi
+dist\release\YouTubeHarvester_0.2.5-beta_windows_portable.zip
+dist\release\YouTubeHarvester_0.2.5-beta_windows_setup.exe
+dist\release\YouTubeHarvester_0.2.5-beta_windows_x64.msi
 dist\release\SHA256SUMS-windows.txt
 ```
 

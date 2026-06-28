@@ -55,11 +55,42 @@ def positive_int(value: str | None, default: int) -> int:
     return parsed if parsed > 0 else default
 
 
+MOJIBAKE_HINTS = (
+    "Рџ", "Р’", "Рђ", "РЅ", "Р°", "Рµ", "Рё", "Рѕ", "СЂ", "СЃ", "С‚", "СЊ",
+    "Ð", "Ñ", "вЂ", "вњ", "вљ", "рџ", "�",
+)
+
+
+def text_quality(text: str) -> int:
+    cyrillic = sum(1 for char in text if "\u0400" <= char <= "\u04ff")
+    emoji = sum(1 for char in text if ord(char) >= 0x1F000)
+    bad = sum(text.count(marker) for marker in MOJIBAKE_HINTS)
+    bad += text.count("\ufffd") * 3
+    return cyrillic + emoji * 2 - bad * 8
+
+
+def fix_mojibake(value: str) -> str:
+    if not isinstance(value, str) or not any(marker in value for marker in MOJIBAKE_HINTS):
+        return value
+    best = value
+    best_score = text_quality(value)
+    for encoding in ("cp1251", "latin1"):
+        try:
+            candidate = value.encode(encoding).decode("utf-8")
+        except UnicodeError:
+            continue
+        score = text_quality(candidate)
+        if score > best_score + 2:
+            best = candidate
+            best_score = score
+    return best
+
+
 def safe_print(message: object, *, file=None) -> None:
     stream = file if file is not None else sys.stdout
     if stream is None:
         return
-    text = str(message)
+    text = fix_mojibake(str(message))
     try:
         print(text, file=stream)
     except UnicodeEncodeError:
@@ -124,7 +155,9 @@ def yt_dlp_command() -> list[str]:
 def utf8_subprocess_env() -> dict[str, str]:
     env = os.environ.copy()
     env["PYTHONUTF8"] = "1"
-    env["PYTHONIOENCODING"] = "utf-8"
+    env["PYTHONIOENCODING"] = "utf-8:replace"
+    env["PYTHONLEGACYWINDOWSSTDIO"] = "0"
+    env["PYTHONUNBUFFERED"] = "1"
     return env
 
 
@@ -213,6 +246,7 @@ class Downloader:
         self.config_dir = Path(os.environ.get("YTD_CONFIG_DIR", self.data_dir))
         self.channels_file = Path(os.environ.get("YTD_CHANNELS_FILE", self.data_dir / "channels.txt"))
         self.queue_file = Path(os.environ.get("YTD_QUEUE_FILE", self.data_dir / "queue.txt"))
+        self.single_queue_url = os.environ.get("YTD_SINGLE_QUEUE_URL", "").strip()
         self.archive_file = Path(os.environ.get("YTD_ARCHIVE_FILE", self.data_dir / "yt_archive.txt"))
         self.archive_details_file = Path(os.environ.get("YTD_ARCHIVE_DETAILS_FILE", self.data_dir / "archive_details.jsonl"))
         self.env_file = Path(os.environ.get("YTD_ENV_FILE", self.config_dir / ".env"))
@@ -338,6 +372,7 @@ class Downloader:
             pass
 
     def log(self, message: str) -> None:
+        message = fix_mojibake(str(message))
         safe_print(message)
         try:
             with self.log_file.open("a", encoding="utf-8") as log:
@@ -484,14 +519,14 @@ class Downloader:
         entry = {
             "video_id": video_id,
             "youtube_url": url,
-            "title": title,
-            "channel_name": channel,
+            "title": fix_mojibake(title),
+            "channel_name": fix_mojibake(channel),
             "channel_url": channel_url,
             "downloaded_at": _dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "downloaded_at_ts": int(time.time()),
             "type": type_name,
             "file_path": str(file_path),
-            "filename": file_path.name,
+            "filename": fix_mojibake(file_path.name),
         }
         try:
             with self.archive_details_file.open("a", encoding="utf-8") as details:
@@ -682,7 +717,7 @@ class Downloader:
 
         assert proc.stdout is not None
         for raw_line in proc.stdout:
-            line = raw_line.rstrip("\n")
+            line = fix_mojibake(raw_line.rstrip("\n"))
             self.update_status_from_line(line, type_name)
             if not re.match(r"^\[download\]\s+[0-9]+(?:\.[0-9]+)?%", line):
                 self.log(line)
@@ -782,7 +817,9 @@ class Downloader:
                 title, uploader = base.rsplit(" - ", 1)
             else:
                 title, uploader = base, channel_name
-            title = title[:180]
+            title = fix_mojibake(title[:180])
+            uploader = fix_mojibake(uploader)
+            channel_name = fix_mojibake(channel_name)
             emoji, _label = TYPE_LABELS.get(status_type, TYPE_LABELS["videos"])
 
             self.new_count += 1
@@ -882,12 +919,7 @@ class Downloader:
             command.append("--windows-filenames")
         return command
 
-    def process_queue(self) -> None:
-        queued_urls = self.read_nonempty_lines(self.queue_file)
-        if not queued_urls:
-            return
-        self.save_queue([])
-
+    def process_queue_urls(self, queued_urls: list[str], retry_failed: bool) -> None:
         for url in queued_urls:
             self.check_stop()
             self.state = "searching"
@@ -914,13 +946,20 @@ class Downloader:
             lines = self.run_yt_dlp(command, "queue")
             self.process_type_lines(lines, url, "Очередь", "queue")
             if self.new_count == before and not any("has already been recorded in the archive" in line for line in lines):
-                if self.retry_failed_queue:
+                if retry_failed:
                     with self.queue_file.open("a", encoding="utf-8") as queue:
                         queue.write(url + "\n")
                     self.log("   ⚠️ Не скачано из очереди, оставлено для повтора")
                 else:
                     self.log("   ⚠️ Не скачано из очереди, повтор отключён")
                 self.failed_count += 1
+
+    def process_queue(self) -> None:
+        queued_urls = self.read_nonempty_lines(self.queue_file)
+        if not queued_urls:
+            return
+        self.save_queue([])
+        self.process_queue_urls(queued_urls, self.retry_failed_queue)
 
     def process_channels(self) -> None:
         channels = self.read_nonempty_lines(self.channels_file)
@@ -1064,8 +1103,11 @@ class Downloader:
 
         try:
             self.check_stop()
-            self.process_queue()
-            self.process_channels()
+            if self.single_queue_url:
+                self.process_queue_urls([self.single_queue_url], retry_failed=False)
+            else:
+                self.process_queue()
+                self.process_channels()
         except KeyboardInterrupt:
             return self.rotate_logs(0)
 

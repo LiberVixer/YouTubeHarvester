@@ -2,6 +2,46 @@
 
 All notable changes to **YouTube Harvester** are documented here.
 
+## [0.2.5-beta] - 2026-06-28
+
+### English
+
+#### Added
+
+- Quick-download window with clipboard URL detection, metadata preview, immediate download, queue add, and a persistent Telegram notification checkbox.
+- Configurable quick-download hotkey with native Windows support, Linux/X11 `pynput` support, and Cinnamon/GNOME Wayland desktop shortcut installation.
+
+#### Changed
+
+- Linux now uses the Python downloader engine only; the legacy Bash engine is disabled and documented as obsolete.
+- Overview and quick-download layouts were tightened so controls, counters, previews, and logs fit more cleanly.
+- README, release notes, and packaging defaults were refreshed for the `0.2.5-beta` release.
+
+#### Fixed
+
+- Windows text display is more resilient to mojibake and console encoding problems.
+- Quick-download channel/video previews load more reliably and the quick-download window remembers its position.
+- The archive button and overview log panel spacing were adjusted for the current interface.
+
+### Русский
+
+#### Добавлено
+
+- Окно быстрого скачивания: URL из буфера обмена, предпросмотр метаданных, немедленное скачивание, добавление в очередь и сохраняющаяся галочка Telegram-уведомления.
+- Настраиваемая горячая клавиша быстрого скачивания: native Windows, Linux/X11 через `pynput`, Cinnamon/GNOME Wayland через системную пользовательскую команду.
+
+#### Изменено
+
+- Linux теперь использует только Python-движок скачивания; устаревший Bash-движок отключён и описан как legacy.
+- Вкладка обзора и окно быстрого скачивания стали компактнее: кнопки, счётчики, предпросмотры и логи аккуратнее помещаются в интерфейсе.
+- README, release notes и упаковочные дефолты обновлены под релиз `0.2.5-beta`.
+
+#### Исправлено
+
+- Отображение текста в Windows стало устойчивее к кракозябрам и проблемам кодировки консоли.
+- Предпросмотры канала/видео в быстром скачивании грузятся надёжнее, окно быстрого скачивания запоминает позицию.
+- Кнопка архива и отступы панели логов на вкладке обзора подогнаны под текущий интерфейс.
+
 ## [0.2.4-beta] - 2026-06-25
 
 ### English

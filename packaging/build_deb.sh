@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PACKAGE="yt-harvester"
-VERSION="${1:-0.2.4~beta}"
+VERSION="${1:-0.2.5~beta}"
 ARCH="all"
 BUILD_DIR="$ROOT_DIR/dist/deb-build"
 PKG_DIR="$BUILD_DIR/${PACKAGE}_${VERSION}_${ARCH}"
@@ -61,6 +61,7 @@ export YTD_ENV_FILE="$CONFIG_DIR/.env"
 export YTD_SETTINGS_FILE="$CONFIG_DIR/settings.json"
 export YTD_SCHEDULES_FILE="$CONFIG_DIR/schedules.json"
 export YTD_CHANNEL_RULES_FILE="$CONFIG_DIR/channel_rules.json"
+export YTD_QUICK_REQUEST_FILE="$CONFIG_DIR/quick_download.request"
 export YTD_TEMP_DIR="${YTD_TEMP_DIR:-$HOME/temp/YTH}"
 export YTD_FINAL_DIR="${YTD_FINAL_DIR:-$HOME/Downloads/YouTubeHarvester}"
 
@@ -91,7 +92,7 @@ Version: $VERSION
 Section: net
 Priority: optional
 Architecture: $ARCH
-Depends: python3, python3-pyqt5, yt-dlp, curl, bash, coreutils, findutils, grep, sed
+Depends: python3, python3-pyqt5, python3-pynput, yt-dlp, curl
 Maintainer: YouTube Harvester <noreply@users.noreply.github.com>
 Description: YouTube downloader with tray interface
  YouTube Harvester watches configured YouTube channels and a manual queue,

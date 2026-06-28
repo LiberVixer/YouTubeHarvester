@@ -14,6 +14,10 @@ import time
 import shlex
 import shutil
 import importlib.util
+import ctypes
+import ctypes.wintypes
+import re
+import ast
 from pathlib import Path
 import urllib.request
 import urllib.parse
@@ -50,10 +54,11 @@ from PyQt5.QtWidgets import (
     QAbstractItemView,
     QDialog,
     QDialogButtonBox,
+    QKeySequenceEdit,
     QSizePolicy,
 )
-from PyQt5.QtGui import QIcon, QPixmap, QPainter, QColor, QBrush, QFont, QPen, QDesktopServices, QTextCursor, QPalette
-from PyQt5.QtCore import Qt, QTimer, QTime, QDate, QUrl, QPoint, QSize, pyqtSignal
+from PyQt5.QtGui import QIcon, QPixmap, QPainter, QColor, QBrush, QFont, QPen, QDesktopServices, QTextCursor, QPalette, QKeySequence, QPainterPath
+from PyQt5.QtCore import Qt, QTimer, QTime, QDate, QUrl, QPoint, QSize, pyqtSignal, QObject, QEvent, QAbstractNativeEventFilter
 import json
 import glob
 
@@ -80,9 +85,363 @@ CHANNEL_TYPE_BUTTONS = (
 )
 
 APP_NAME = "YouTube Harvester"
-APP_VERSION = "0.2.4-beta"
+APP_VERSION = "0.2.5-beta"
 APP_TITLE = f"{APP_NAME} {APP_VERSION}"
 USAGE_RULES_VERSION = "2026-06-13"
+DEFAULT_QUICK_DOWNLOAD_HOTKEY = "Ctrl+Shift+Alt+Y"
+
+MOJIBAKE_HINTS = (
+    "Рџ", "Р’", "Рђ", "РЅ", "Р°", "Рµ", "Рё", "Рѕ", "СЂ", "СЃ", "С‚", "СЊ",
+    "Ð", "Ñ", "вЂ", "вњ", "вљ", "рџ", "�",
+)
+
+
+def text_quality(text: str) -> int:
+    cyrillic = sum(1 for char in text if "\u0400" <= char <= "\u04ff")
+    emoji = sum(1 for char in text if ord(char) >= 0x1F000)
+    bad = sum(text.count(marker) for marker in MOJIBAKE_HINTS)
+    bad += text.count("\ufffd") * 3
+    return cyrillic + emoji * 2 - bad * 8
+
+
+def fix_mojibake(value):
+    if not isinstance(value, str) or not any(marker in value for marker in MOJIBAKE_HINTS):
+        return value
+    best = value
+    best_score = text_quality(value)
+    for encoding in ("cp1251", "latin1"):
+        try:
+            candidate = value.encode(encoding).decode("utf-8")
+        except UnicodeError:
+            continue
+        score = text_quality(candidate)
+        if score > best_score + 2:
+            best = candidate
+            best_score = score
+    return best
+
+
+def normalize_text_value(value):
+    if isinstance(value, str):
+        return fix_mojibake(value)
+    if isinstance(value, dict):
+        return {key: normalize_text_value(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [normalize_text_value(item) for item in value]
+    return value
+
+
+def quick_hotkey_icon():
+    pixmap = QPixmap(64, 64)
+    pixmap.fill(Qt.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.Antialiasing)
+    painter.translate(32, 34)
+    painter.rotate(-35)
+
+    painter.setPen(QPen(QColor("#80d4ff"), 3))
+    painter.setBrush(QColor("#f6fbff"))
+    body = QPainterPath()
+    body.addRoundedRect(-10, -20, 20, 34, 10, 10)
+    painter.drawPath(body)
+
+    painter.setPen(QPen(QColor("#17314f"), 2))
+    painter.setBrush(QColor("#ff7a2f"))
+    painter.drawPolygon(QPoint(0, -31), QPoint(-10, -17), QPoint(10, -17))
+    painter.drawPolygon(QPoint(-10, 5), QPoint(-22, 19), QPoint(-7, 15))
+    painter.drawPolygon(QPoint(10, 5), QPoint(22, 19), QPoint(7, 15))
+
+    painter.setPen(QPen(QColor("#17314f"), 2))
+    painter.setBrush(QColor("#55cfff"))
+    painter.drawEllipse(-5, -12, 10, 10)
+
+    painter.setPen(Qt.NoPen)
+    painter.setBrush(QColor("#ffd34d"))
+    painter.drawPolygon(QPoint(-5, 15), QPoint(0, 30), QPoint(5, 15))
+    painter.setBrush(QColor("#ff5a3c"))
+    painter.drawPolygon(QPoint(-3, 15), QPoint(0, 24), QPoint(3, 15))
+    painter.end()
+    return QIcon(pixmap)
+
+
+def read_text_for_display(path: Path) -> str:
+    try:
+        raw = path.read_bytes()
+    except OSError:
+        return ""
+    for encoding in ("utf-8-sig", "utf-8", "cp1251"):
+        try:
+            return fix_mojibake(raw.decode(encoding))
+        except UnicodeDecodeError:
+            continue
+    return fix_mojibake(raw.decode("utf-8", errors="replace"))
+
+
+def default_quick_request_file() -> Path:
+    configured = os.environ.get("YTD_QUICK_REQUEST_FILE", "").strip()
+    if configured:
+        return Path(configured)
+    settings_file = os.environ.get("YTD_SETTINGS_FILE", "").strip()
+    if settings_file:
+        return Path(settings_file).parent / "quick_download.request"
+    config_dir = os.environ.get("YTD_CONFIG_DIR", "").strip()
+    if config_dir:
+        return Path(config_dir) / "quick_download.request"
+    if os.name == "nt":
+        base = os.environ.get("APPDATA")
+        root = Path(base) if base else Path.home() / "AppData" / "Roaming"
+        return root / "YouTubeHarvester" / "quick_download.request"
+    return Path.home() / ".config" / "YTD" / "quick_download.request"
+
+
+def write_quick_download_request() -> int:
+    try:
+        request_file = default_quick_request_file()
+        request_file.parent.mkdir(parents=True, exist_ok=True)
+        request_file.write_text(str(int(time.time())) + "\n", encoding="utf-8")
+        return 0
+    except Exception as exc:
+        print(f"Cannot request quick download window: {exc}", file=sys.stderr)
+        return 1
+
+
+class WindowsGlobalHotkeyFilter(QAbstractNativeEventFilter):
+    WM_HOTKEY = 0x0312
+    MOD_ALT = 0x0001
+    MOD_CONTROL = 0x0002
+    MOD_SHIFT = 0x0004
+    MOD_WIN = 0x0008
+    MOD_NOREPEAT = 0x4000
+
+    MODIFIER_MAP = {
+        "ctrl": MOD_CONTROL,
+        "control": MOD_CONTROL,
+        "shift": MOD_SHIFT,
+        "alt": MOD_ALT,
+        "meta": MOD_WIN,
+        "win": MOD_WIN,
+        "windows": MOD_WIN,
+    }
+
+    KEY_MAP = {
+        **{chr(code): code for code in range(ord("A"), ord("Z") + 1)},
+        **{str(number): ord(str(number)) for number in range(10)},
+        **{f"f{number}": 0x70 + number - 1 for number in range(1, 25)},
+        "space": 0x20,
+        "enter": 0x0D,
+        "return": 0x0D,
+        "tab": 0x09,
+        "escape": 0x1B,
+        "esc": 0x1B,
+        "insert": 0x2D,
+        "delete": 0x2E,
+        "home": 0x24,
+        "end": 0x23,
+        "pageup": 0x21,
+        "pagedown": 0x22,
+        "up": 0x26,
+        "down": 0x28,
+        "left": 0x25,
+        "right": 0x27,
+    }
+
+    def __init__(self, callback, hwnd: int = 0):
+        super().__init__()
+        self.callback = callback
+        self.hwnd = hwnd
+        self.hotkey_id = 0x594854
+        self.registered = False
+        self.sequence = ""
+
+    def parse_sequence(self, sequence: str):
+        portable = QKeySequence(sequence or DEFAULT_QUICK_DOWNLOAD_HOTKEY).toString(QKeySequence.PortableText)
+        first = (portable.split(",")[0] or sequence or DEFAULT_QUICK_DOWNLOAD_HOTKEY).strip()
+        parts = [part.strip().lower() for part in re.split(r"\s*\+\s*", first) if part.strip()]
+        if not parts:
+            return None
+
+        modifiers = 0
+        key = 0
+        for part in parts:
+            mapped_modifier = self.MODIFIER_MAP.get(part)
+            if mapped_modifier:
+                modifiers |= mapped_modifier
+                continue
+            mapped_key = self.KEY_MAP.get(part) or self.KEY_MAP.get(part.upper())
+            if mapped_key:
+                key = mapped_key
+
+        if not key:
+            return None
+        return modifiers | self.MOD_NOREPEAT, key
+
+    def register(self, sequence: str) -> bool:
+        self.unregister()
+        parsed = self.parse_sequence(sequence)
+        if not parsed:
+            return False
+        modifiers, key = parsed
+        try:
+            ok = bool(ctypes.windll.user32.RegisterHotKey(self.hwnd, self.hotkey_id, modifiers, key))
+        except Exception:
+            return False
+        self.registered = ok
+        self.sequence = sequence if ok else ""
+        return ok
+
+    def unregister(self):
+        if not self.registered:
+            return
+        try:
+            ctypes.windll.user32.UnregisterHotKey(self.hwnd, self.hotkey_id)
+        except Exception:
+            pass
+        self.registered = False
+
+    def nativeEventFilter(self, event_type, message):
+        event_name = bytes(event_type).decode(errors="ignore") if not isinstance(event_type, str) else event_type
+        if event_name not in {"windows_generic_MSG", "windows_dispatcher_MSG"}:
+            return False, 0
+        try:
+            msg = ctypes.wintypes.MSG.from_address(int(message))
+        except Exception:
+            return False, 0
+        if msg.message == self.WM_HOTKEY and int(msg.wParam) == self.hotkey_id:
+            QTimer.singleShot(0, self.callback)
+            return True, 0
+        return False, 0
+
+
+class PynputGlobalHotkey(QObject):
+    triggered = pyqtSignal()
+
+    MODIFIER_MAP = {
+        "ctrl": "<ctrl>",
+        "control": "<ctrl>",
+        "shift": "<shift>",
+        "alt": "<alt>",
+        "meta": "<cmd>",
+        "win": "<cmd>",
+        "windows": "<cmd>",
+    }
+
+    SPECIAL_KEY_MAP = {
+        "space": "<space>",
+        "enter": "<enter>",
+        "return": "<enter>",
+        "tab": "<tab>",
+        "escape": "<esc>",
+        "esc": "<esc>",
+        "insert": "<insert>",
+        "delete": "<delete>",
+        "home": "<home>",
+        "end": "<end>",
+        "pageup": "<page_up>",
+        "pagedown": "<page_down>",
+        "up": "<up>",
+        "down": "<down>",
+        "left": "<left>",
+        "right": "<right>",
+    }
+
+    def __init__(self, callback):
+        super().__init__()
+        self.triggered.connect(callback)
+        self.listener = None
+        self.sequence = ""
+        self.last_error = ""
+
+    def sequence_to_pynput(self, sequence: str):
+        portable = QKeySequence(sequence or DEFAULT_QUICK_DOWNLOAD_HOTKEY).toString(QKeySequence.PortableText)
+        first = (portable.split(",")[0] or sequence or DEFAULT_QUICK_DOWNLOAD_HOTKEY).strip()
+        parts = [part.strip().lower() for part in re.split(r"\s*\+\s*", first) if part.strip()]
+        keys = []
+        for part in parts:
+            if part in self.MODIFIER_MAP:
+                keys.append(self.MODIFIER_MAP[part])
+            elif part in self.SPECIAL_KEY_MAP:
+                keys.append(self.SPECIAL_KEY_MAP[part])
+            elif re.fullmatch(r"f(?:[1-9]|1[0-9]|2[0-4])", part):
+                keys.append(f"<{part}>")
+            elif len(part) == 1:
+                keys.append(part)
+        if len(keys) != len(parts) or not keys:
+            return ""
+        return "+".join(keys)
+
+    def register(self, sequence: str) -> bool:
+        self.unregister()
+        hotkey = self.sequence_to_pynput(sequence)
+        if not hotkey:
+            self.last_error = "не удалось разобрать комбинацию"
+            return False
+        try:
+            from pynput import keyboard
+
+            self.listener = keyboard.GlobalHotKeys({hotkey: self.triggered.emit})
+            self.listener.start()
+        except Exception as exc:
+            self.listener = None
+            self.last_error = str(exc)
+            return False
+        self.sequence = sequence
+        self.last_error = ""
+        return True
+
+    def unregister(self):
+        if self.listener is None:
+            return
+        try:
+            self.listener.stop()
+        except Exception:
+            pass
+        self.listener = None
+
+
+class AppLocalHotkeyFilter(QObject):
+    MODIFIER_KEYS = {
+        Qt.Key_Control,
+        Qt.Key_Shift,
+        Qt.Key_Alt,
+        Qt.Key_Meta,
+        Qt.Key_AltGr,
+    }
+
+    def __init__(self, callback, sequence_getter):
+        super().__init__()
+        self.callback = callback
+        self.sequence_getter = sequence_getter
+
+    def normalized_sequence(self, sequence: str):
+        text = QKeySequence(sequence or DEFAULT_QUICK_DOWNLOAD_HOTKEY).toString(QKeySequence.PortableText)
+        return (text.split(",")[0] or "").replace(" ", "").casefold()
+
+    def event_sequence(self, event):
+        key = int(event.key())
+        if key in self.MODIFIER_KEYS or key == Qt.Key_unknown:
+            return ""
+        try:
+            value = int(event.modifiers()) | key
+        except TypeError:
+            value = event.modifiers() | key
+        return QKeySequence(value).toString(QKeySequence.PortableText).replace(" ", "").casefold()
+
+    def eventFilter(self, obj, event):
+        if event.type() != QEvent.KeyPress:
+            return False
+        try:
+            if event.isAutoRepeat():
+                return False
+        except Exception:
+            pass
+        if isinstance(QApplication.focusWidget(), QKeySequenceEdit):
+            return False
+        configured = self.normalized_sequence(self.sequence_getter())
+        pressed = self.event_sequence(event)
+        if configured and pressed == configured:
+            QTimer.singleShot(0, self.callback)
+            return True
+        return False
 
 
 USAGE_RULES_HTML = f"""
@@ -106,8 +465,9 @@ USAGE_RULES_HTML = f"""
 <ul>
   <li><b>yt-dlp</b> выполняет чтение страниц и скачивание медиафайлов.</li>
   <li><b>PyQt5/Qt</b> используется для графического интерфейса.</li>
-  <li><b>curl</b> используется для Telegram-уведомлений в Bash-движке и режиме SOCKS-прокси.</li>
-  <li><b>bash и GNU coreutils/findutils/grep/sed</b> используются в Linux Bash-скрипте скачивания.</li>
+  <li><b>curl</b> используется для Telegram-уведомлений в режиме SOCKS-прокси.</li>
+  <li><b>pynput</b> используется для глобальной горячей клавиши в Linux/X11.</li>
+  <li><b>bash-движок</b> оставлен в исходниках как устаревший, но отключён в интерфейсе и не используется.</li>
 </ul>
 
 <p>У каждого внешнего компонента есть собственная лицензия и документация.
@@ -191,6 +551,7 @@ class TrayLauncher:
         self.log_file = Path(os.environ.get("YTD_LOG_FILE", self.data_dir / "download.log"))
         self.status_file = Path(os.environ.get("YTD_STATUS_FILE", self.data_dir / "status.json"))
         self.stop_file = Path(os.environ.get("YTD_STOP_FILE", self.data_dir / "stop_requested"))
+        self.quick_request_file = default_quick_request_file()
         self.last_download_file = Path(os.environ.get("YTD_LAST_DOWNLOAD_FILE", self.data_dir / "last_download_at.txt"))
         self.overview_logo_path = Path(os.environ.get("YTD_OVERVIEW_LOGO", self.app_dir / "assets" / "overview-logo.png"))
         self.video_placeholder_path = Path(os.environ.get("YTD_VIDEO_PLACEHOLDER", self.app_dir / "assets" / "video-placeholder.png"))
@@ -209,6 +570,15 @@ class TrayLauncher:
         self.apply_runtime_settings(self.app_settings)
         self.schedules = []
         self.main_window = None
+        self.hotkey_filter = None
+        self.hotkey_window = None
+        self.local_hotkey_filter = AppLocalHotkeyFilter(
+            self.open_quick_download_window,
+            lambda: self.quick_download_hotkey,
+        )
+        self.app.installEventFilter(self.local_hotkey_filter)
+        self.quick_telegram_override = None
+        self.quick_single_url = ""
         self.last_tray_trigger_at = 0.0
         if self.app_icon_path.exists():
             self.app.setWindowIcon(QIcon(str(self.app_icon_path)))
@@ -227,6 +597,8 @@ class TrayLauncher:
         self.schedule_timer.start(15000)
 
         self.load_schedules()
+        self.setup_global_hotkey()
+        self.app.aboutToQuit.connect(self.cleanup_global_hotkey)
         QTimer.singleShot(700, self.show_initial_usage_rules)
 
     def create_colored_icon(self, color_rgb: tuple, rect: bool = False) -> QIcon:
@@ -271,6 +643,8 @@ class TrayLauncher:
         settings_action.triggered.connect(lambda checked=False: self.open_main_window(3))
         menu.addSeparator()
 
+        self.quick_download_action = menu.addAction(f"⚡ Быстрое скачивание ({self.quick_download_hotkey})")
+        self.quick_download_action.triggered.connect(lambda checked=False: self.open_quick_download_window())
         self.tray_start_action = menu.addAction("⏬ Старт")
         self.tray_start_action.triggered.connect(self.run_script)
         self.tray_stop_action = menu.addAction("⏹ Стоп")
@@ -305,6 +679,7 @@ class TrayLauncher:
             status_text = "😴 Статус: сон"
 
         self.tray_status_action.setText(status_text)
+        self.quick_download_action.setText(f"⚡ Быстрое скачивание ({self.quick_download_hotkey})")
         self.tray_start_action.setEnabled(not self.is_running)
         self.tray_stop_action.setEnabled(self.is_running)
 
@@ -341,6 +716,248 @@ class TrayLauncher:
         self.main_window.setWindowState(self.main_window.windowState() & ~Qt.WindowMinimized | Qt.WindowActive)
         self.main_window.raise_()
         self.main_window.activateWindow()
+
+    def open_quick_download_window(self):
+        if not self.ensure_usage_rules_accepted(self.main_window):
+            self.show_notification("⚖️", "Быстрое скачивание", "Сначала нужно принять правила использования")
+            return
+        if self.main_window is None:
+            self.main_window = MainWindow(self)
+        self.main_window.open_quick_download_window()
+
+    def is_wayland_session(self):
+        return not self.is_windows and os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland"
+
+    def setup_global_hotkey(self):
+        if self.is_windows:
+            self.hotkey_window = QWidget()
+            self.hotkey_window.setWindowTitle(f"{APP_NAME} Hotkey")
+            hwnd = int(self.hotkey_window.winId())
+            self.hotkey_filter = WindowsGlobalHotkeyFilter(self.open_quick_download_window, hwnd)
+            self.app.installNativeEventFilter(self.hotkey_filter)
+        else:
+            self.hotkey_filter = PynputGlobalHotkey(self.open_quick_download_window)
+        self.refresh_global_hotkey()
+
+    def refresh_global_hotkey(self):
+        if hasattr(self, "quick_download_action"):
+            self.update_tray_menu()
+        if self.hotkey_filter is None:
+            return
+        if self.is_wayland_session():
+            self.hotkey_filter.unregister()
+            return
+        if not self.hotkey_filter.register(self.quick_download_hotkey):
+            detail = getattr(self.hotkey_filter, "last_error", "")
+            message = f"Не удалось назначить: {self.quick_download_hotkey}"
+            if detail:
+                message += f"\n{detail[:160]}"
+            self.show_notification("⚠️", "Горячая клавиша", message)
+
+    def cleanup_global_hotkey(self):
+        if self.hotkey_filter is not None:
+            self.hotkey_filter.unregister()
+            if self.is_windows:
+                self.app.removeNativeEventFilter(self.hotkey_filter)
+        if self.hotkey_window is not None:
+            self.hotkey_window.deleteLater()
+            self.hotkey_window = None
+        if self.local_hotkey_filter is not None:
+            self.app.removeEventFilter(self.local_hotkey_filter)
+
+    def gsettings_get(self, schema: str, key: str, path: str | None = None):
+        command = ["gsettings"]
+        if path:
+            command.extend(["get", f"{schema}:{path}", key])
+        else:
+            command.extend(["get", schema, key])
+        try:
+            result = subprocess.run(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=3,
+                check=False,
+            )
+        except Exception:
+            return None
+        if result.returncode != 0:
+            return None
+        return result.stdout.strip()
+
+    def gsettings_set(self, schema: str, key: str, value: str, path: str | None = None) -> bool:
+        command = ["gsettings"]
+        if path:
+            command.extend(["set", f"{schema}:{path}", key, value])
+        else:
+            command.extend(["set", schema, key, value])
+        try:
+            result = subprocess.run(
+                command,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=3,
+                check=False,
+            )
+            return result.returncode == 0
+        except Exception:
+            return False
+
+    def gsettings_string(self, value: str):
+        return "'" + str(value).replace("\\", "\\\\").replace("'", "\\'") + "'"
+
+    def gsettings_strv(self, values):
+        return "[" + ", ".join(self.gsettings_string(value) for value in values) + "]"
+
+    def parse_gsettings_list(self, value: str | None):
+        if not value:
+            return []
+        try:
+            parsed = ast.literal_eval(value)
+        except (SyntaxError, ValueError):
+            return []
+        if isinstance(parsed, (list, tuple)):
+            return [str(item) for item in parsed]
+        return []
+
+    def quick_hotkey_desktop_binding(self, sequence: str | None = None):
+        portable = QKeySequence(sequence or self.quick_download_hotkey or DEFAULT_QUICK_DOWNLOAD_HOTKEY).toString(QKeySequence.PortableText)
+        first = (portable.split(",")[0] or DEFAULT_QUICK_DOWNLOAD_HOTKEY).strip()
+        parts = [part.strip().lower() for part in re.split(r"\s*\+\s*", first) if part.strip()]
+        modifiers = {
+            "<Primary>": False,
+            "<Shift>": False,
+            "<Alt>": False,
+            "<Super>": False,
+        }
+        key = ""
+        for part in parts:
+            if part in {"ctrl", "control"}:
+                modifiers["<Primary>"] = True
+            elif part == "shift":
+                modifiers["<Shift>"] = True
+            elif part == "alt":
+                modifiers["<Alt>"] = True
+            elif part in {"meta", "win", "windows"}:
+                modifiers["<Super>"] = True
+            elif re.fullmatch(r"f(?:[1-9]|1[0-9]|2[0-4])", part):
+                key = part.upper()
+            elif len(part) == 1:
+                key = part
+            else:
+                key = part
+        if not key:
+            return ""
+        return "".join(name for name, enabled in modifiers.items() if enabled) + key
+
+    def quick_download_command(self):
+        installed = shutil.which("yt-harvester")
+        if installed:
+            return shlex.join([installed, "--quick-download"])
+        start_script = self.app_dir / "start_tray.sh"
+        if start_script.exists():
+            return shlex.join([str(start_script), "--quick-download"])
+        if getattr(sys, "frozen", False):
+            return shlex.join([sys.executable, "--quick-download"])
+        return shlex.join([sys.executable, str(Path(__file__).resolve()), "--quick-download"])
+
+    def install_system_quick_hotkey(self, sequence: str | None = None):
+        if self.is_windows:
+            return False, "Системная установка нужна только для Linux Wayland"
+        if not shutil.which("gsettings"):
+            return False, "gsettings не найден"
+        binding = self.quick_hotkey_desktop_binding(sequence)
+        if not binding:
+            return False, "Не удалось преобразовать комбинацию клавиш"
+        command = self.quick_download_command()
+        desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").lower()
+        errors = []
+        if "cinnamon" in desktop:
+            ok, message = self.install_cinnamon_quick_hotkey(binding, command)
+            if ok:
+                return True, message
+            errors.append(message)
+        ok, message = self.install_gnome_quick_hotkey(binding, command)
+        if ok:
+            return True, message
+        errors.append(message)
+        if "cinnamon" not in desktop:
+            ok, message = self.install_cinnamon_quick_hotkey(binding, command)
+            if ok:
+                return True, message
+            errors.append(message)
+        return False, "; ".join(error for error in errors if error) or "Не удалось добавить системную комбинацию"
+
+    def install_cinnamon_quick_hotkey(self, binding: str, command: str):
+        list_schema = "org.cinnamon.desktop.keybindings"
+        item_schema = "org.cinnamon.desktop.keybindings.custom-keybinding"
+        current = self.gsettings_get(list_schema, "custom-list")
+        if current is None:
+            return False, "Cinnamon keybindings schema недоступна"
+        names = self.parse_gsettings_list(current)
+        target_name = "YouTube Harvester Quick Download"
+        target = ""
+        for name in names:
+            path = f"/org/cinnamon/desktop/keybindings/custom-keybindings/{name}/"
+            existing_name = self.gsettings_get(item_schema, "name", path)
+            existing_command = self.gsettings_get(item_schema, "command", path)
+            if target_name in str(existing_name or "") or "--quick-download" in str(existing_command or ""):
+                target = name
+                break
+        if not target:
+            used = set(names)
+            index = 0
+            while f"custom{index}" in used:
+                index += 1
+            target = f"custom{index}"
+            names.append(target)
+            if not self.gsettings_set(list_schema, "custom-list", self.gsettings_strv(names)):
+                return False, "Не удалось обновить список Cinnamon custom-list"
+        path = f"/org/cinnamon/desktop/keybindings/custom-keybindings/{target}/"
+        ok = (
+            self.gsettings_set(item_schema, "name", self.gsettings_string(target_name), path)
+            and self.gsettings_set(item_schema, "command", self.gsettings_string(command), path)
+            and self.gsettings_set(item_schema, "binding", self.gsettings_strv([binding]), path)
+        )
+        if not ok:
+            return False, "Не удалось записать Cinnamon shortcut"
+        return True, f"Системная комбинация Cinnamon установлена: {binding}"
+
+    def install_gnome_quick_hotkey(self, binding: str, command: str):
+        list_schema = "org.gnome.settings-daemon.plugins.media-keys"
+        item_schema = "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding"
+        current = self.gsettings_get(list_schema, "custom-keybindings")
+        if current is None:
+            return False, "GNOME media-keys schema недоступна"
+        paths = self.parse_gsettings_list(current)
+        target_name = "YouTube Harvester Quick Download"
+        target_path = ""
+        for path in paths:
+            existing_name = self.gsettings_get(item_schema, "name", path)
+            existing_command = self.gsettings_get(item_schema, "command", path)
+            if target_name in str(existing_name or "") or "--quick-download" in str(existing_command or ""):
+                target_path = path
+                break
+        if not target_path:
+            used = set(paths)
+            index = 0
+            while f"/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom{index}/" in used:
+                index += 1
+            target_path = f"/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom{index}/"
+            paths.append(target_path)
+            if not self.gsettings_set(list_schema, "custom-keybindings", self.gsettings_strv(paths)):
+                return False, "Не удалось обновить GNOME custom-keybindings"
+        ok = (
+            self.gsettings_set(item_schema, "name", self.gsettings_string(target_name), target_path)
+            and self.gsettings_set(item_schema, "command", self.gsettings_string(command), target_path)
+            and self.gsettings_set(item_schema, "binding", self.gsettings_string(binding), target_path)
+        )
+        if not ok:
+            return False, "Не удалось записать GNOME shortcut"
+        return True, f"Системная комбинация GNOME установлена: {binding}"
 
     def load_app_settings(self):
         try:
@@ -427,7 +1044,7 @@ class TrayLauncher:
         return Path.home() / "temp" / "YTH"
 
     def default_download_engine(self):
-        return "python" if self.is_windows else "bash"
+        return "python"
 
     def command_exists(self, command: str):
         return shutil.which(command) is not None
@@ -587,42 +1204,36 @@ class TrayLauncher:
         self.log_keep_count = self._setting_int(settings, "log_keep_count", 3, 1, 50)
         self.cleanup_temp = self._setting_bool(settings, "cleanup_temp", True)
         self.retry_failed_queue = self._setting_bool(settings, "retry_failed_queue", True)
+        self.quick_download_hotkey = str(
+            settings.get("quick_download_hotkey")
+            or os.environ.get("YTD_QUICK_DOWNLOAD_HOTKEY")
+            or DEFAULT_QUICK_DOWNLOAD_HOTKEY
+        ).strip() or DEFAULT_QUICK_DOWNLOAD_HOTKEY
+        self.quick_download_telegram_notify = self._setting_bool(settings, "quick_download_telegram_notify", False)
         telegram_default = self._setting_bool({"telegram_enabled": self.env_setting("TELEGRAM_ENABLED")}, "telegram_enabled", True)
         self.telegram_enabled = self._setting_bool(settings, "telegram_enabled", telegram_default)
-        engine = str(settings.get("download_engine") or os.environ.get("YTD_DOWNLOAD_ENGINE") or self.default_download_engine()).strip().lower()
-        if self.is_windows:
-            self.download_engine = "python"
-        else:
-            self.download_engine = engine if engine in {"bash", "python"} else self.default_download_engine()
+        self.download_engine = "python"
         resolution = str(settings.get("max_resolution") or os.environ.get("YTD_MAX_RESOLUTION") or "1080").strip()
         self.max_resolution = resolution if resolution in {"480", "720", "1080", "1440", "2160", "best"} else "1080"
 
     def validate_download_environment(self):
-        if self.download_engine == "python":
-            if not self.python_downloader_path.exists():
-                self.show_notification("❌", "Python-движок", f"Не найден файл: {self.python_downloader_path}")
-                return False
-            if self.is_windows and not self.ffmpeg_dir:
-                self.show_notification(
-                    "❌",
-                    "ffmpeg не найден",
-                    "Windows-сборке нужны bundled ffmpeg.exe и ffprobe.exe",
-                )
-                return False
-            if self.is_windows and not self.deno_path:
-                self.show_notification(
-                    "❌",
-                    "Deno не найден",
-                    "Windows-сборке нужен bundled deno.exe для YouTube JS",
-                )
-                return False
-        else:
-            if not self.script_path.exists():
-                self.show_notification("❌", "Bash-движок", f"Не найден файл: {self.script_path}")
-                return False
-            if not self.command_exists("bash"):
-                self.show_notification("❌", "Bash не найден", "Выберите Python-движок в настройках")
-                return False
+        if not self.python_downloader_path.exists():
+            self.show_notification("❌", "Python-движок", f"Не найден файл: {self.python_downloader_path}")
+            return False
+        if self.is_windows and not self.ffmpeg_dir:
+            self.show_notification(
+                "❌",
+                "ffmpeg не найден",
+                "Windows-сборке нужны bundled ffmpeg.exe и ffprobe.exe",
+            )
+            return False
+        if self.is_windows and not self.deno_path:
+            self.show_notification(
+                "❌",
+                "Deno не найден",
+                "Windows-сборке нужен bundled deno.exe для YouTube JS",
+            )
+            return False
         if (
             not getattr(sys, "frozen", False)
             and not os.environ.get("YTD_YT_DLP_COMMAND")
@@ -636,9 +1247,12 @@ class TrayLauncher:
     def script_environment(self):
         env = os.environ.copy()
         yt_dlp_command = self.yt_dlp_command()
+        telegram_enabled = self.telegram_enabled if self.quick_telegram_override is None else bool(self.quick_telegram_override)
         env.update({
-            "PYTHONIOENCODING": "utf-8",
+            "PYTHONIOENCODING": "utf-8:replace",
             "PYTHONUTF8": "1",
+            "PYTHONLEGACYWINDOWSSTDIO": "0",
+            "PYTHONUNBUFFERED": "1",
             "YTD_APP_DIR": str(self.app_dir),
             "YTD_DATA_DIR": str(self.data_dir),
             "YTD_CONFIG_DIR": str(self.config_dir),
@@ -655,18 +1269,22 @@ class TrayLauncher:
             "YTD_LOG_KEEP_COUNT": str(self.log_keep_count),
             "YTD_CLEANUP_TEMP": "1" if self.cleanup_temp else "0",
             "YTD_RETRY_FAILED_QUEUE": "1" if self.retry_failed_queue else "0",
-            "YTD_TELEGRAM_ENABLED": "1" if self.telegram_enabled else "0",
+            "YTD_TELEGRAM_ENABLED": "1" if telegram_enabled else "0",
             "YTD_DOWNLOAD_ENGINE": self.download_engine,
+            "YTD_QUICK_DOWNLOAD_HOTKEY": self.quick_download_hotkey,
+            "YTD_QUICK_DOWNLOAD_TELEGRAM_NOTIFY": "1" if self.quick_download_telegram_notify else "0",
             "YTD_YT_DLP_COMMAND": subprocess.list2cmdline(yt_dlp_command),
             "YTD_YT_DLP_COMMAND_JSON": json.dumps(yt_dlp_command, ensure_ascii=False),
         })
+        if self.quick_single_url:
+            env["YTD_SINGLE_QUEUE_URL"] = self.quick_single_url
         if self.ffmpeg_dir:
             env["YTD_FFMPEG_DIR"] = str(self.ffmpeg_dir)
         if self.deno_path:
             env["YTD_DENO_PATH"] = str(self.deno_path)
         return env
 
-    def run_script(self):
+    def run_script(self, telegram_override=None, single_queue_url: str = ""):
         if self.is_running:
             self.show_notification("⚠️", "Скрипт уже запущен", "Подождите завершения...")
             return
@@ -688,6 +1306,8 @@ class TrayLauncher:
 
         self.is_running = True
         self.state = "running"
+        self.quick_telegram_override = telegram_override
+        self.quick_single_url = str(single_queue_url or "").strip()
         self.update_icon()
         self.update_tray_menu()
         self.show_notification("▶️", "Загрузка началась", "Скрипт запущен...")
@@ -698,10 +1318,7 @@ class TrayLauncher:
     def _execute_script(self):
         proc = None
         try:
-            if self.download_engine == "python":
-                command = self.python_script_command(self.python_downloader_path)
-            else:
-                command = ["bash", str(self.script_path)]
+            command = self.python_script_command(self.python_downloader_path)
             proc = subprocess.Popen(
                 command,
                 stdout=subprocess.DEVNULL,
@@ -716,6 +1333,8 @@ class TrayLauncher:
             self.current_process = None
             self.is_running = False
             self.state = "idle"
+            self.quick_telegram_override = None
+            self.quick_single_url = ""
             self.update_icon()
             self.update_tray_menu()
 
@@ -752,9 +1371,19 @@ class TrayLauncher:
         self.tray.setToolTip(tooltip)
 
     def check_process_status(self):
+        self.check_quick_download_request()
         self.update_icon()
         if self.main_window is not None and self.main_window.isVisible():
             self.main_window.refresh_overview()
+
+    def check_quick_download_request(self):
+        try:
+            if not self.quick_request_file.exists():
+                return
+            self.quick_request_file.unlink(missing_ok=True)
+        except Exception:
+            return
+        self.open_quick_download_window()
 
     def show_notification(self, icon: str, title: str, message: str):
         try:
@@ -907,7 +1536,7 @@ class ArchiveWindow(QMainWindow):
             return []
 
         entries = []
-        for index, line in enumerate(path.read_text(encoding="utf-8", errors="ignore").splitlines()):
+        for index, line in enumerate(read_text_for_display(path).splitlines()):
             text = line.strip()
             if not text:
                 continue
@@ -916,6 +1545,7 @@ class ArchiveWindow(QMainWindow):
             except json.JSONDecodeError:
                 continue
             if isinstance(entry, dict):
+                entry = normalize_text_value(entry)
                 entry["_index"] = index
                 entries.append(entry)
 
@@ -950,10 +1580,10 @@ class ArchiveWindow(QMainWindow):
         video_id = str(entry.get("video_id") or "").strip()
         values = [
             type_emoji,
-            str(entry.get("channel_name") or ""),
-            str(entry.get("title") or ""),
+            fix_mojibake(str(entry.get("channel_name") or "")),
+            fix_mojibake(str(entry.get("title") or "")),
             video_id,
-            str(entry.get("downloaded_at") or ""),
+            fix_mojibake(str(entry.get("downloaded_at") or "")),
         ]
         for col, value in enumerate(values, start=1):
             display_value = value.strip() or "-"
@@ -1071,7 +1701,7 @@ class ArchiveWindow(QMainWindow):
         selected_index = entry.get("_index")
         removed = 0
         kept_lines = []
-        for index, raw_line in enumerate(path.read_text(encoding="utf-8", errors="ignore").splitlines()):
+        for index, raw_line in enumerate(read_text_for_display(path).splitlines()):
             should_remove = False
             try:
                 current = json.loads(raw_line)
@@ -1104,7 +1734,7 @@ class ArchiveWindow(QMainWindow):
 
         removed = 0
         kept_lines = []
-        for raw_line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        for raw_line in read_text_for_display(path).splitlines():
             if video_id in raw_line:
                 removed += 1
             else:
@@ -1269,9 +1899,217 @@ class ArchiveWindow(QMainWindow):
         return None
 
 
+class QuickDownloadDialog(QDialog):
+    def __init__(self, main_window):
+        super().__init__(main_window)
+        self.main_window = main_window
+        self.launcher = main_window.launcher
+        self.setWindowTitle("Быстрое скачивание")
+        self.setModal(False)
+        self.setFixedSize(900, 235)
+        self._position_ready = False
+        if self.launcher.app_icon_path.exists():
+            self.setWindowIcon(QIcon(str(self.launcher.app_icon_path)))
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(8, 8, 10, 10)
+        layout.setSpacing(10)
+
+        self.logo_label = QLabel()
+        self.logo_label.setObjectName("quickLogo")
+        self.logo_label.setAlignment(Qt.AlignCenter)
+        self.logo_label.setFixedSize(205, 205)
+        self._load_logo()
+        layout.addWidget(self.logo_label, 0, Qt.AlignTop)
+
+        right_panel = QWidget()
+        right_panel.setObjectName("toolPanel")
+        right_layout = QVBoxLayout(right_panel)
+        right_layout.setContentsMargins(10, 8, 10, 8)
+        right_layout.setSpacing(8)
+        layout.addWidget(right_panel, 1)
+
+        top_row = QHBoxLayout()
+        top_row.setSpacing(8)
+        self.url_input = QLineEdit()
+        self.url_input.setPlaceholderText("YouTube URL")
+        self.url_input.textChanged.connect(self.on_url_changed)
+        self.download_button = QPushButton()
+        self.download_button.setObjectName("primaryRunButton")
+        self.download_button.setFixedSize(46, 46)
+        self.download_button.setIconSize(QSize(44, 44))
+        self.download_button.setIcon(self.main_window._run_button_icon(False))
+        self.download_button.setToolTip("Скачать немедленно")
+        self.download_button.clicked.connect(self.download_now)
+        self.add_queue_button = QPushButton("Добавить в очередь")
+        self.add_queue_button.setFixedHeight(32)
+        self.add_queue_button.setToolTip("Добавить ссылку в очередь")
+        self.add_queue_button.clicked.connect(self.add_to_queue)
+        top_row.addWidget(self.url_input, 1)
+        top_row.addWidget(self.download_button)
+        top_row.addWidget(self.add_queue_button)
+        right_layout.addLayout(top_row)
+
+        preview_row = QHBoxLayout()
+        preview_row.setSpacing(10)
+        self.thumbnail_label = QLabel("Обложка")
+        self.thumbnail_label.setAlignment(Qt.AlignCenter)
+        self.thumbnail_label.setFixedSize(250, 132)
+        self.thumbnail_label.setObjectName("quickThumbnail")
+        preview_row.addWidget(self.thumbnail_label, 0, Qt.AlignTop)
+
+        info_layout = QVBoxLayout()
+        info_layout.setSpacing(6)
+        self.video_title_label = QLabel("Ожидаю ссылку YouTube")
+        self.video_title_label.setObjectName("quickTitle")
+        self.video_title_label.setWordWrap(True)
+        title_font = QFont()
+        title_font.setBold(True)
+        title_font.setPointSize(11)
+        self.video_title_label.setFont(title_font)
+        self.video_uploader_label = QLabel("")
+        self.video_uploader_label.setObjectName("subtleText")
+        self.video_status_label = QLabel("")
+        self.video_status_label.setObjectName("subtleText")
+        self.video_status_label.setWordWrap(True)
+        info_layout.addWidget(self.video_title_label)
+        info_layout.addWidget(self.video_uploader_label)
+        info_layout.addWidget(self.video_status_label)
+        info_layout.addStretch()
+
+        bottom_row = QHBoxLayout()
+        bottom_row.addStretch()
+        self.telegram_check = QCheckBox("Отправлять в Telegram уведомление")
+        self.telegram_check.setChecked(self.launcher.quick_download_telegram_notify)
+        self.telegram_check.toggled.connect(self.save_telegram_setting)
+        bottom_row.addWidget(self.telegram_check)
+        info_layout.addLayout(bottom_row)
+        preview_row.addLayout(info_layout, 1)
+        right_layout.addLayout(preview_row, 1)
+
+        self.update_actions(False)
+
+    def restore_position(self):
+        position = self.main_window.ui_settings.get("quick_download_window_position")
+        if not isinstance(position, dict):
+            return
+        try:
+            x = int(position.get("x"))
+            y = int(position.get("y"))
+        except (TypeError, ValueError):
+            return
+        screen = QApplication.screenAt(QPoint(x + self.width() // 2, y + self.height() // 2))
+        if screen is None:
+            screen = QApplication.primaryScreen()
+        if screen is not None:
+            available = screen.availableGeometry()
+            x = max(available.left(), min(x, available.right() - self.width() + 1))
+            y = max(available.top(), min(y, available.bottom() - self.height() + 1))
+        self.move(x, y)
+
+    def save_position(self):
+        if not self._position_ready or self.isMinimized():
+            return
+        position = {"x": int(self.x()), "y": int(self.y())}
+        if self.main_window.ui_settings.get("quick_download_window_position") == position:
+            return
+        self.main_window.ui_settings["quick_download_window_position"] = position
+        self.main_window.save_ui_settings()
+
+    def moveEvent(self, event):
+        super().moveEvent(event)
+        self.save_position()
+
+    def closeEvent(self, event):
+        self.save_position()
+        super().closeEvent(event)
+
+    def accept(self):
+        self.save_position()
+        super().accept()
+
+    def reject(self):
+        self.save_position()
+        super().reject()
+
+    def _load_logo(self):
+        for path in (self.launcher.overview_logo_path, self.launcher.app_icon_path):
+            if path.exists():
+                pixmap = QPixmap(str(path))
+                if not pixmap.isNull():
+                    self.logo_label.setPixmap(pixmap.scaled(
+                        self.logo_label.size(),
+                        Qt.KeepAspectRatioByExpanding,
+                        Qt.SmoothTransformation,
+                    ))
+                    return
+        self.logo_label.setText(APP_NAME)
+
+    def set_channel_logo(self, path_text: str):
+        path = Path(path_text) if path_text else None
+        if path and path.exists():
+            pixmap = QPixmap(str(path))
+            if not pixmap.isNull():
+                self.logo_label.setPixmap(pixmap.scaled(
+                    self.logo_label.size(),
+                    Qt.KeepAspectRatioByExpanding,
+                    Qt.SmoothTransformation,
+                ))
+                return
+        self._load_logo()
+
+    def open_from_clipboard(self):
+        clipboard_text = QApplication.clipboard().text().strip()
+        self.main_window.current_previews["quick"] = {}
+        self.thumbnail_label.setPixmap(QPixmap())
+        self.thumbnail_label.setText("Обложка")
+        self._load_logo()
+        self.video_uploader_label.setText("")
+        self.video_status_label.setText("")
+        if self.main_window._looks_like_youtube_url(clipboard_text):
+            self.url_input.setText(clipboard_text)
+            self.url_input.selectAll()
+            self.main_window.schedule_video_preview("quick")
+        else:
+            self.url_input.clear()
+            self.video_title_label.setText("Ошибка")
+            self.video_status_label.setText("В буфере обмена нет корректной ссылки YouTube")
+            self.update_actions(False)
+        self.telegram_check.setChecked(self.launcher.quick_download_telegram_notify)
+        self.restore_position()
+        self.show()
+        self._position_ready = True
+        self.raise_()
+        self.activateWindow()
+
+    def on_url_changed(self):
+        valid = self.main_window._looks_like_youtube_url(self.url_input.text().strip())
+        self.update_actions(valid)
+        self.main_window.schedule_video_preview("quick")
+
+    def update_actions(self, valid: bool):
+        self.download_button.setEnabled(valid)
+        self.add_queue_button.setEnabled(valid)
+
+    def save_telegram_setting(self, checked: bool):
+        self.main_window.ui_settings["quick_download_telegram_notify"] = bool(checked)
+        self.main_window.save_ui_settings()
+        self.launcher.app_settings = dict(self.main_window.ui_settings)
+        self.launcher.apply_runtime_settings(self.launcher.app_settings)
+
+    def add_to_queue(self):
+        if self.main_window.add_video_to_queue("quick"):
+            self.accept()
+
+    def download_now(self):
+        if self.main_window.quick_download_now():
+            self.accept()
+
+
 class MainWindow(QMainWindow):
     metadata_loaded = pyqtSignal(dict)
     metadata_failed = pyqtSignal(int, str)
+    quick_channel_logo_loaded = pyqtSignal(dict)
     channel_metadata_loaded = pyqtSignal(dict)
     channel_marked_archived = pyqtSignal(dict)
     channel_mark_archive_failed = pyqtSignal(str)
@@ -1288,7 +2126,7 @@ class MainWindow(QMainWindow):
         self.preview_request_context = "queue"
         self.pending_preview_context = "queue"
         self.current_preview = {}
-        self.current_previews = {"overview": {}, "queue": {}}
+        self.current_previews = {"overview": {}, "queue": {}, "quick": {}}
         self.ui_settings = self.load_ui_settings()
         self._window_position_ready = False
         self.theme = self.ui_settings.get("theme", "dark")
@@ -1300,6 +2138,7 @@ class MainWindow(QMainWindow):
         self.channel_section_results = {}
         self.channel_section_checks_running = set()
         self.archive_window = None
+        self.quick_download_dialog = None
 
         self.tabs = QTabWidget()
         self.setCentralWidget(self.tabs)
@@ -1325,6 +2164,7 @@ class MainWindow(QMainWindow):
 
         self.metadata_loaded.connect(self.on_metadata_loaded)
         self.metadata_failed.connect(self.on_metadata_failed)
+        self.quick_channel_logo_loaded.connect(self.on_quick_channel_logo_loaded)
         self.channel_metadata_loaded.connect(self.on_channel_metadata_loaded)
         self.channel_marked_archived.connect(self.on_channel_marked_archived)
         self.channel_mark_archive_failed.connect(self.on_channel_mark_archive_failed)
@@ -1352,8 +2192,8 @@ class MainWindow(QMainWindow):
         header_panel = QWidget()
         header_panel.setObjectName("overviewHeaderPanel")
         header_layout = QVBoxLayout(header_panel)
-        header_layout.setContentsMargins(10, 8, 10, 10)
-        header_layout.setSpacing(7)
+        header_layout.setContentsMargins(10, 5, 10, 10)
+        header_layout.setSpacing(0)
 
         top_row = QHBoxLayout()
         top_row.setSpacing(5)
@@ -1400,9 +2240,9 @@ class MainWindow(QMainWindow):
         temp_btn.setFixedSize(38, 32)
         temp_btn.setToolTip("Открыть временную папку")
         temp_btn.clicked.connect(lambda: self.open_folder(self.launcher.temp_dir))
-        archive_btn = QPushButton("🗃")
+        archive_btn = QPushButton("🗃 Архив")
         archive_btn.setObjectName("overviewButton")
-        archive_btn.setFixedSize(38, 32)
+        archive_btn.setFixedSize(102, 32)
         archive_btn.setToolTip("Открыть подробный архив скачиваний")
         archive_btn.clicked.connect(self.open_archive_window)
         top_row.addWidget(self.run_button, 0, Qt.AlignLeft | Qt.AlignTop)
@@ -1448,8 +2288,8 @@ class MainWindow(QMainWindow):
         activity_panel = QWidget()
         activity_panel.setObjectName("overviewActivityPanel")
         activity_layout = QVBoxLayout(activity_panel)
-        activity_layout.setContentsMargins(12, 10, 12, 10)
-        activity_layout.setSpacing(7)
+        activity_layout.setContentsMargins(12, 10, 12, 14)
+        activity_layout.setSpacing(8)
         self.overview_activity_bar = QProgressBar()
         self.overview_activity_bar.setObjectName("overviewActivityBar")
         self.overview_activity_bar.setRange(0, 100)
@@ -1460,9 +2300,9 @@ class MainWindow(QMainWindow):
         activity_layout.addWidget(self.overview_activity_bar)
 
         status_grid = QGridLayout()
-        status_grid.setContentsMargins(0, 2, 0, 2)
+        status_grid.setContentsMargins(0, 0, 0, 0)
         status_grid.setHorizontalSpacing(8)
-        status_grid.setVerticalSpacing(5)
+        status_grid.setVerticalSpacing(4)
         self.overview_channel_label = self._overview_type_status_row(status_grid, 0, "📺", "Канал")
         self.overview_video_status_label = self._overview_type_status_row(status_grid, 1, "🎬", "Видео")
         self.overview_shorts_status_label = self._overview_type_status_row(status_grid, 2, "⚡", "Shorts")
@@ -1474,7 +2314,7 @@ class MainWindow(QMainWindow):
         self.overview_events_label.setTextFormat(Qt.RichText)
         self.overview_events_label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         self.overview_events_label.setWordWrap(True)
-        self.overview_events_label.setMinimumHeight(112)
+        self.overview_events_label.setMinimumHeight(85)
         activity_layout.addWidget(self.overview_events_label, 1)
 
         download_panel = QWidget()
@@ -1531,7 +2371,7 @@ class MainWindow(QMainWindow):
         download_layout.addLayout(download_details, 1)
 
         right_column = QVBoxLayout()
-        right_column.setContentsMargins(0, 0, 0, 0)
+        right_column.setContentsMargins(0, 3, 0, 0)
         right_column.setSpacing(10)
         right_column.addWidget(activity_panel, 1)
         content.addLayout(right_column, 1)
@@ -1544,16 +2384,16 @@ class MainWindow(QMainWindow):
         name = QLabel(f"{emoji} {title}")
         name.setObjectName("overviewTypeName")
         name.setFixedWidth(112)
-        name.setFixedHeight(27)
+        name.setFixedHeight(25)
         name.setAlignment(Qt.AlignVCenter | Qt.AlignLeft)
         status = QLabel()
         status.setObjectName("overviewTypeStatus")
         status.setTextFormat(Qt.RichText)
-        status.setFixedHeight(27)
+        status.setFixedHeight(25)
         status.setAlignment(Qt.AlignVCenter | Qt.AlignLeft)
         grid.addWidget(name, row, 0)
         grid.addWidget(status, row, 1)
-        grid.setRowMinimumHeight(row, 32)
+        grid.setRowMinimumHeight(row, 25)
         return status
 
     def _build_channels_tab(self):
@@ -1787,7 +2627,7 @@ class MainWindow(QMainWindow):
         self.streams_limit_spin = self._limit_spin()
         self.streams_limit_spin.setToolTip("Сколько последних трансляций проверять на каждом канале")
         limits_row = QHBoxLayout()
-        limits_row.setSpacing(4)
+        limits_row.setSpacing(6)
         limits_font = QFont(self.font())
         limits_font.setPointSize(max(8, limits_font.pointSize() - 2))
         limits_title = QLabel("🔢Лимиты:")
@@ -1796,9 +2636,9 @@ class MainWindow(QMainWindow):
         limits_title.setToolTip("Сколько последних элементов проверять на каждом канале")
         limits_row.addWidget(limits_title)
         for label_text, spin, label_width in (
-            ("🎬Видео", self.videos_limit_spin, 64),
-            ("⚡Shorts", self.shorts_limit_spin, 66),
-            ("🔴Трансляции", self.streams_limit_spin, 136),
+            ("🎬Видео", self.videos_limit_spin, 56),
+            ("⚡Shorts", self.shorts_limit_spin, 58),
+            ("🔴Трансляции", self.streams_limit_spin, 92),
         ):
             spin.setButtonSymbols(QSpinBox.NoButtons)
             spin.setAlignment(Qt.AlignCenter)
@@ -1833,38 +2673,47 @@ class MainWindow(QMainWindow):
         engine_row = QHBoxLayout()
         engine_row.setSpacing(8)
         self.download_engine_combo = QComboBox()
-        if self.launcher.is_windows:
-            self.download_engine_combo.setToolTip("Windows-сборка использует только переносимый Python-движок")
-            self.download_engine_combo.addItem("Python (Windows)", "python")
-            self.download_engine_combo.setEnabled(False)
-        else:
-            self.download_engine_combo.setToolTip("Bash - стабильный Linux-скрипт; Python - переносимый движок для тестов")
-            self.download_engine_combo.addItem("Bash (Linux, стабильный)", "bash")
-            self.download_engine_combo.addItem("Python (тестовый)", "python")
+        self.download_engine_combo.setToolTip("Используется только Python-движок. Bash-движок отключён как устаревший.")
+        self.download_engine_combo.addItem("Python", "python")
+        self.download_engine_combo.setEnabled(False)
         engine_row.addWidget(QLabel("🧩 Движок"))
         engine_row.addWidget(self.download_engine_combo, 1)
         download_layout.addLayout(engine_row)
 
         options_row = QHBoxLayout()
-        options_row.setSpacing(8)
+        options_row.setSpacing(3)
+        options_font = QFont(self.font())
+        options_font.setPointSize(max(8, options_font.pointSize() - 2))
         self.cleanup_temp_check = QCheckBox("🧹 Врем.")
         self.cleanup_temp_check.setToolTip("Очищать временную папку после успешной обработки")
         self.retry_queue_check = QCheckBox("🔁 Очередь")
         self.retry_queue_check.setToolTip("Возвращать неудачные ссылки обратно в очередь для повтора")
-        self.autostart_check = QCheckBox("🚀 Автозапуск")
+        self.autostart_check = QCheckBox("🚀 Авто")
         self.autostart_check.setToolTip(f"Запускать {APP_NAME} при входе в систему")
+        self.cleanup_temp_check.setFont(options_font)
+        self.retry_queue_check.setFont(options_font)
+        self.autostart_check.setFont(options_font)
         self.log_keep_spin = self._limit_spin(1, 50)
+        self.log_keep_spin.setFixedWidth(38)
         self.log_keep_spin.setToolTip("Сколько архивных логов хранить")
+        log_keep_label = QLabel("📝 Логов")
+        log_keep_label.setFont(options_font)
         options_row.addWidget(self.cleanup_temp_check)
         options_row.addWidget(self.retry_queue_check)
         options_row.addWidget(self.autostart_check)
-        options_row.addWidget(QLabel("📝 Логов"))
+        options_row.addWidget(log_keep_label)
         options_row.addWidget(self.log_keep_spin)
         rules_btn = QPushButton("⚖")
-        rules_btn.setFixedSize(34, 28)
+        rules_btn.setFixedSize(30, 28)
         rules_btn.setToolTip("Открыть правила использования и сведения о внешних компонентах")
         rules_btn.clicked.connect(self.open_usage_rules)
         options_row.addWidget(rules_btn)
+        self.quick_hotkey_button = QPushButton()
+        self.quick_hotkey_button.setIcon(quick_hotkey_icon())
+        self.quick_hotkey_button.setIconSize(QSize(20, 20))
+        self.quick_hotkey_button.setFixedSize(30, 28)
+        self.quick_hotkey_button.clicked.connect(self.open_quick_hotkey_dialog)
+        options_row.addWidget(self.quick_hotkey_button)
         options_row.addStretch()
         download_layout.addLayout(options_row)
 
@@ -2009,6 +2858,59 @@ class MainWindow(QMainWindow):
         if self.download_engine_combo.currentData() != self.launcher.download_engine:
             self.refresh_settings_controls()
 
+    def update_quick_hotkey_button(self):
+        hotkey = self.launcher.quick_download_hotkey or DEFAULT_QUICK_DOWNLOAD_HOTKEY
+        self.quick_hotkey_button.setToolTip(f"Горячая клавиша быстрого скачивания: {hotkey}")
+
+    def install_current_system_hotkey(self, editor: QKeySequenceEdit):
+        sequence = editor.keySequence().toString(QKeySequence.NativeText).strip() or DEFAULT_QUICK_DOWNLOAD_HOTKEY
+        self.ui_settings["quick_download_hotkey"] = sequence
+        self.save_settings_from_ui(show_message=False)
+        self.launcher.quick_download_hotkey = sequence
+        self.launcher.refresh_global_hotkey()
+        self.update_quick_hotkey_button()
+        ok, message = self.launcher.install_system_quick_hotkey(sequence)
+        if ok:
+            QMessageBox.information(self, "Горячая клавиша", message)
+        else:
+            QMessageBox.warning(self, "Горячая клавиша", message)
+
+    def open_quick_hotkey_dialog(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Быстрое скачивание")
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(14, 12, 14, 12)
+        layout.setSpacing(10)
+
+        label = QLabel("Горячая клавиша")
+        label.setObjectName("sectionTitle")
+        layout.addWidget(label)
+
+        editor = QKeySequenceEdit(QKeySequence(self.launcher.quick_download_hotkey or DEFAULT_QUICK_DOWNLOAD_HOTKEY))
+        editor.setToolTip("Комбинация для быстрого скачивания")
+        layout.addWidget(editor)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        default_button = buttons.addButton("По умолчанию", QDialogButtonBox.ResetRole)
+        system_button = buttons.addButton("В систему", QDialogButtonBox.ActionRole)
+        default_button.clicked.connect(lambda checked=False: editor.setKeySequence(QKeySequence(DEFAULT_QUICK_DOWNLOAD_HOTKEY)))
+        system_button.clicked.connect(lambda checked=False: self.install_current_system_hotkey(editor))
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+
+        if dialog.exec_() == QDialog.Accepted:
+            sequence = editor.keySequence().toString(QKeySequence.NativeText).strip() or DEFAULT_QUICK_DOWNLOAD_HOTKEY
+            self.ui_settings["quick_download_hotkey"] = sequence
+            self.save_settings_from_ui(show_message=False)
+            self.launcher.quick_download_hotkey = sequence
+            self.launcher.refresh_global_hotkey()
+            self.update_quick_hotkey_button()
+            if self.launcher.is_wayland_session():
+                ok, message = self.launcher.install_system_quick_hotkey(sequence)
+                icon = "⌨️" if ok else "⚠️"
+                self.launcher.show_notification(icon, "Горячая клавиша", message)
+
     def open_usage_rules(self):
         required = not self.launcher.usage_rules_accepted()
         dialog = UsageRulesDialog(required=required, parent=self)
@@ -2040,6 +2942,7 @@ class MainWindow(QMainWindow):
         self.retry_queue_check.setChecked(self.launcher.retry_failed_queue)
         self.telegram_enabled_button.setChecked(self.launcher.telegram_enabled)
         self.update_telegram_enabled_button()
+        self.update_quick_hotkey_button()
         self.autostart_check.setChecked(self.is_autostart_enabled())
 
         resolution_index = self.resolution_combo.findData(self.launcher.max_resolution)
@@ -2068,10 +2971,13 @@ class MainWindow(QMainWindow):
             "cleanup_temp": self.cleanup_temp_check.isChecked(),
             "retry_failed_queue": self.retry_queue_check.isChecked(),
             "telegram_enabled": self.telegram_enabled_button.isChecked(),
+            "quick_download_hotkey": self.ui_settings.get("quick_download_hotkey") or self.launcher.quick_download_hotkey or DEFAULT_QUICK_DOWNLOAD_HOTKEY,
+            "quick_download_telegram_notify": self.ui_settings.get("quick_download_telegram_notify", self.launcher.quick_download_telegram_notify),
         })
         self.save_ui_settings()
         self.launcher.app_settings = dict(self.ui_settings)
         self.launcher.apply_runtime_settings(self.launcher.app_settings)
+        self.launcher.refresh_global_hotkey()
         self.launcher.temp_dir.mkdir(parents=True, exist_ok=True)
         self.launcher.final_dir.mkdir(parents=True, exist_ok=True)
         self.write_env_values({
@@ -2533,7 +3439,7 @@ class MainWindow(QMainWindow):
                     color: #33404d;
                     border: 1px solid #d7dfe7;
                     border-radius: 4px;
-                    padding: 7px;
+                    padding: 8px 8px 10px 8px;
                 }
                 QLabel#overviewMainImage, QLabel#overviewVideoImage {
                     background: #ffffff;
@@ -2797,7 +3703,7 @@ class MainWindow(QMainWindow):
                     color: #c9d2dc;
                     border: 1px solid #303844;
                     border-radius: 4px;
-                    padding: 7px;
+                    padding: 8px 8px 10px 8px;
                 }
                 QLabel#overviewMainImage, QLabel#overviewVideoImage {
                     background: #101317;
@@ -2855,12 +3761,16 @@ class MainWindow(QMainWindow):
 
         if self.archive_window is not None:
             self.archive_window.setStyleSheet(self.styleSheet())
+        if self.quick_download_dialog is not None:
+            self.quick_download_dialog.setStyleSheet(self.styleSheet())
 
     def _apply_preview_thumbnail_style(self, style: str):
         for label_name in ("thumbnail_label", "overview_thumbnail_label"):
             label = getattr(self, label_name, None)
             if label is not None:
                 label.setStyleSheet(style)
+        if self.quick_download_dialog is not None:
+            self.quick_download_dialog.thumbnail_label.setStyleSheet(style)
 
     def effective_theme(self):
         if self.theme != "system":
@@ -2948,6 +3858,35 @@ class MainWindow(QMainWindow):
         self.archive_window.raise_()
         self.archive_window.activateWindow()
 
+    def open_quick_download_window(self):
+        if self.quick_download_dialog is None:
+            self.quick_download_dialog = QuickDownloadDialog(self)
+            self.quick_download_dialog.setStyleSheet(self.styleSheet())
+        self.quick_download_dialog.open_from_clipboard()
+
+    def quick_download_now(self):
+        if self.launcher.is_running:
+            QMessageBox.information(self, "Быстрое скачивание", "Скачивание уже идёт. Ссылка добавится в очередь обычной кнопкой.")
+            return False
+        widgets = self._preview_widgets("quick")
+        preview = self.current_previews.get("quick", {})
+        url = (preview.get("url") or widgets["input"].text()).strip()
+        if not self._looks_like_youtube_url(url):
+            QMessageBox.warning(self, "Быстрое скачивание", "Нужна ссылка на YouTube-видео")
+            return False
+        video_id = (preview.get("video_id") or self.youtube_video_id_from_url(url)).strip()
+        if video_id and self.archive_contains_video(video_id):
+            QMessageBox.information(self, "Быстрое скачивание", "Это видео уже есть в архиве")
+            widgets["status"].setText("Видео уже есть в архиве")
+            return False
+
+        telegram_notify = False
+        if self.quick_download_dialog is not None:
+            telegram_notify = self.quick_download_dialog.telegram_check.isChecked()
+        self.launcher.run_script(telegram_override=telegram_notify, single_queue_url=url)
+        self.refresh_overview()
+        return True
+
     def read_status(self):
         try:
             if self.launcher.status_file.exists():
@@ -2963,7 +3902,7 @@ class MainWindow(QMainWindow):
         )
 
     def _html_text(self, text):
-        return html.escape(str(text), quote=False)
+        return html.escape(fix_mojibake(str(text)), quote=False)
 
     def _run_button_icon(self, stopping: bool = False):
         pixmap = QPixmap(50, 50)
@@ -3238,13 +4177,13 @@ class MainWindow(QMainWindow):
                 return report
 
         try:
-            lines = self.launcher.log_file.read_text(encoding="utf-8", errors="ignore").splitlines()
+            lines = read_text_for_display(self.launcher.log_file).splitlines()
         except Exception:
             lines = []
 
         events = []
         for line in reversed(lines):
-            text = line.strip()
+            text = fix_mojibake(line).strip()
             if not text or text.startswith("[download]"):
                 continue
             events.append(text)
@@ -4055,6 +4994,16 @@ class MainWindow(QMainWindow):
                 "uploader": self.overview_idle_uploader_label,
                 "status": self.overview_idle_status_label,
             }
+        if context == "quick" and self.quick_download_dialog is not None:
+            dialog = self.quick_download_dialog
+            return {
+                "input": dialog.url_input,
+                "button": dialog.add_queue_button,
+                "thumbnail": dialog.thumbnail_label,
+                "title": dialog.video_title_label,
+                "uploader": dialog.video_uploader_label,
+                "status": dialog.video_status_label,
+            }
         return {
             "input": self.video_url_input,
             "button": self.add_video_button,
@@ -4074,7 +5023,10 @@ class MainWindow(QMainWindow):
         widgets["thumbnail"].setPixmap(QPixmap())
         widgets["thumbnail"].setText("Обложка")
         widgets["button"].setEnabled(False)
-        widgets["title"].setText("Введите адрес YouTube-видео")
+        widgets["title"].setText("Ожидаю ссылку YouTube" if context == "quick" else "Введите адрес YouTube-видео")
+        if context == "quick" and self.quick_download_dialog is not None:
+            self.quick_download_dialog.update_actions(False)
+            self.quick_download_dialog.set_channel_logo("")
 
     def schedule_video_preview(self, context: str = "queue"):
         widgets = self._preview_widgets(context)
@@ -4086,12 +5038,17 @@ class MainWindow(QMainWindow):
         widgets["thumbnail"].setPixmap(QPixmap())
         widgets["thumbnail"].setText("Обложка")
         text = widgets["input"].text().strip()
-        widgets["button"].setEnabled(self._looks_like_youtube_url(text))
+        valid = self._looks_like_youtube_url(text)
+        widgets["button"].setEnabled(valid)
+        if context == "quick" and self.quick_download_dialog is not None:
+            self.quick_download_dialog.update_actions(valid)
         if not text:
-            widgets["title"].setText("Введите адрес YouTube-видео")
+            widgets["title"].setText("Ожидаю ссылку YouTube" if context == "quick" else "Введите адрес YouTube-видео")
             return
         if not self._looks_like_youtube_url(text):
-            widgets["title"].setText("Введите ссылку на YouTube-видео")
+            widgets["title"].setText("Ошибка" if context == "quick" else "Введите ссылку на YouTube-видео")
+            if context == "quick":
+                widgets["status"].setText("Нужна корректная ссылка YouTube")
             return
         widgets["title"].setText("Загрузка данных...")
         self.pending_preview_context = context
@@ -4150,6 +5107,27 @@ class MainWindow(QMainWindow):
                     except Exception:
                         thumbnail_path = ""
 
+            channel_url = data.get("channel_url") or data.get("uploader_url") or ""
+            if not channel_url and data.get("channel_id"):
+                channel_url = f"https://www.youtube.com/channel/{data.get('channel_id')}"
+            if not channel_url and data.get("uploader_id"):
+                uploader_id = str(data.get("uploader_id")).strip()
+                if uploader_id.startswith("@"):
+                    channel_url = f"https://www.youtube.com/{uploader_id}"
+                elif uploader_id:
+                    channel_url = f"https://www.youtube.com/channel/{uploader_id}"
+
+            channel_thumbnail_url = data.get("channel_thumbnail") or data.get("uploader_thumbnail") or ""
+            channel_thumbnail_path = ""
+            if context == "quick" and channel_thumbnail_url:
+                preview_dir = self.launcher.cache_dir / "previews"
+                preview_dir.mkdir(parents=True, exist_ok=True)
+                channel_thumbnail_path = str(preview_dir / f"ytd_channel_{request_id}.jpg")
+                try:
+                    urllib.request.urlretrieve(channel_thumbnail_url, channel_thumbnail_path)
+                except Exception:
+                    channel_thumbnail_path = ""
+
             self.metadata_loaded.emit({
                 "request_id": request_id,
                 "context": context,
@@ -4158,9 +5136,59 @@ class MainWindow(QMainWindow):
                 "title": data.get("title") or "Без названия",
                 "uploader": data.get("uploader") or "",
                 "thumbnail_path": thumbnail_path,
+                "channel_thumbnail_path": channel_thumbnail_path,
+                "channel_url": channel_url,
             })
+            if context == "quick" and not channel_thumbnail_path and channel_url:
+                loaded_path = self.fetch_quick_channel_logo(channel_url, request_id)
+                if loaded_path:
+                    self.quick_channel_logo_loaded.emit({
+                        "request_id": request_id,
+                        "image_path": loaded_path,
+                    })
         except Exception as e:
             self.metadata_failed.emit(request_id, str(e))
+
+    def fetch_quick_channel_logo(self, channel_url: str, request_id: int) -> str:
+        channel_url = str(channel_url or "").strip().rstrip("/")
+        if not channel_url:
+            return ""
+        try:
+            cache = self.channel_cache_path(channel_url)
+            cached_image = cache.with_suffix(".jpg")
+            if cached_image.exists():
+                return str(cached_image)
+
+            result = subprocess.run(
+                self.launcher.yt_dlp_command()
+                + self.launcher.yt_dlp_js_runtime_args()
+                + ["--dump-single-json", "--skip-download", "--flat-playlist", "--playlist-items", "1", f"{channel_url}/videos"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                env=self.launcher.script_environment(),
+                timeout=18,
+            )
+            if result.returncode != 0:
+                return ""
+            data = json.loads(result.stdout)
+            title = data.get("channel") or data.get("uploader") or data.get("title") or self.channel_title_from_url(channel_url)
+            thumbnails = data.get("thumbnails") or []
+            thumbnail_url = ""
+            if thumbnails:
+                thumbnail_url = thumbnails[-1].get("url") or ""
+            if not thumbnail_url:
+                return ""
+
+            cache.parent.mkdir(parents=True, exist_ok=True)
+            cache.with_suffix(".json").write_text(json.dumps({"title": title}, ensure_ascii=False), encoding="utf-8")
+            image_path = str(cached_image)
+            urllib.request.urlretrieve(thumbnail_url, image_path)
+            return image_path
+        except Exception:
+            return ""
 
     def on_metadata_loaded(self, info: dict):
         if info.get("request_id") != self.preview_request_id:
@@ -4175,6 +5203,9 @@ class MainWindow(QMainWindow):
         widgets["uploader"].setText(f"Канал: {uploader}" if uploader else "")
         widgets["status"].setText("Готово к добавлению в очередь")
         widgets["button"].setEnabled(True)
+        if context == "quick" and self.quick_download_dialog is not None:
+            self.quick_download_dialog.update_actions(True)
+            self.quick_download_dialog.set_channel_logo(info.get("channel_thumbnail_path") or "")
 
         thumbnail_path = info.get("thumbnail_path")
         if thumbnail_path:
@@ -4183,6 +5214,12 @@ class MainWindow(QMainWindow):
                 thumbnail = widgets["thumbnail"]
                 thumbnail.setText("")
                 thumbnail.setPixmap(pixmap.scaled(thumbnail.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+
+    def on_quick_channel_logo_loaded(self, info: dict):
+        if info.get("request_id") != self.preview_request_id:
+            return
+        if self.quick_download_dialog is not None:
+            self.quick_download_dialog.set_channel_logo(info.get("image_path") or "")
 
     def on_metadata_failed(self, request_id: int, message: str):
         if request_id != self.preview_request_id:
@@ -4193,40 +5230,58 @@ class MainWindow(QMainWindow):
         if context == "queue":
             self.current_preview = {}
         widgets["button"].setEnabled(self._looks_like_youtube_url(widgets["input"].text().strip()))
+        if context == "quick" and self.quick_download_dialog is not None:
+            self.quick_download_dialog.update_actions(self._looks_like_youtube_url(widgets["input"].text().strip()))
+            self.quick_download_dialog.set_channel_logo("")
         widgets["title"].setText("Не удалось прочитать видео")
         widgets["status"].setText(f"{message}\nМожно добавить ссылку в очередь без предпросмотра.")
 
-    def add_video_to_queue(self, context: str = "queue"):
+    def add_video_to_queue(self, context: str = "queue", *, front: bool = False, clear_after: bool = True, quiet: bool = False):
         widgets = self._preview_widgets(context)
         preview = self.current_previews.get(context, {})
         url = (preview.get("url") or widgets["input"].text()).strip()
         if not self._looks_like_youtube_url(url):
-            QMessageBox.warning(self, "Очередь", "Нужна ссылка на YouTube-видео")
-            return
+            if not quiet:
+                QMessageBox.warning(self, "Очередь", "Нужна ссылка на YouTube-видео")
+            return False
 
         video_id = (preview.get("video_id") or self.youtube_video_id_from_url(url)).strip()
         if video_id and self.archive_contains_video(video_id):
-            QMessageBox.information(self, "Очередь", "Это видео уже есть в архиве")
+            if not quiet:
+                QMessageBox.information(self, "Очередь", "Это видео уже есть в архиве")
             widgets["status"].setText("Видео уже есть в архиве")
-            return
+            return False
 
         queued = self._read_queue()
         queued_ids = {self.youtube_video_id_from_url(item) for item in queued}
         if url in queued or (video_id and video_id in queued_ids):
-            QMessageBox.information(self, "Очередь", "Это видео уже есть в очереди")
-            return
+            if not front:
+                if not quiet:
+                    QMessageBox.information(self, "Очередь", "Это видео уже есть в очереди")
+                return False
+            queued = [
+                item for item in queued
+                if item != url and (not video_id or self.youtube_video_id_from_url(item) != video_id)
+            ]
 
         try:
             self.launcher.queue_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.launcher.queue_file, "a", encoding="utf-8") as f:
-                f.write(url + "\n")
+            if front:
+                self._save_queue([url] + queued)
+            else:
+                with open(self.launcher.queue_file, "a", encoding="utf-8") as f:
+                    f.write(url + "\n")
             self.refresh_queue()
             self.refresh_overview()
-            widgets["input"].clear()
-            self._clear_video_preview(context)
-            widgets["status"].setText("Добавлено в очередь")
+            if clear_after:
+                widgets["input"].clear()
+                self._clear_video_preview(context)
+            widgets["status"].setText("Поставлено первым в очередь" if front else "Добавлено в очередь")
+            return True
         except Exception as e:
-            QMessageBox.warning(self, "Очередь", str(e))
+            if not quiet:
+                QMessageBox.warning(self, "Очередь", str(e))
+            return False
 
     def refresh_queue(self):
         self.queue_list.clear()
@@ -4339,7 +5394,7 @@ class MainWindow(QMainWindow):
             return False
         try:
             if self.launcher.archive_file.exists():
-                for line in self.launcher.archive_file.read_text(encoding="utf-8", errors="ignore").splitlines():
+                for line in read_text_for_display(self.launcher.archive_file).splitlines():
                     if video_id in line.split():
                         return True
         except Exception:
@@ -4347,7 +5402,7 @@ class MainWindow(QMainWindow):
         try:
             if self.launcher.archive_details_file.exists():
                 needle = f'"video_id":"{video_id}"'
-                for line in self.launcher.archive_details_file.read_text(encoding="utf-8", errors="ignore").splitlines():
+                for line in read_text_for_display(self.launcher.archive_details_file).splitlines():
                     if needle in line.replace(" ", ""):
                         return True
         except Exception:
@@ -4358,7 +5413,7 @@ class MainWindow(QMainWindow):
         if not path.exists():
             return 0
         count = 0
-        for line in path.read_text(encoding="utf-8-sig", errors="ignore").splitlines():
+        for line in read_text_for_display(path).splitlines():
             text = line.strip()
             if not text:
                 continue
@@ -4381,16 +5436,17 @@ class MainWindow(QMainWindow):
     def _tail_text(self, path: Path, lines: int):
         if not path or not path.exists():
             return ""
-        data = path.read_text(encoding="utf-8", errors="ignore").splitlines()
-        return "\n".join(data[-lines:])
+        data = read_text_for_display(path).splitlines()
+        return "\n".join(fix_mojibake(item) for item in data[-lines:])
 
     def _last_interesting_line(self, path: Path):
         if not path or not path.exists():
             return "нет"
         interesting = ("Найдено", "Новых видео", "Отправлено", "Не отправлено", "Видео перемещено", "Жатва завершена")
-        for line in reversed(path.read_text(encoding="utf-8", errors="ignore").splitlines()):
-            if any(marker in line for marker in interesting):
-                return line.strip()
+        for line in reversed(read_text_for_display(path).splitlines()):
+            text = fix_mojibake(line).strip()
+            if any(marker in text for marker in interesting):
+                return text
         return "нет"
 
 
@@ -4483,6 +5539,9 @@ def run_yt_dlp_helper(args: list[str]) -> int:
 
 
 if __name__ == "__main__":
+    if len(sys.argv) >= 2 and sys.argv[1] == "--quick-download":
+        raise SystemExit(write_quick_download_request())
+
     if len(sys.argv) >= 2 and sys.argv[1] == "--run-yt-dlp":
         raise SystemExit(run_yt_dlp_helper(sys.argv[2:]))
 

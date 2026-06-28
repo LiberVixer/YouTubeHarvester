@@ -10,9 +10,10 @@ permissions:
   contents: write
 
 env:
-  APP_VERSION: 0.2.4-beta
-  DEB_VERSION: 0.2.4~beta
-  MSI_VERSION: 0.2.4
+  APP_VERSION: 0.2.5-beta
+  DEB_VERSION: 0.2.5~beta
+  MSI_VERSION: 0.2.5
+  RELEASE_TITLE: YouTube Harvester 0.2.5 Beta
 
 jobs:
   linux:
@@ -48,6 +49,8 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          name: ${{ env.RELEASE_TITLE }}
+          prerelease: false
           body_path: docs/releases/${{ env.APP_VERSION }}.md
           files: |
             dist/release/YouTubeHarvester_${{ env.APP_VERSION }}_linux_all.deb
@@ -101,6 +104,8 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          name: ${{ env.RELEASE_TITLE }}
+          prerelease: false
           body_path: docs/releases/${{ env.APP_VERSION }}.md
           files: |
             dist/release/YouTubeHarvester_${{ env.APP_VERSION }}_windows_portable.zip

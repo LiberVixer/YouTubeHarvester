@@ -12,8 +12,8 @@ if not exist "%WHEELHOUSE%" (
     echo Wheelhouse not found: "%WHEELHOUSE%"
     echo.
     echo Put the wheelhouse folder next to the source folder:
-    echo   YouTubeHarvester-0.2.4-beta-offline\wheelhouse
-    echo   YouTubeHarvester-0.2.4-beta-offline\source
+    echo   YouTubeHarvester-0.2.5-beta-offline\wheelhouse
+    echo   YouTubeHarvester-0.2.5-beta-offline\source
     exit /b 1
 )
 
@@ -21,8 +21,8 @@ if not exist "%FFMPEG_DIR%\ffmpeg.exe" if not exist "%FFMPEG_DIR%\bin\ffmpeg.exe
     echo ffmpeg/ffprobe not found: "%FFMPEG_DIR%"
     echo.
     echo Put Windows x64 ffmpeg files next to the source folder:
-    echo   YouTubeHarvester-0.2.4-beta-offline\ffmpeg\bin\ffmpeg.exe
-    echo   YouTubeHarvester-0.2.4-beta-offline\ffmpeg\bin\ffprobe.exe
+    echo   YouTubeHarvester-0.2.5-beta-offline\ffmpeg\bin\ffmpeg.exe
+    echo   YouTubeHarvester-0.2.5-beta-offline\ffmpeg\bin\ffprobe.exe
     echo.
     echo Or set FFMPEG_DIR to a folder that contains ffmpeg.exe and ffprobe.exe.
     exit /b 1
@@ -38,7 +38,7 @@ if not exist "%DENO_DIR%\deno.exe" if not exist "%DENO_DIR%\bin\deno.exe" (
     echo Deno not found: "%DENO_DIR%"
     echo.
     echo Put Windows x64 deno next to the source folder:
-    echo   YouTubeHarvester-0.2.4-beta-offline\deno\deno.exe
+    echo   YouTubeHarvester-0.2.5-beta-offline\deno\deno.exe
     echo.
     echo Or set DENO_DIR to a folder that contains deno.exe.
     exit /b 1
@@ -52,7 +52,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%SOURCE_DIR%packaging\windo
 if errorlevel 1 exit /b %errorlevel%
 
 if not exist "%WINDOWS_RELEASE%" mkdir "%WINDOWS_RELEASE%"
-copy /Y "%SOURCE_DIR%dist\release\YouTubeHarvester_0.2.4-beta_windows*" "%WINDOWS_RELEASE%\" >nul 2>nul
+copy /Y "%SOURCE_DIR%dist\release\YouTubeHarvester_0.2.5-beta_windows*" "%WINDOWS_RELEASE%\" >nul 2>nul
 copy /Y "%SOURCE_DIR%dist\release\SHA256SUMS-windows.txt" "%WINDOWS_RELEASE%\" >nul 2>nul
 
 echo.
