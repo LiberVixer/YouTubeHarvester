@@ -2,6 +2,37 @@
 
 All notable changes to **YouTube Harvester** are documented here.
 
+## [1.0.0] - 2026-07-02
+
+### Added
+
+- First stable release of YouTube Harvester.
+- New README with full Linux/Windows usage, launch keys, build instructions,
+  Telegram setup, hotkey notes, release assets, and responsible-use notes.
+- New release notes and refreshed screenshot/placeholder assets for the 1.0.0
+  GitHub release.
+
+### Changed
+
+- Application, Linux package, Windows installers, GitHub Actions, offline build
+  docs, and release publishing defaults now use `1.0.0`.
+- Shared runtime helpers were moved into `yth_common.py` and included in Linux,
+  Windows, and source release artifacts.
+- Quick-download startup now uses a single-instance handoff instead of spawning
+  duplicate tray processes.
+- Source release packaging includes the shared helper even before it is tracked
+  by git during local release builds.
+
+### Fixed
+
+- Telegram delivery errors no longer block saving a successfully downloaded file
+  locally.
+- Downloader exit code now reports failed items correctly.
+- Temporary folder cleanup is guarded by a marker and path checks to avoid
+  unsafe deletion.
+- Windows/PyInstaller helper scripts can import project runtime helpers.
+- GitHub Actions validation includes `yth_common.py`.
+
 ## [0.2.5-beta] - 2026-06-28
 
 ### English

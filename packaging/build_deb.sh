@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PACKAGE="yt-harvester"
-VERSION="${1:-0.2.5~beta}"
+VERSION="${1:-1.0.0}"
 ARCH="all"
 BUILD_DIR="$ROOT_DIR/dist/deb-build"
 PKG_DIR="$BUILD_DIR/${PACKAGE}_${VERSION}_${ARCH}"
@@ -17,6 +17,7 @@ rm -rf "$PKG_DIR"
 mkdir -p "$APP_DIR/assets" "$APP_DIR/scripts" "$BIN_DIR" "$DESKTOP_DIR" "$ICON_DIR" "$DOC_DIR" "$PKG_DIR/DEBIAN"
 
 install -m 0755 "$ROOT_DIR/tray_launcher.py" "$APP_DIR/tray_launcher.py"
+install -m 0644 "$ROOT_DIR/yth_common.py" "$APP_DIR/yth_common.py"
 install -m 0755 "$ROOT_DIR/run_download.sh" "$APP_DIR/run_download.sh"
 install -m 0755 "$ROOT_DIR/start_tray.sh" "$APP_DIR/start_tray.sh"
 install -m 0755 "$ROOT_DIR/scripts/downloader.py" "$APP_DIR/scripts/downloader.py"

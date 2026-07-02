@@ -328,6 +328,7 @@ $pyInstallerArgs = @(
     "--name", "YouTubeHarvester",
     "--icon", "$IconIco",
     "--collect-all", "yt_dlp",
+    "--add-data", "$RootDir\yth_common.py;.",
     "--add-data", "$RootDir\assets;assets",
     "--add-data", "$RootDir\scripts;scripts",
     "--add-binary", "$FfmpegBinDir\ffmpeg.exe;ffmpeg",

@@ -3,13 +3,16 @@
 
 import argparse
 import json
-import os
 import re
-import shutil
-import shlex
 import subprocess
 import sys
 from pathlib import Path
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+from yth_common import deno_runtime_arg, utf8_subprocess_env, yt_dlp_command  # noqa: E402
 
 
 VIDEO_ID_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")
@@ -30,47 +33,6 @@ def channel_section_url(channel: str, section: str) -> str:
     return channel.strip().rstrip("/") + "/" + section
 
 
-def yt_dlp_command() -> list[str]:
-    configured_json = os.environ.get("YTD_YT_DLP_COMMAND_JSON", "").strip()
-    if configured_json:
-        try:
-            configured = json.loads(configured_json)
-            if isinstance(configured, list) and all(isinstance(item, str) for item in configured):
-                return configured
-        except json.JSONDecodeError:
-            pass
-    configured = os.environ.get("YTD_YT_DLP_COMMAND", "").strip()
-    if configured:
-        try:
-            parts = shlex.split(configured, posix=(os.name != "nt"))
-            if os.name == "nt":
-                parts = [part[1:-1] if len(part) >= 2 and part[0] == part[-1] == '"' else part for part in parts]
-            return parts
-        except ValueError:
-            return [configured]
-    found = shutil.which("yt-dlp")
-    return [found] if found else []
-
-
-def deno_runtime_arg() -> str:
-    configured = os.environ.get("YTD_DENO_PATH", "").strip()
-    if configured and Path(configured).is_file():
-        return f"deno:{configured}"
-    found = shutil.which("deno")
-    if found:
-        return f"deno:{found}"
-    return "deno"
-
-
-def utf8_subprocess_env() -> dict[str, str]:
-    env = os.environ.copy()
-    env["PYTHONUTF8"] = "1"
-    env["PYTHONIOENCODING"] = "utf-8:replace"
-    env["PYTHONLEGACYWINDOWSSTDIO"] = "0"
-    env["PYTHONUNBUFFERED"] = "1"
-    return env
-
-
 def collect_ids(yt_dlp: list[str], channel: str, section: str, limit: int) -> tuple[list[str], str]:
     url = channel_section_url(channel, section)
     command = yt_dlp + [
@@ -88,8 +50,7 @@ def collect_ids(yt_dlp: list[str], channel: str, section: str, limit: int) -> tu
     try:
         result = subprocess.run(
             command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             text=True,
             encoding="utf-8",
             errors="replace",
@@ -160,7 +121,7 @@ def main() -> int:
     parser.add_argument("--streams-limit", type=positive_int, default=5)
     args = parser.parse_args()
 
-    yt_dlp = yt_dlp_command()
+    yt_dlp = yt_dlp_command(allow_missing=False)
     if not yt_dlp:
         print("yt-dlp не найден", file=sys.stderr)
         return 2

@@ -1,28 +1,41 @@
 #!/usr/bin/env python3
-"""Experimental Python downloader engine for YouTube Harvester.
+"""Python downloader engine for YouTube Harvester.
 
-The stable engine is still run_download.sh. This file mirrors the same public
-contract: status.json, queue.txt, yt_archive.txt, archive_details.jsonl and the
-same YTD_* environment variables.
+It writes the public runtime contract used by the GUI: status.json, queue.txt,
+yt_archive.txt, archive_details.jsonl and the same YTD_* environment variables.
 """
 
 from __future__ import annotations
 
 import datetime as _dt
-import glob
+import contextlib
+import hashlib
 import html
 import json
 import os
 import re
-import shlex
 import shutil
 import subprocess
 import sys
-import tempfile
 import time
-import urllib.parse
 import urllib.request
 from pathlib import Path
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+from yth_common import (  # noqa: E402
+    SingleInstanceLock,
+    extract_video_id,
+    fix_mojibake,
+    positive_int,
+    read_env_file,
+    safe_print,
+    truthy,
+    utf8_subprocess_env,
+    yt_dlp_command,
+)
 
 
 TYPE_LABELS = {
@@ -43,200 +56,11 @@ MISSING_PAGE_RE = re.compile(
 )
 
 
-def truthy(value: str | None) -> bool:
-    return str(value or "").strip().lower() in {"1", "true", "yes", "on", "да"}
-
-
-def positive_int(value: str | None, default: int) -> int:
-    try:
-        parsed = int(str(value or "").strip())
-    except ValueError:
-        return default
-    return parsed if parsed > 0 else default
-
-
-MOJIBAKE_HINTS = (
-    "Рџ", "Р’", "Рђ", "РЅ", "Р°", "Рµ", "Рё", "Рѕ", "СЂ", "СЃ", "С‚", "СЊ",
-    "Ð", "Ñ", "вЂ", "вњ", "вљ", "рџ", "�",
-)
-
-
-def text_quality(text: str) -> int:
-    cyrillic = sum(1 for char in text if "\u0400" <= char <= "\u04ff")
-    emoji = sum(1 for char in text if ord(char) >= 0x1F000)
-    bad = sum(text.count(marker) for marker in MOJIBAKE_HINTS)
-    bad += text.count("\ufffd") * 3
-    return cyrillic + emoji * 2 - bad * 8
-
-
-def fix_mojibake(value: str) -> str:
-    if not isinstance(value, str) or not any(marker in value for marker in MOJIBAKE_HINTS):
-        return value
-    best = value
-    best_score = text_quality(value)
-    for encoding in ("cp1251", "latin1"):
-        try:
-            candidate = value.encode(encoding).decode("utf-8")
-        except UnicodeError:
-            continue
-        score = text_quality(candidate)
-        if score > best_score + 2:
-            best = candidate
-            best_score = score
-    return best
-
-
-def safe_print(message: object, *, file=None) -> None:
-    stream = file if file is not None else sys.stdout
-    if stream is None:
-        return
-    text = fix_mojibake(str(message))
-    try:
-        print(text, file=stream)
-    except UnicodeEncodeError:
-        encoding = getattr(stream, "encoding", None) or "ascii"
-        safe_text = text.encode(encoding, errors="replace").decode(encoding, errors="replace")
-        print(safe_text, file=stream)
-
-
-def env_quote_value(line: str) -> tuple[str, str] | None:
-    text = line.strip()
-    if not text or text.startswith("#"):
-        return None
-    if text.startswith("export "):
-        text = text[7:].strip()
-    try:
-        parts = shlex.split(text, comments=False, posix=True)
-    except ValueError:
-        parts = [text]
-    if not parts or "=" not in parts[0]:
-        return None
-    key, value = parts[0].split("=", 1)
-    return key.strip(), value
-
-
-def read_env_file(path: Path) -> dict[str, str]:
-    values: dict[str, str] = {}
-    if not path.exists():
-        return values
-    try:
-        text = path.read_text(encoding="utf-8-sig", errors="ignore").replace("\r\n", "\n")
-    except OSError:
-        return values
-    for line in text.splitlines():
-        item = env_quote_value(line)
-        if item:
-            values[item[0]] = item[1]
-    return values
-
-
-def yt_dlp_command() -> list[str]:
-    configured_json = os.environ.get("YTD_YT_DLP_COMMAND_JSON", "").strip()
-    if configured_json:
-        try:
-            configured = json.loads(configured_json)
-            if isinstance(configured, list) and all(isinstance(item, str) for item in configured):
-                return configured
-        except json.JSONDecodeError:
-            pass
-    configured = os.environ.get("YTD_YT_DLP_COMMAND", "").strip()
-    if configured:
-        try:
-            parts = shlex.split(configured, posix=(os.name != "nt"))
-            if os.name == "nt":
-                parts = [part[1:-1] if len(part) >= 2 and part[0] == part[-1] == '"' else part for part in parts]
-            return parts
-        except ValueError:
-            return [configured]
-    found = shutil.which("yt-dlp")
-    return [found] if found else ["yt-dlp"]
-
-
-def utf8_subprocess_env() -> dict[str, str]:
-    env = os.environ.copy()
-    env["PYTHONUTF8"] = "1"
-    env["PYTHONIOENCODING"] = "utf-8:replace"
-    env["PYTHONLEGACYWINDOWSSTDIO"] = "0"
-    env["PYTHONUNBUFFERED"] = "1"
-    return env
-
-
 def short_channel_name(channel: str) -> str:
     text = channel.rstrip("/")
     if "/@" in text:
         return text.rsplit("/@", 1)[-1]
     return text.rsplit("/", 1)[-1]
-
-
-def extract_video_id(url: str) -> str:
-    try:
-        parsed = urllib.parse.urlparse(url.strip())
-        if parsed.netloc.lower().endswith("youtu.be"):
-            candidate = parsed.path.strip("/").split("/")[0]
-            if len(candidate) == 11:
-                return candidate
-        query = urllib.parse.parse_qs(parsed.query)
-        candidate = (query.get("v") or [""])[0]
-        if len(candidate) == 11:
-            return candidate
-        parts = [part for part in parsed.path.split("/") if part]
-        for marker in ("shorts", "live", "embed"):
-            if marker in parts:
-                index = parts.index(marker)
-                if index + 1 < len(parts) and len(parts[index + 1]) == 11:
-                    return parts[index + 1]
-    except Exception:
-        return ""
-    return ""
-
-
-class SingleInstanceLock:
-    def __init__(self) -> None:
-        lock_dir = Path(tempfile.gettempdir())
-        self.path = lock_dir / "yt_harvester.lock"
-        self.handle = None
-
-    def acquire(self) -> bool:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.handle = self.path.open("a+")
-        try:
-            if os.name == "nt":
-                import msvcrt
-
-                try:
-                    msvcrt.locking(self.handle.fileno(), msvcrt.LK_NBLCK, 1)
-                except OSError:
-                    return False
-            else:
-                import fcntl
-
-                try:
-                    fcntl.flock(self.handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-                except OSError:
-                    return False
-        except Exception:
-            return True
-        return True
-
-    def release(self) -> None:
-        if not self.handle:
-            return
-        try:
-            if os.name == "nt":
-                import msvcrt
-
-                self.handle.seek(0)
-                msvcrt.locking(self.handle.fileno(), msvcrt.LK_UNLCK, 1)
-            else:
-                import fcntl
-
-                fcntl.flock(self.handle.fileno(), fcntl.LOCK_UN)
-        except Exception:
-            pass
-        try:
-            self.handle.close()
-        except Exception:
-            pass
 
 
 class Downloader:
@@ -259,6 +83,7 @@ class Downloader:
         self.ffmpeg_dir = self.detect_ffmpeg_dir()
         self.deno_path = self.detect_deno_path()
         self.log_file = Path(os.environ.get("YTD_LOG_FILE", self.data_dir / "download.log"))
+        self.temp_marker_file = self.temp_dir / ".yth-temp"
 
         env_values = read_env_file(self.env_file)
         merged = dict(env_values)
@@ -366,8 +191,17 @@ class Downloader:
         for path in (self.channels_file, self.archive_file, self.archive_details_file, self.log_file, self.queue_file):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.touch(exist_ok=True)
-        try:
+        self.ensure_temp_marker()
+        with contextlib.suppress(OSError):
             self.stop_file.unlink(missing_ok=True)
+
+    def ensure_temp_marker(self) -> None:
+        try:
+            if self.temp_marker_file.exists():
+                return
+            has_files = any(self.temp_dir.iterdir())
+            if not has_files:
+                self.temp_marker_file.write_text("YouTube Harvester temp directory\n", encoding="utf-8")
         except OSError:
             pass
 
@@ -478,9 +312,7 @@ class Downloader:
         value = rules.get(type_name, True)
         if value is False:
             return False
-        if isinstance(value, str) and value.strip().lower() in {"0", "false", "no", "off"}:
-            return False
-        return True
+        return not (isinstance(value, str) and value.strip().lower() in {"0", "false", "no", "off"})
 
     def archive_has_video(self, video_id: str) -> bool:
         if not video_id:
@@ -744,7 +576,7 @@ class Downloader:
                 if re.search(r"\.f[0-9]+\.mp4$", item):
                     continue
                 found.add(Path(item))
-        return sorted(found, key=lambda item: str(item))
+        return sorted(found, key=str)
 
     def downloaded_files_from_temp(self, expected_type: str) -> list[Path]:
         found: list[Path] = []
@@ -774,7 +606,7 @@ class Downloader:
             found.setdefault(str(path.resolve()), path)
         if missing_from_log and fallback_files:
             self.log("   🧭 Готовый файл найден в temp по фактическому имени")
-        return sorted(found.values(), key=lambda item: str(item))
+        return sorted(found.values(), key=str)
 
     def unique_final_path(self, basename: str) -> Path:
         basename = self.short_final_basename(basename)
@@ -798,8 +630,14 @@ class Downloader:
             return basename
         suffix = Path(basename).suffix
         stem = Path(basename).stem
-        keep = max(40, budget - len(suffix))
-        return stem[:keep].rstrip(" .") + suffix
+        digest = hashlib.sha1(basename.encode("utf-8", errors="replace")).hexdigest()[:8]
+        if budget <= len(suffix) + 12:
+            return f"YTH_{digest}{suffix or '.mp4'}"
+        keep = max(1, budget - len(suffix) - len(digest) - 1)
+        shortened = f"{stem[:keep].rstrip(' .')}_{digest}{suffix}"
+        if len(shortened) > budget and len(suffix) < budget:
+            shortened = shortened[: budget - len(suffix)].rstrip(" .") + suffix
+        return shortened
 
     def process_type_lines(self, lines: list[str], channel_link: str, channel_name: str, expected_type: str) -> int:
         files = self.downloaded_files(lines, expected_type)
@@ -834,10 +672,8 @@ class Downloader:
             self.progress_bucket = "100"
             self.set_type_status(status_type, "downloading")
             self.write_status()
-            try:
+            with contextlib.suppress(OSError):
                 self.last_download_file.write_text(str(int(time.time())) + "\n", encoding="utf-8")
-            except OSError:
-                pass
 
             self.log(f"   🔔 Найдено новое видео ({title})")
             self.log("   ⏬ Видео скачено")
@@ -849,30 +685,25 @@ class Downloader:
 
             if not self.telegram_enabled:
                 self.log("   🔕 Telegram отключён")
-                sent_ok = True
             else:
-                sent_ok = self.send_telegram_message(post)
-                if sent_ok:
+                if self.send_telegram_message(post):
                     self.log("   📨 Отправлено в канал")
                 else:
                     self.log("   ❌ Не отправлено в канал")
+                    self.log("   📁 Telegram не помешает сохранению файла")
                     self.failed_count += 1
-                    self.remove_video_from_archive(video_id)
 
-            if sent_ok:
-                try:
-                    self.final_dir.mkdir(parents=True, exist_ok=True)
-                    final_path = self.unique_final_path(basename)
-                    shutil.move(str(file_path), str(final_path))
-                    self.append_archive_details(video_id, video_url, title, uploader, channel_link, status_type, final_path)
-                    self.downloaded_counts[status_type] = self.downloaded_counts.get(status_type, 0) + 1
-                    self.log(f"   ⚓ Видео перемещено: {final_path}")
-                except Exception as exc:
-                    self.log(f"   ❌ Видео не перемещено: {exc}")
-                    self.failed_count += 1
-                    self.remove_video_from_archive(video_id)
-            else:
-                self.log(f"   ⚠️ Файл оставлен во временной папке: {basename}")
+            try:
+                self.final_dir.mkdir(parents=True, exist_ok=True)
+                final_path = self.unique_final_path(basename)
+                shutil.move(str(file_path), str(final_path))
+                self.append_archive_details(video_id, video_url, title, uploader, channel_link, status_type, final_path)
+                self.downloaded_counts[status_type] = self.downloaded_counts.get(status_type, 0) + 1
+                self.log(f"   ⚓ Видео перемещено: {final_path}")
+            except Exception as exc:
+                self.log(f"   ❌ Видео не перемещено: {exc}")
+                self.failed_count += 1
+                self.remove_video_from_archive(video_id)
 
             self.set_type_status(status_type, "done")
             self.state = "searching"
@@ -966,9 +797,9 @@ class Downloader:
         self.channels_total = len(channels)
         self.channels_checked = 0
         self.write_status()
-        for channel in channels:
+        for raw_channel in channels:
             self.check_stop()
-            channel = channel.rstrip("/")
+            channel = raw_channel.rstrip("/")
             self.state = "searching"
             self.channel_url = channel
             self.channel_name = short_channel_name(channel)
@@ -1033,7 +864,12 @@ class Downloader:
         self.log("Жёсткая очистка временной папки...")
         if not self.temp_dir.exists():
             return
+        if not self.can_cleanup_temp_dir():
+            self.log(f"⚠️ Очистка временной папки пропущена: небезопасный путь {self.temp_dir}")
+            return
         for item in self.temp_dir.iterdir():
+            if item == self.temp_marker_file:
+                continue
             try:
                 if item.is_dir():
                     shutil.rmtree(item)
@@ -1041,6 +877,33 @@ class Downloader:
                     item.unlink()
             except OSError:
                 pass
+
+    def _path_contains(self, parent: Path, child: Path) -> bool:
+        try:
+            child.relative_to(parent)
+            return True
+        except ValueError:
+            return False
+
+    def can_cleanup_temp_dir(self) -> bool:
+        try:
+            temp = self.temp_dir.resolve(strict=False)
+            final = self.final_dir.resolve(strict=False)
+            forbidden = {
+                Path(temp.anchor).resolve(strict=False),
+                Path.home().resolve(strict=False),
+                self.base_dir.resolve(strict=False),
+                self.data_dir.resolve(strict=False),
+                self.config_dir.resolve(strict=False),
+                final,
+            }
+            if temp in forbidden:
+                return False
+            if self._path_contains(temp, final):
+                return False
+            return self.temp_marker_file.exists()
+        except OSError:
+            return False
 
     def rotate_logs(self, exit_code: int) -> int:
         self.log("Ротация логов...")
@@ -1061,10 +924,8 @@ class Downloader:
             pass
         logs = sorted(self.data_dir.glob("download_*.log"), key=lambda item: item.stat().st_mtime, reverse=True)
         for old_log in logs[self.log_keep_count :]:
-            try:
+            with contextlib.suppress(OSError):
                 old_log.unlink()
-            except OSError:
-                pass
         return exit_code
 
     def validate_telegram(self) -> bool:
@@ -1120,7 +981,7 @@ class Downloader:
                 self.cleanup_temp_dir()
             else:
                 self.log("🧹 Очистка временной папки отключена")
-            return self.rotate_logs(0)
+            return self.rotate_logs(1 if self.failed_count else 0)
 
         self.log(f"✳️ Найдено новых видео: {self.new_count}")
         if self.failed_count == 0:
@@ -1131,11 +992,11 @@ class Downloader:
         else:
             self.log(f"⚠️ Были ошибки обработки: {self.failed_count}")
             self.log("⚠️ Временная папка не очищена, чтобы не потерять файлы для повтора/ручной проверки")
-        return self.rotate_logs(0)
+        return self.rotate_logs(1 if self.failed_count else 0)
 
 
 def main() -> int:
-    lock = SingleInstanceLock()
+    lock = SingleInstanceLock("yt_harvester_downloader.lock")
     if not lock.acquire():
         safe_print("Already running")
         return 0

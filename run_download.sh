@@ -146,8 +146,12 @@ type_limit() {
 
 cleanup_temp_dir() {
     log_console "Жёсткая очистка временной папки..."
-    find "$TEMP_DIR" -type f -delete 2>/dev/null || true
-    rm -rf "$TEMP_DIR"/* 2>/dev/null || true
+    if [ -z "${TEMP_DIR:-}" ] || [ "$TEMP_DIR" = "/" ] || [ "$TEMP_DIR" = "$HOME" ] || [ "$TEMP_DIR" = "$FINAL_DIR" ]; then
+        log_console "⚠️ Очистка временной папки пропущена: небезопасный путь $TEMP_DIR"
+        return
+    fi
+    find "${TEMP_DIR:?}" -type f ! -name '.yth-temp' -delete 2>/dev/null || true
+    rm -rf -- "${TEMP_DIR:?}/"* 2>/dev/null || true
 }
 
 rotate_logs_and_exit() {
@@ -722,7 +726,7 @@ STATUS_CHANNELS_TOTAL=$(awk '{sub(/^\xef\xbb\xbf/, ""); gsub(/^[[:space:]]+|[[:s
 STATUS_CHANNELS_CHECKED=0
 write_status
 while IFS= read -r channel || [ -n "$channel" ]; do
-    channel=$(echo "$channel" | sed 's/^\xef\xbb\xbf//')
+	    channel=${channel#$'\xef\xbb\xbf'}
     [[ -z "$channel" || "$channel" =~ ^# ]] && continue
 
     check_stop_requested

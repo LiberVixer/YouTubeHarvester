@@ -1,6 +1,6 @@
 param(
-    [string]$Version = "0.2.5-beta",
-    [string]$MsiVersion = "0.2.5",
+    [string]$Version = "1.0.0",
+    [string]$MsiVersion = "1.0.0",
     [switch]$Offline,
     [string]$Wheelhouse = "",
     [string]$FfmpegDir = "",

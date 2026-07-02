@@ -58,10 +58,7 @@ def iter_media_files(scan_dirs: list[Path]):
     for scan_dir in scan_dirs:
         if not scan_dir.exists():
             continue
-        if scan_dir.is_file():
-            candidates = [scan_dir]
-        else:
-            candidates = scan_dir.rglob("*")
+        candidates = [scan_dir] if scan_dir.is_file() else scan_dir.rglob("*")
         for path in candidates:
             try:
                 resolved = path.resolve()
