@@ -107,12 +107,13 @@ jobs:
         run: |
           $release = Join-Path $PWD "dist\release"
           $app = Join-Path $PWD "dist\windows\YouTubeHarvester"
+          $internal = Join-Path $app "_internal"
           $exe = Join-Path $app "YouTubeHarvester.exe"
           $required = @(
             $exe,
-            (Join-Path $app "ffmpeg\ffmpeg.exe"),
-            (Join-Path $app "ffmpeg\ffprobe.exe"),
-            (Join-Path $app "deno\deno.exe"),
+            (Join-Path $internal "ffmpeg\ffmpeg.exe"),
+            (Join-Path $internal "ffmpeg\ffprobe.exe"),
+            (Join-Path $internal "deno\deno.exe"),
             (Join-Path $release "YouTubeHarvester_${env:APP_VERSION}_windows_portable.zip"),
             (Join-Path $release "YouTubeHarvester_${env:APP_VERSION}_windows_setup.exe"),
             (Join-Path $release "YouTubeHarvester_${env:APP_VERSION}_windows_x64.msi"),
@@ -139,21 +140,21 @@ jobs:
       - name: Smoke-test bundled ffmpeg
         shell: powershell
         run: |
-          $app = Join-Path $PWD "dist\windows\YouTubeHarvester"
+          $app = Join-Path $PWD "dist\windows\YouTubeHarvester\_internal"
           & (Join-Path $app "ffmpeg\ffmpeg.exe") -version
           if ($LASTEXITCODE -ne 0) { throw "Bundled ffmpeg smoke test failed: $LASTEXITCODE" }
 
       - name: Smoke-test bundled ffprobe
         shell: powershell
         run: |
-          $app = Join-Path $PWD "dist\windows\YouTubeHarvester"
+          $app = Join-Path $PWD "dist\windows\YouTubeHarvester\_internal"
           & (Join-Path $app "ffmpeg\ffprobe.exe") -version
           if ($LASTEXITCODE -ne 0) { throw "Bundled ffprobe smoke test failed: $LASTEXITCODE" }
 
       - name: Smoke-test bundled Deno
         shell: powershell
         run: |
-          $app = Join-Path $PWD "dist\windows\YouTubeHarvester"
+          $app = Join-Path $PWD "dist\windows\YouTubeHarvester\_internal"
           & (Join-Path $app "deno\deno.exe") --version
           if ($LASTEXITCODE -ne 0) { throw "Bundled Deno smoke test failed: $LASTEXITCODE" }
 
