@@ -22,7 +22,7 @@ jobs:
     name: Linux packages
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install package tools
         run: |
@@ -46,10 +46,10 @@ jobs:
           dpkg-deb --info "dist/release/YouTubeHarvester_${APP_VERSION}_linux_all.deb"
           dpkg-deb --contents "dist/release/YouTubeHarvester_${APP_VERSION}_linux_all.deb" | grep -F '/opt/yt-harvester/i18n_locales.py'
           dpkg-deb --contents "dist/release/YouTubeHarvester_${APP_VERSION}_linux_all.deb" | grep -F '/opt/yt-harvester/assets/ui.dat'
-          sha256sum --check "dist/release/SHA256SUMS-linux.txt"
+          (cd dist/release && sha256sum --check "SHA256SUMS-linux.txt")
 
       - name: Upload Linux artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: youtube-harvester-linux
           path: |
@@ -73,10 +73,10 @@ jobs:
     name: Windows packages
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -102,7 +102,7 @@ jobs:
         run: |
           powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 -Version "$env:APP_VERSION" -MsiVersion "$env:MSI_VERSION"
 
-      - name: Smoke-test Windows portable build
+      - name: Verify Windows release files
         shell: powershell
         run: |
           $release = Join-Path $PWD "dist\release"
@@ -121,19 +121,44 @@ jobs:
           foreach ($path in $required) {
             if (-not (Test-Path $path)) { throw "Missing Windows release file: $path" }
           }
-          & $exe --run-yt-dlp --version
-          if ($LASTEXITCODE -ne 0) { throw "Bundled yt-dlp smoke test failed: $LASTEXITCODE" }
-          & $exe --run-script check_channel_sections.py --help
-          if ($LASTEXITCODE -ne 0) { throw "Bundled helper smoke test failed: $LASTEXITCODE" }
+
+      - name: Smoke-test bundled yt-dlp
+        shell: powershell
+        run: |
+          $exe = Join-Path $PWD "dist\windows\YouTubeHarvester\YouTubeHarvester.exe"
+          $process = Start-Process -FilePath $exe -ArgumentList @("--run-yt-dlp", "--version") -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "Bundled yt-dlp smoke test failed: $($process.ExitCode)" }
+
+      - name: Smoke-test bundled Python helper
+        shell: powershell
+        run: |
+          $exe = Join-Path $PWD "dist\windows\YouTubeHarvester\YouTubeHarvester.exe"
+          $process = Start-Process -FilePath $exe -ArgumentList @("--run-script", "check_channel_sections.py", "--help") -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "Bundled helper smoke test failed: $($process.ExitCode)" }
+
+      - name: Smoke-test bundled ffmpeg
+        shell: powershell
+        run: |
+          $app = Join-Path $PWD "dist\windows\YouTubeHarvester"
           & (Join-Path $app "ffmpeg\ffmpeg.exe") -version
           if ($LASTEXITCODE -ne 0) { throw "Bundled ffmpeg smoke test failed: $LASTEXITCODE" }
+
+      - name: Smoke-test bundled ffprobe
+        shell: powershell
+        run: |
+          $app = Join-Path $PWD "dist\windows\YouTubeHarvester"
           & (Join-Path $app "ffmpeg\ffprobe.exe") -version
           if ($LASTEXITCODE -ne 0) { throw "Bundled ffprobe smoke test failed: $LASTEXITCODE" }
+
+      - name: Smoke-test bundled Deno
+        shell: powershell
+        run: |
+          $app = Join-Path $PWD "dist\windows\YouTubeHarvester"
           & (Join-Path $app "deno\deno.exe") --version
           if ($LASTEXITCODE -ne 0) { throw "Bundled Deno smoke test failed: $LASTEXITCODE" }
 
       - name: Upload Windows artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: youtube-harvester-windows
           path: |
