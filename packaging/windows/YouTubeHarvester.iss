@@ -2,7 +2,7 @@
 #define MyAppPublisher "YouTube Harvester"
 #define MyAppExeName "YouTubeHarvester.exe"
 #ifndef AppVersion
-#define AppVersion "1.1.0"
+#define AppVersion "1.1.1"
 #endif
 #ifndef SourceDir
 #define SourceDir "..\..\dist\windows\YouTubeHarvester"

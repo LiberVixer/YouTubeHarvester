@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.0
+# YouTube Harvester 1.1.1
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="Logotipo de YouTube Harvester" width="128">
@@ -21,6 +21,8 @@
   a Telegram.
 </p>
 
+> **UPD 1.1.1:** Se han corregido pequeños detalles.
+
 ![Descripción general de YouTube Harvester](docs/screenshots/es/overview.png)
 
 ## Descripción
@@ -30,7 +32,7 @@ vídeos, Shorts y emisiones con `yt-dlp`. También admite enlaces individuales,
 mantiene un archivo local, muestra informes y puede enviar notificaciones o
 archivos a Telegram.
 
-La versión `1.1.0` usa el motor Python tanto en Linux como en Windows. El antiguo
+La versión `1.1.1` usa el motor Python tanto en Linux como en Windows. El antiguo
 motor Bash permanece en el código fuente únicamente como código heredado y
 desactivado.
 
@@ -78,12 +80,12 @@ desactivado.
 Los paquetes se publican en
 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases).
 
-Linux: `YouTubeHarvester_1.1.0_linux_all.deb`,
-`YouTubeHarvester_1.1.0_source.tar.gz` y `SHA256SUMS-linux.txt`.
+Linux: `YouTubeHarvester_1.1.1_linux_all.deb`,
+`YouTubeHarvester_1.1.1_source.tar.gz` y `SHA256SUMS-linux.txt`.
 
-Windows: `YouTubeHarvester_1.1.0_windows_setup.exe`,
-`YouTubeHarvester_1.1.0_windows_x64.msi`,
-`YouTubeHarvester_1.1.0_windows_portable.zip` y `SHA256SUMS-windows.txt`.
+Windows: `YouTubeHarvester_1.1.1_windows_setup.exe`,
+`YouTubeHarvester_1.1.1_windows_x64.msi`,
+`YouTubeHarvester_1.1.1_windows_portable.zip` y `SHA256SUMS-windows.txt`.
 
 Las compilaciones para Windows incluyen `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` y
 `deno.exe`.
@@ -91,7 +93,7 @@ Las compilaciones para Windows incluyen `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` y
 ## Instalación en Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.0_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.1_linux_all.deb
 yt-harvester
 ```
 
@@ -183,12 +185,12 @@ localmente.
 ## Compilación
 
 ```bash
-packaging/build_release.sh 1.1.0 1.1.0
+packaging/build_release.sh 1.1.1 1.1.1
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.0 -MsiVersion 1.1.0
+  -Version 1.1.1 -MsiVersion 1.1.1
 ```
 
 ## Uso responsable

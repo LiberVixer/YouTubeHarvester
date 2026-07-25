@@ -19,6 +19,7 @@ import subprocess
 import sys
 import time
 import urllib.request
+from collections.abc import Callable
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -62,6 +63,7 @@ MEMBERS_ONLY_RE = re.compile(
 PAID_CONTENT_STATUS_KEY = "paid_content_status"
 PAID_CONTENT_HAS = "has_paid"
 MIN_FREE_SPACE_MB = 1024
+PLAYLIST_ITEM_RE = re.compile(r"^\[download\] Downloading item \d+ of \d+")
 
 
 def short_channel_name(channel: str) -> str:
@@ -605,8 +607,15 @@ class Downloader:
                     self.video_thumbnail = thumb
             self.write_status()
 
-    def run_yt_dlp(self, command: list[str], type_name: str) -> list[str]:
+    def run_yt_dlp(
+        self,
+        command: list[str],
+        type_name: str,
+        item_completed: Callable[[list[str]], None] | None = None,
+    ) -> list[str]:
         lines: list[str] = []
+        item_lines: list[str] = []
+        playlist_item_started = False
         try:
             proc = subprocess.Popen(
                 command,
@@ -623,9 +632,38 @@ class Downloader:
             self.failed_count += 1
             return lines
 
+        def finish_item(completed_lines: list[str]) -> None:
+            if item_completed is None or not completed_lines:
+                return
+            try:
+                item_completed(list(completed_lines))
+            except Exception as exc:
+                self.failed_count += 1
+                self.log(f"   ❌ Ошибка обработки готового видео: {exc}")
+
+            if not self.stop_file.exists():
+                return
+            if proc.poll() is None:
+                with contextlib.suppress(OSError):
+                    proc.terminate()
+                try:
+                    proc.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    with contextlib.suppress(OSError):
+                        proc.kill()
+                    with contextlib.suppress(OSError):
+                        proc.wait(timeout=5)
+            raise KeyboardInterrupt
+
         assert proc.stdout is not None
         for raw_line in proc.stdout:
             line = fix_mojibake(raw_line.rstrip("\n"))
+            if item_completed is not None and PLAYLIST_ITEM_RE.match(line):
+                if playlist_item_started:
+                    finish_item(item_lines)
+                    item_lines = []
+                playlist_item_started = True
+
             self.update_status_from_line(line, type_name)
             if not re.match(r"^\[download\]\s+[0-9]+(?:\.[0-9]+)?%", line):
                 if self.is_members_only_line(line):
@@ -633,9 +671,13 @@ class Downloader:
                     self.set_channel_paid_content_status(self.channel_url, PAID_CONTENT_HAS)
                     self.log(message)
                     lines.append(message)
+                    if playlist_item_started:
+                        item_lines.append(message)
                 else:
                     self.log(line)
                     lines.append(line)
+                    if playlist_item_started:
+                        item_lines.append(line)
         return_code = proc.wait()
         if return_code != 0:
             if self.output_is_members_only_only(lines):
@@ -643,6 +685,8 @@ class Downloader:
             else:
                 self.failed_count += 1
                 self.log(f"   ❌ yt-dlp завершился с кодом {return_code}")
+        if item_completed is not None:
+            finish_item(item_lines if playlist_item_started else lines)
         return lines
 
     def is_members_only_line(self, line: str) -> bool:
@@ -746,7 +790,15 @@ class Downloader:
             shortened = shortened[: budget - len(suffix)].rstrip(" .") + suffix
         return shortened
 
-    def process_type_lines(self, lines: list[str], channel_link: str, channel_name: str, expected_type: str) -> int:
+    def process_type_lines(
+        self,
+        lines: list[str],
+        channel_link: str,
+        channel_name: str,
+        expected_type: str,
+        *,
+        check_stop_after: bool = True,
+    ) -> int:
         files = self.downloaded_files(lines, expected_type)
         if not files:
             return 0
@@ -816,7 +868,8 @@ class Downloader:
             self.state = "searching"
             self.reset_progress()
             self.write_status()
-            self.check_stop()
+            if check_stop_after:
+                self.check_stop()
             time.sleep(3)
         return processed
 
@@ -951,8 +1004,17 @@ class Downloader:
                 output_template = str(self.temp_dir / f"%(title).150s - %(uploader).80s [%(id)s] [{type_name}] [%(height)sp].%(ext)s")
                 command = self.yt_dlp_base_command(output_template)
                 command.extend(["--playlist-items", f"1-{self.type_limit(type_name)}", f"{channel}/{type_name}"])
-                lines = self.run_yt_dlp(command, type_name)
-                self.process_type_lines(lines, channel, self.channel_name, type_name)
+                lines = self.run_yt_dlp(
+                    command,
+                    type_name,
+                    item_completed=lambda completed_lines: self.process_type_lines(
+                        completed_lines,
+                        channel,
+                        self.channel_name,
+                        type_name,
+                        check_stop_after=False,
+                    ),
+                )
 
                 if self.new_count == before:
                     if any(MISSING_PAGE_RE.search(line) for line in lines):

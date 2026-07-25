@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.0
+# YouTube Harvester 1.1.1
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="Логотип YouTube Harvester" width="128">
@@ -21,6 +21,8 @@
   необязательная отправка в Telegram.
 </p>
 
+> **UPD 1.1.1:** Исправлены мелкие недочёты.
+
 ![Обзор YouTube Harvester](docs/screenshots/ru/overview.png)
 
 ## Что делает программа
@@ -30,7 +32,7 @@
 ссылки, вести локальный архив, смотреть отчёты о скачанном и отправлять
 уведомления или файлы в Telegram.
 
-Версия `1.1.0` использует Python-движок на Linux и Windows. Старый Bash-движок
+Версия `1.1.1` использует Python-движок на Linux и Windows. Старый Bash-движок
 оставлен в исходниках только как отключённый устаревший код.
 
 ## Основные возможности
@@ -82,15 +84,15 @@
 
 Linux:
 
-- `YouTubeHarvester_1.1.0_linux_all.deb`
-- `YouTubeHarvester_1.1.0_source.tar.gz`
+- `YouTubeHarvester_1.1.1_linux_all.deb`
+- `YouTubeHarvester_1.1.1_source.tar.gz`
 - `SHA256SUMS-linux.txt`
 
 Windows:
 
-- `YouTubeHarvester_1.1.0_windows_setup.exe` — обычный установщик.
-- `YouTubeHarvester_1.1.0_windows_x64.msi` — пакет MSI x64.
-- `YouTubeHarvester_1.1.0_windows_portable.zip` — portable-версия.
+- `YouTubeHarvester_1.1.1_windows_setup.exe` — обычный установщик.
+- `YouTubeHarvester_1.1.1_windows_x64.msi` — пакет MSI x64.
+- `YouTubeHarvester_1.1.1_windows_portable.zip` — portable-версия.
 - `SHA256SUMS-windows.txt`
 
 В Windows-сборки уже входят `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` и `deno.exe`.
@@ -98,7 +100,7 @@ Windows:
 ## Установка в Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.0_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.1_linux_all.deb
 ```
 
 После установки запустите программу из меню приложений или командой:
@@ -222,14 +224,14 @@ PROXY_URL=127.0.0.1:9050
 Linux:
 
 ```bash
-packaging/build_release.sh 1.1.0 1.1.0
+packaging/build_release.sh 1.1.1 1.1.1
 ```
 
 Windows:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.0 -MsiVersion 1.1.0
+  -Version 1.1.1 -MsiVersion 1.1.1
 ```
 
 GitHub Actions собирает Linux- и Windows-артефакты для тегов `v*`.

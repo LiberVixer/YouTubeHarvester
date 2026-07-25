@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.0
+# YouTube Harvester 1.1.1
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="Logo YouTube Harvester" width="128">
@@ -21,6 +21,8 @@
   envoi Telegram facultatif.
 </p>
 
+> **UPD 1.1.1 :** De petits défauts ont été corrigés.
+
 ![Aperçu de YouTube Harvester](docs/screenshots/fr/overview.png)
 
 ## Présentation
@@ -30,7 +32,7 @@ leurs nouvelles vidéos, leurs Shorts et leurs directs avec `yt-dlp`. Il accepte
 aussi des liens individuels, conserve une archive locale, affiche des rapports
 et peut envoyer des notifications ou des fichiers vers Telegram.
 
-La version `1.1.0` utilise le moteur Python sous Linux et Windows. L'ancien
+La version `1.1.1` utilise le moteur Python sous Linux et Windows. L'ancien
 moteur Bash reste dans les sources uniquement comme code historique désactivé.
 
 ## Fonctions principales
@@ -77,12 +79,12 @@ moteur Bash reste dans les sources uniquement comme code historique désactivé.
 Les paquets sont publiés dans
 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases).
 
-Linux : `YouTubeHarvester_1.1.0_linux_all.deb`,
-`YouTubeHarvester_1.1.0_source.tar.gz` et `SHA256SUMS-linux.txt`.
+Linux : `YouTubeHarvester_1.1.1_linux_all.deb`,
+`YouTubeHarvester_1.1.1_source.tar.gz` et `SHA256SUMS-linux.txt`.
 
-Windows : `YouTubeHarvester_1.1.0_windows_setup.exe`,
-`YouTubeHarvester_1.1.0_windows_x64.msi`,
-`YouTubeHarvester_1.1.0_windows_portable.zip` et `SHA256SUMS-windows.txt`.
+Windows : `YouTubeHarvester_1.1.1_windows_setup.exe`,
+`YouTubeHarvester_1.1.1_windows_x64.msi`,
+`YouTubeHarvester_1.1.1_windows_portable.zip` et `SHA256SUMS-windows.txt`.
 
 Les versions Windows incluent `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` et
 `deno.exe`.
@@ -90,7 +92,7 @@ Les versions Windows incluent `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` et
 ## Installation sous Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.0_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.1_linux_all.deb
 yt-harvester
 ```
 
@@ -184,12 +186,12 @@ enregistrée localement.
 ## Compilation
 
 ```bash
-packaging/build_release.sh 1.1.0 1.1.0
+packaging/build_release.sh 1.1.1 1.1.1
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.0 -MsiVersion 1.1.0
+  -Version 1.1.1 -MsiVersion 1.1.1
 ```
 
 ## Utilisation responsable

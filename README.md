@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.0
+# YouTube Harvester 1.1.1
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="YouTube Harvester logo" width="128">
@@ -21,6 +21,8 @@
   optional Telegram delivery.
 </p>
 
+> **UPD 1.1.1:** Minor issues have been fixed.
+
 ![YouTube Harvester overview](docs/screenshots/en/overview.png)
 
 ## What It Does
@@ -30,7 +32,7 @@ Videos, Shorts, and live streams through `yt-dlp`. It also accepts individual
 video links, keeps a searchable local archive, reports what was downloaded,
 and can send notifications or files to Telegram.
 
-Version `1.1.0` uses the Python downloader on both Linux and Windows. The old
+Version `1.1.1` uses the Python downloader on both Linux and Windows. The old
 Bash engine remains in the source tree only as disabled legacy code.
 
 ## Main Features
@@ -82,15 +84,15 @@ Ready-to-use packages are published on
 
 Linux:
 
-- `YouTubeHarvester_1.1.0_linux_all.deb`
-- `YouTubeHarvester_1.1.0_source.tar.gz`
+- `YouTubeHarvester_1.1.1_linux_all.deb`
+- `YouTubeHarvester_1.1.1_source.tar.gz`
 - `SHA256SUMS-linux.txt`
 
 Windows:
 
-- `YouTubeHarvester_1.1.0_windows_setup.exe` — standard installer.
-- `YouTubeHarvester_1.1.0_windows_x64.msi` — x64 MSI package.
-- `YouTubeHarvester_1.1.0_windows_portable.zip` — portable build.
+- `YouTubeHarvester_1.1.1_windows_setup.exe` — standard installer.
+- `YouTubeHarvester_1.1.1_windows_x64.msi` — x64 MSI package.
+- `YouTubeHarvester_1.1.1_windows_portable.zip` — portable build.
 - `SHA256SUMS-windows.txt`
 
 The Windows packages bundle `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe`, and
@@ -99,7 +101,7 @@ The Windows packages bundle `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe`, and
 ## Install on Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.0_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.1_linux_all.deb
 ```
 
 Start it from the application menu or run:
@@ -226,14 +228,14 @@ local video.
 Linux artifacts:
 
 ```bash
-packaging/build_release.sh 1.1.0 1.1.0
+packaging/build_release.sh 1.1.1 1.1.1
 ```
 
 Windows artifacts, from Windows:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.0 -MsiVersion 1.1.0
+  -Version 1.1.1 -MsiVersion 1.1.1
 ```
 
 GitHub Actions builds Linux and Windows artifacts for tags matching `v*`.

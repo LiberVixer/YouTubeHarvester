@@ -13,6 +13,17 @@
 
 Aquí se documentan todos los cambios importantes de **YouTube Harvester**.
 
+## [1.1.1] - 2026-07-25
+
+### Corregido
+
+- Cada vídeo terminado se mueve ahora de la carpeta temporal a la carpeta de
+  descargas antes de comenzar el siguiente elemento.
+- Una parada suave conserva y mueve el vídeo que ya ha terminado.
+- La imagen del canal activo permanece visible durante la descarga incluso
+  después de desbloquear el logotipo de victoria del juego oculto.
+- Se han corregido pequeños detalles de interfaz y funcionamiento.
+
 ## [1.1.0] - 2026-07-25
 
 ### Añadido

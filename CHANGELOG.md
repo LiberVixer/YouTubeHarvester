@@ -13,6 +13,17 @@
 
 All notable changes to **YouTube Harvester** are documented here.
 
+## [1.1.1] - 2026-07-25
+
+### Fixed
+
+- Each completed channel video is now moved from the temporary directory to
+  the download directory before the next playlist item starts.
+- A soft stop now preserves and moves the item that has already finished.
+- The active channel image is shown during downloads even after the hidden
+  Harvester game has unlocked its victory logo.
+- Minor interface and runtime inconsistencies were corrected.
+
 ## [1.1.0] - 2026-07-25
 
 ### Added

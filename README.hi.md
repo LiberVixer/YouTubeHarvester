@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.0
+# YouTube Harvester 1.1.1
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="YouTube Harvester लोगो" width="128">
@@ -20,6 +20,8 @@
   कतार, त्वरित डाउनलोड, समय-सारणी, संग्रह और वैकल्पिक Telegram प्रेषण के साथ।
 </p>
 
+> **UPD 1.1.1:** छोटी कमियों को ठीक किया गया है।
+
 ![YouTube Harvester अवलोकन](docs/screenshots/hi/overview.png)
 
 ## परिचय
@@ -29,7 +31,7 @@
 जोड़े जा सकते हैं, स्थानीय संग्रह रखा जा सकता है, रिपोर्ट देखी जा सकती है और
 Telegram पर सूचनाएँ या फ़ाइलें भेजी जा सकती हैं।
 
-संस्करण `1.1.0` Linux और Windows दोनों पर Python इंजन का उपयोग करता है। पुराना
+संस्करण `1.1.1` Linux और Windows दोनों पर Python इंजन का उपयोग करता है। पुराना
 Bash इंजन स्रोत में केवल निष्क्रिय विरासत कोड के रूप में रखा गया है।
 
 ## मुख्य सुविधाएँ
@@ -76,19 +78,19 @@ Bash इंजन स्रोत में केवल निष्क्र�
 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases) पर
 मिलते हैं।
 
-Linux: `YouTubeHarvester_1.1.0_linux_all.deb`,
-`YouTubeHarvester_1.1.0_source.tar.gz` और `SHA256SUMS-linux.txt`।
+Linux: `YouTubeHarvester_1.1.1_linux_all.deb`,
+`YouTubeHarvester_1.1.1_source.tar.gz` और `SHA256SUMS-linux.txt`।
 
-Windows: `YouTubeHarvester_1.1.0_windows_setup.exe`,
-`YouTubeHarvester_1.1.0_windows_x64.msi`,
-`YouTubeHarvester_1.1.0_windows_portable.zip` और `SHA256SUMS-windows.txt`।
+Windows: `YouTubeHarvester_1.1.1_windows_setup.exe`,
+`YouTubeHarvester_1.1.1_windows_x64.msi`,
+`YouTubeHarvester_1.1.1_windows_portable.zip` और `SHA256SUMS-windows.txt`।
 
 Windows पैकेज में `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` और `deno.exe` शामिल हैं।
 
 ## Linux में स्थापना
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.0_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.1_linux_all.deb
 yt-harvester
 ```
 
@@ -177,12 +179,12 @@ PROXY_URL=127.0.0.1:9050
 ## रिलीज़ बनाना
 
 ```bash
-packaging/build_release.sh 1.1.0 1.1.0
+packaging/build_release.sh 1.1.1 1.1.1
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.0 -MsiVersion 1.1.0
+  -Version 1.1.1 -MsiVersion 1.1.1
 ```
 
 ## ज़िम्मेदार उपयोग

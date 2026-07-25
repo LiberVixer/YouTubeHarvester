@@ -702,7 +702,7 @@ PAID_CONTENT_EMOJIS = {
 }
 
 APP_NAME = "YouTube Harvester"
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.1.1"
 APP_TITLE = f"{APP_NAME} {APP_VERSION}"
 USAGE_RULES_VERSION = "2026-06-13"
 DEFAULT_QUICK_DOWNLOAD_HOTKEY = "Ctrl+Shift+Alt+Y"
@@ -6639,12 +6639,12 @@ class MainWindow(QMainWindow):
 
         channel_url = status_info.get("channel_url") or ""
         channel_name = self._channel_display_name(channel_url, status_info.get("channel_name") or "")
-        if self.overview_easter_unlocked:
-            self.set_overview_easter_logo()
-        elif self.launcher.is_running and channel_url:
+        if self.launcher.is_running and channel_url:
             channel_image = self.channel_cache_path(channel_url).with_suffix(".jpg")
             main_image = channel_image if channel_image.exists() else self.launcher.overview_logo_path
             self._set_label_image(self.overview_main_image, main_image, channel_name or "YT")
+        elif self.overview_easter_unlocked:
+            self.set_overview_easter_logo()
         else:
             main_image = self.launcher.overview_logo_path
             self._set_label_image(self.overview_main_image, main_image, channel_name or "YT")

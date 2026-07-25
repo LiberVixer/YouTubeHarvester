@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.0
+# YouTube Harvester 1.1.1
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="Логотип YouTube Harvester" width="128">
@@ -21,6 +21,8 @@
   надсилання до Telegram.
 </p>
 
+> **UPD 1.1.1:** Виправлено дрібні недоліки.
+
 ![Огляд YouTube Harvester](docs/screenshots/uk/overview.png)
 
 ## Що робить програма
@@ -30,7 +32,7 @@
 посилання, вести локальний архів, переглядати звіти та надсилати сповіщення або
 файли до Telegram.
 
-Версія `1.1.0` використовує Python-рушій у Linux і Windows. Старий Bash-рушій
+Версія `1.1.1` використовує Python-рушій у Linux і Windows. Старий Bash-рушій
 залишено у вихідному коді лише як вимкнений застарілий компонент.
 
 ## Основні можливості
@@ -78,19 +80,19 @@
 Файли публікуються в
 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases).
 
-Linux: `YouTubeHarvester_1.1.0_linux_all.deb`,
-`YouTubeHarvester_1.1.0_source.tar.gz` і `SHA256SUMS-linux.txt`.
+Linux: `YouTubeHarvester_1.1.1_linux_all.deb`,
+`YouTubeHarvester_1.1.1_source.tar.gz` і `SHA256SUMS-linux.txt`.
 
-Windows: `YouTubeHarvester_1.1.0_windows_setup.exe`,
-`YouTubeHarvester_1.1.0_windows_x64.msi`,
-`YouTubeHarvester_1.1.0_windows_portable.zip` і `SHA256SUMS-windows.txt`.
+Windows: `YouTubeHarvester_1.1.1_windows_setup.exe`,
+`YouTubeHarvester_1.1.1_windows_x64.msi`,
+`YouTubeHarvester_1.1.1_windows_portable.zip` і `SHA256SUMS-windows.txt`.
 
 Windows-збірки вже містять `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` і `deno.exe`.
 
 ## Встановлення в Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.0_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.1_linux_all.deb
 yt-harvester
 ```
 
@@ -179,12 +181,12 @@ PROXY_URL=127.0.0.1:9050
 ## Збирання релізу
 
 ```bash
-packaging/build_release.sh 1.1.0 1.1.0
+packaging/build_release.sh 1.1.1 1.1.1
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.0 -MsiVersion 1.1.0
+  -Version 1.1.1 -MsiVersion 1.1.1
 ```
 
 ## Відповідальне використання

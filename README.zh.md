@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.0
+# YouTube Harvester 1.1.1
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="YouTube Harvester 标志" width="128">
@@ -20,6 +20,8 @@
   快速下载、定时任务、下载档案以及可选的 Telegram 发送功能。
 </p>
 
+> **UPD 1.1.1：** 已修复一些小问题。
+
 ![YouTube Harvester 概览](docs/screenshots/zh/overview.png)
 
 ## 软件简介
@@ -28,7 +30,7 @@
 普通视频、Shorts 和直播。它也能处理单独的视频链接、维护本地下载档案、显示
 下载报告，并向 Telegram 发送通知或文件。
 
-版本 `1.1.0` 在 Linux 和 Windows 上统一使用 Python 下载引擎。旧 Bash 引擎
+版本 `1.1.1` 在 Linux 和 Windows 上统一使用 Python 下载引擎。旧 Bash 引擎
 仅作为已禁用的历史代码保留在源码中。
 
 ## 主要功能
@@ -72,19 +74,19 @@
 安装包发布在
 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases)。
 
-Linux：`YouTubeHarvester_1.1.0_linux_all.deb`、
-`YouTubeHarvester_1.1.0_source.tar.gz` 和 `SHA256SUMS-linux.txt`。
+Linux：`YouTubeHarvester_1.1.1_linux_all.deb`、
+`YouTubeHarvester_1.1.1_source.tar.gz` 和 `SHA256SUMS-linux.txt`。
 
-Windows：`YouTubeHarvester_1.1.0_windows_setup.exe`、
-`YouTubeHarvester_1.1.0_windows_x64.msi`、
-`YouTubeHarvester_1.1.0_windows_portable.zip` 和 `SHA256SUMS-windows.txt`。
+Windows：`YouTubeHarvester_1.1.1_windows_setup.exe`、
+`YouTubeHarvester_1.1.1_windows_x64.msi`、
+`YouTubeHarvester_1.1.1_windows_portable.zip` 和 `SHA256SUMS-windows.txt`。
 
 Windows 版本已经包含 `yt-dlp`、`ffmpeg.exe`、`ffprobe.exe` 和 `deno.exe`。
 
 ## Linux 安装
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.0_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.1_linux_all.deb
 yt-harvester
 ```
 
@@ -169,12 +171,12 @@ PROXY_URL=127.0.0.1:9050
 ## 构建发布版本
 
 ```bash
-packaging/build_release.sh 1.1.0 1.1.0
+packaging/build_release.sh 1.1.1 1.1.1
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.0 -MsiVersion 1.1.0
+  -Version 1.1.1 -MsiVersion 1.1.1
 ```
 
 ## 负责任地使用

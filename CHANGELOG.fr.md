@@ -13,6 +13,17 @@
 
 Toutes les modifications importantes de **YouTube Harvester** sont listées ici.
 
+## [1.1.1] - 2026-07-25
+
+### Corrections
+
+- Chaque vidéo terminée est désormais déplacée du dossier temporaire vers le
+  dossier de téléchargement avant le démarrage de l'élément suivant.
+- Un arrêt progressif conserve et déplace la vidéo déjà terminée.
+- L'image de la chaîne active reste visible pendant le téléchargement, même
+  après le déverrouillage du logo de victoire du jeu caché.
+- De petits défauts d'interface et de fonctionnement ont été corrigés.
+
 ## [1.1.0] - 2026-07-25
 
 ### Ajouté

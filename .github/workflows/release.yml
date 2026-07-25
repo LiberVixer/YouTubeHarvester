@@ -12,10 +12,10 @@ permissions:
   contents: write
 
 env:
-  APP_VERSION: 1.1.0
-  DEB_VERSION: 1.1.0
-  MSI_VERSION: 1.1.0
-  RELEASE_TITLE: YouTube Harvester 1.1.0
+  APP_VERSION: 1.1.1
+  DEB_VERSION: 1.1.1
+  MSI_VERSION: 1.1.1
+  RELEASE_TITLE: YouTube Harvester 1.1.1
 
 jobs:
   linux:

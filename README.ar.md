@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.0
+# YouTube Harvester 1.1.1
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="شعار YouTube Harvester" width="128">
@@ -20,6 +20,8 @@
   وقائمة انتظار يدوية وتنزيل سريع وجدولة وأرشيف وإرسال اختياري إلى Telegram.
 </p>
 
+> **UPD 1.1.1:** تم إصلاح بعض الملاحظات البسيطة.
+
 ![نظرة عامة على YouTube Harvester](docs/screenshots/ar/overview.png)
 
 ## نبذة عن البرنامج
@@ -29,7 +31,7 @@
 والاحتفاظ بأرشيف محلي، وعرض تقارير التنزيل، وإرسال الإشعارات أو الملفات إلى
 Telegram.
 
-يستخدم الإصدار `1.1.0` محرك Python على Linux وWindows. بقي محرك Bash القديم في
+يستخدم الإصدار `1.1.1` محرك Python على Linux وWindows. بقي محرك Bash القديم في
 المصدر فقط كشيفرة قديمة معطلة.
 
 ## الميزات الرئيسية
@@ -75,19 +77,19 @@ Telegram.
 تُنشر الحزم في
 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases).
 
-Linux: `YouTubeHarvester_1.1.0_linux_all.deb` و
-`YouTubeHarvester_1.1.0_source.tar.gz` و`SHA256SUMS-linux.txt`.
+Linux: `YouTubeHarvester_1.1.1_linux_all.deb` و
+`YouTubeHarvester_1.1.1_source.tar.gz` و`SHA256SUMS-linux.txt`.
 
-Windows: `YouTubeHarvester_1.1.0_windows_setup.exe` و
-`YouTubeHarvester_1.1.0_windows_x64.msi` و
-`YouTubeHarvester_1.1.0_windows_portable.zip` و`SHA256SUMS-windows.txt`.
+Windows: `YouTubeHarvester_1.1.1_windows_setup.exe` و
+`YouTubeHarvester_1.1.1_windows_x64.msi` و
+`YouTubeHarvester_1.1.1_windows_portable.zip` و`SHA256SUMS-windows.txt`.
 
 تتضمن حزم Windows الأدوات `yt-dlp` و`ffmpeg.exe` و`ffprobe.exe` و`deno.exe`.
 
 ## التثبيت على Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.0_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.1_linux_all.deb
 yt-harvester
 ```
 
@@ -174,12 +176,12 @@ PROXY_URL=127.0.0.1:9050
 ## بناء الإصدار
 
 ```bash
-packaging/build_release.sh 1.1.0 1.1.0
+packaging/build_release.sh 1.1.1 1.1.1
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.0 -MsiVersion 1.1.0
+  -Version 1.1.1 -MsiVersion 1.1.1
 ```
 
 ## الاستخدام المسؤول
