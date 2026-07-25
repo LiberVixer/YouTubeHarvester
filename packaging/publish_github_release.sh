@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO="${GITHUB_REPOSITORY:-LiberVixer/YouTubeHarvester}"
 TARGET_BRANCH="${YTH_RELEASE_TARGET:-main}"
-TAG="${YTH_RELEASE_TAG:-v1.0.0}"
+TAG="${YTH_RELEASE_TAG:-v1.1.0}"
 RELEASE_VERSION="${YTH_RELEASE_VERSION:-${TAG#v}}"
 TITLE="${YTH_RELEASE_TITLE:-YouTube Harvester ${RELEASE_VERSION}}"
 if [ -z "${YTH_RELEASE_ROOT:-}" ]; then

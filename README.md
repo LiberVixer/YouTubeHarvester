@@ -1,122 +1,143 @@
-# YouTube Harvester 1.0.0
-
-> Русский интерфейсный загрузчик YouTube-каналов с очередью, быстрым скачиванием,
-> архивом, расписанием и Telegram-уведомлениями.
+# YouTube Harvester 1.1.0
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="YouTube Harvester logo" width="128">
 </p>
 
 <p align="center">
-  <a href="#русский">Русский</a> · <a href="#english">English</a> ·
-  <a href="CHANGELOG.md">Changelog</a> ·
-  <a href="https://github.com/LiberVixer/YouTubeHarvester/releases">Releases</a>
+  <a href="README.md">🇺🇸 🇬🇧 English</a> ·
+  <a href="README.ru.md">🇷🇺 Русский</a> ·
+  <a href="README.uk.md">🇺🇦 Українська</a> ·
+  <a href="README.fr.md">🇫🇷 Français</a> ·
+  <a href="README.es.md">🇪🇸 Español</a> ·
+  <a href="README.hi.md">🇮🇳 हिन्दी</a> ·
+  <a href="README.zh.md">🇨🇳 中文</a> ·
+  <a href="README.ar.md">🇸🇦 العربية</a>
 </p>
 
-![Обзор YouTube Harvester](docs/screenshots/overview.png)
+<p align="center">
+  A multilingual desktop YouTube downloader for Linux and Windows, with channel
+  monitoring, a manual queue, quick downloads, scheduling, an archive, and
+  optional Telegram delivery.
+</p>
 
-## Русский
+![YouTube Harvester overview](docs/screenshots/en/overview.png)
 
-**YouTube Harvester** — настольная программа для Linux и Windows, которая
-следит за выбранными YouTube-каналами, скачивает новые видео через `yt-dlp`,
-ведёт очередь ручных ссылок, хранит архив скачиваний и может отправлять
-уведомления или файлы в Telegram.
+## What It Does
 
-Версия `1.0.0` использует один основной Python-движок скачивания на Linux и
-Windows. Устаревший Bash-движок оставлен в репозитории только как legacy-код и
-не выбирается в интерфейсе.
+**YouTube Harvester** watches selected YouTube channels and downloads new
+Videos, Shorts, and live streams through `yt-dlp`. It also accepts individual
+video links, keeps a searchable local archive, reports what was downloaded,
+and can send notifications or files to Telegram.
 
-Отдельное спасибо Дмитрию **'Minion'** Погорилову за неоценимую помощь в
-бета-тестировании Windows-версии.
+Version `1.1.0` uses the Python downloader on both Linux and Windows. The old
+Bash engine remains in the source tree only as disabled legacy code.
 
-### Возможности
+## Main Features
 
-- Обзор в реальном времени: состояние программы, проверенные каналы, текущий
-  канал, видео/Shorts/трансляции, прогресс и последние события.
-- Список каналов с обложками и отдельными переключателями для `Видео`,
-  `Shorts` и `Трансляции`.
-- Ручная очередь YouTube-ссылок с предпросмотром названия, канала и обложки.
-- Быстрое скачивание из буфера обмена: отдельное компактное окно, выбор
-  разрешения, кнопки `Скачать немедленно`, `В очередь` и Telegram-чекбокс.
-- Глобальная горячая клавиша быстрого скачивания: по умолчанию
+- Live overview with channel progress, current media type, download stage,
+  speed, ETA, size, recent events, session totals, and daily totals.
+- Channel cards with original cached channel artwork and independent switches
+  for Videos, Shorts, and live streams.
+- Optional paid-content scan with three states: unknown, members-only content
+  found, or no members-only content found during the check.
+- Manual URL field on the Overview tab with immediate download and queue
+  actions.
+- Video queue with title, channel, thumbnail preview, duplicate/archive checks,
+  retry support, and a second queue pass after all channels are scanned.
+- Quick Download window with clipboard URL detection, metadata preview,
+  resolution selection, immediate download, queue action, and a persistent
+  Telegram checkbox.
+- Configurable global quick-download hotkey. The default is
   `Ctrl+Shift+Alt+Y`.
-- Наблюдение за буфером обмена: если появляется YouTube-ссылка, программа
-  открывает окно быстрого скачивания.
-- Планировщик запусков по времени.
-- Архив скачиваний с поиском, открытием видео на YouTube, открытием файла или
-  папки и удалением записей.
-- Telegram-настройки в интерфейсе: `BOT_TOKEN`, `CHANNEL_ID`, `PROXY_URL`,
-  проверка включения уведомлений и сохранение в `.env`.
-- Выбор итогового разрешения: `480p`, `720p`, `1080p`, `1440p`, `2160p` или
-  лучшее доступное.
-- Темы: тёмная, светлая и системная.
-- Режим запуска окна: только системный трей, только панель задач, либо оба
-  режима.
-- Мягкая остановка скачивания: программа завершает текущий безопасный шаг, а
-  не обрывает процесс посреди записи файла.
-- Защита от кракозябр в Windows-логах и архиве.
-- Windows-сборка включает `ffmpeg.exe`, `ffprobe.exe` и `deno.exe`.
-- Linux `.deb` интегрируется в меню приложений и хранит данные в стандартных
-  пользовательских папках.
+- Optional clipboard watcher that opens Quick Download when a valid YouTube URL
+  appears.
+- Scheduler for automatic runs at selected hours.
+- Download archive with type, channel, title, date, YouTube link, local file,
+  containing folder, and record deletion.
+- Log viewer with All, Important, and Errors filters.
+- Built-in `yt-dlp` version check and a diagnostics report for the OS, display
+  session, tray, hotkey, tools, paths, cache, write access, and free disk space.
+- Dark, light, and system themes.
+- Startup modes: system tray only, taskbar only, or tray and taskbar together.
+- Safe stop, guarded temporary-file cleanup, Windows-safe filenames, and UTF-8
+  handling for Windows logs and archive data.
+- English by default, with Russian, Ukrainian, French, Spanish, Hindi, Chinese,
+  and Arabic interfaces.
 
-### Скриншоты
+## Screenshots
 
-| Обзор | Каналы |
+| Overview | Channels |
 | --- | --- |
-| ![Обзор](docs/screenshots/overview.png) | ![Каналы](docs/screenshots/channels.png) |
+| ![Overview](docs/screenshots/en/overview.png) | ![Channels](docs/screenshots/en/channels.png) |
 
-| Очередь и планировщик | Настройки и логи |
+| Queue and scheduler | Settings and logs |
 | --- | --- |
-| ![Очередь и планировщик](docs/screenshots/queue.png) | ![Настройки и логи](docs/screenshots/logs.png) |
+| ![Queue](docs/screenshots/en/queue.png) | ![Settings](docs/screenshots/en/settings.png) |
 
-### Установка Linux
+## Downloads
 
-Скачайте `.deb` из
-[GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases):
+Ready-to-use packages are published on
+[GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases).
+
+Linux:
+
+- `YouTubeHarvester_1.1.0_linux_all.deb`
+- `YouTubeHarvester_1.1.0_source.tar.gz`
+- `SHA256SUMS-linux.txt`
+
+Windows:
+
+- `YouTubeHarvester_1.1.0_windows_setup.exe` — standard installer.
+- `YouTubeHarvester_1.1.0_windows_x64.msi` — x64 MSI package.
+- `YouTubeHarvester_1.1.0_windows_portable.zip` — portable build.
+- `SHA256SUMS-windows.txt`
+
+The Windows packages bundle `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe`, and
+`deno.exe`.
+
+## Install on Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.0.0_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.0_linux_all.deb
 ```
 
-После установки программа доступна из меню приложений или командой:
+Start it from the application menu or run:
 
 ```bash
 yt-harvester
 ```
 
-Пользовательские файлы после установки `.deb`:
+The `.deb` package uses standard per-user locations:
 
-- данные: `~/.local/share/yt-harvester`
-- настройки: `~/.config/yt-harvester`
-- кэш: `~/.cache/yt-harvester`
-- Telegram `.env`: `~/.config/yt-harvester/.env`
-- временная папка по умолчанию: `~/temp/YTH`
-- папка скачиваний по умолчанию: `~/Downloads/YouTubeHarvester`
+- data: `~/.local/share/yt-harvester`
+- settings: `~/.config/yt-harvester`
+- cache: `~/.cache/yt-harvester`
+- Telegram configuration: `~/.config/yt-harvester/.env`
+- default temporary directory: `~/temp/YTH`
+- default download directory: `~/Downloads/YouTubeHarvester`
 
-### Установка Windows
+## Install on Windows
 
-В релизе публикуются три варианта:
+Choose the Setup EXE, MSI, or portable ZIP from the release. The installed and
+portable builds are self-contained; no separate Python, FFmpeg, or Deno setup
+is required.
 
-- `YouTubeHarvester_1.0.0_windows_setup.exe` — обычный установщик.
-- `YouTubeHarvester_1.0.0_windows_x64.msi` — MSI для Windows x64.
-- `YouTubeHarvester_1.0.0_windows_portable.zip` — portable-версия без установки.
-
-Windows-сборка самодостаточна: внутри уже есть `yt-dlp`, `ffmpeg.exe`,
-`ffprobe.exe` и `deno.exe`. Для автозагрузки используется ключ текущего
-пользователя:
+Autostart uses the current user's registry key:
 
 ```text
 HKCU\Software\Microsoft\Windows\CurrentVersion\Run
 ```
 
-### Запуск из исходников
+## Run from Source
 
 Linux:
 
 ```bash
-sudo apt install python3 python3-pyqt5 python3-pynput yt-dlp curl
+sudo apt install python3 python3-pyqt5 python3-pynput yt-dlp ffmpeg curl
+# Recommended for Wayland clipboard monitoring:
+sudo apt install wl-clipboard
 cp .env.example .env
-nano .env
 ./start_tray.sh
 ```
 
@@ -128,138 +149,10 @@ py -3 -m venv .venv
 .\start_tray_windows.bat
 ```
 
-Для офлайн-сборки Windows см.
-[docs/windows-offline-build.md](docs/windows-offline-build.md).
+See [the offline Windows build guide](docs/windows-offline-build.md) when the
+build machine has no reliable Internet access.
 
-### Ключи запуска
-
-Основная команда:
-
-```bash
-yt-harvester
-```
-
-Поддерживаемые пользовательские ключи:
-
-- `--quick-download` — открыть окно быстрого скачивания. Если приложение уже
-  запущено, запрос передаётся в существующий экземпляр.
-- `--start-tray` — стартовать только в системном трее.
-- `--start-window` — стартовать как обычное окно на панели задач.
-- `--start-both` — стартовать и в трее, и на панели задач.
-
-Служебные ключи packaged-сборки:
-
-- `--run-yt-dlp ...` — внутренний запуск bundled `yt-dlp` в Windows/PyInstaller.
-- `--run-script <script.py> ...` — внутренний запуск helper-скриптов из
-  bundled-сборки.
-
-Helper-скрипты для диагностики и обслуживания:
-
-```bash
-python3 scripts/check_channel_sections.py --channel <url> [--timeout 45]
-python3 scripts/mark_channel_archived.py --channel <url> --archive yt_archive.txt \
-  [--videos-limit 5] [--shorts-limit 5] [--streams-limit 5]
-python3 scripts/migrate_archive_details.py --archive yt_archive.txt \
-  --details archive_details.jsonl --scan-dir <downloads> [--include-missing]
-```
-
-### Горячие клавиши и Wayland
-
-На Windows используется native global hotkey. На Linux/X11 глобальный хоткей
-работает через `pynput`. Wayland обычно запрещает приложениям перехватывать
-глобальные клавиши напрямую, поэтому YouTube Harvester поддерживает системную
-пользовательскую команду для Cinnamon/GNOME Wayland: она запускает
-`yt-harvester --quick-download`.
-
-Если окружение не даёт установить глобальный хоткей, быстрый запуск всё равно
-доступен из меню трея, кнопкой в интерфейсе и через отслеживание буфера обмена.
-
-### Telegram
-
-Telegram-настройки можно заполнить в интерфейсе или в `.env`:
-
-```bash
-BOT_TOKEN=your-telegram-bot-token
-CHANNEL_ID=your-telegram-channel-id
-PROXY_URL=127.0.0.1:9050
-```
-
-`PROXY_URL` необязателен. Если включена отправка файлов в Telegram и Telegram
-временно недоступен, локальное сохранение видео не блокируется.
-
-### Сборка релиза
-
-Linux-артефакты:
-
-```bash
-packaging/build_release.sh 1.0.0 1.0.0
-```
-
-Windows-артефакты собираются на Windows:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.0.0 -MsiVersion 1.0.0
-```
-
-GitHub Actions также собирает Linux и Windows артефакты при пуше тега `v*`.
-
-### Ответственное использование
-
-YouTube Harvester не связан с YouTube, Google, Telegram или проектом `yt-dlp`.
-Это локальная оболочка вокруг внешних инструментов.
-
-Используйте программу только для материалов, которые вы имеете право скачивать:
-собственные видео, видео с разрешения правообладателя или контент, который
-законно сохранять для личного использования. Соблюдайте
-[Условия использования YouTube](https://www.youtube.com/t/terms), авторское
-право и законы вашей страны.
-
-Храните Telegram-токены в секрете. Не используйте программу для обхода
-ограничений доступа, пиратского распространения, продажи скачанных материалов
-или агрессивного автоматического сбора данных.
-
-### Внешние компоненты
-
-- [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) — чтение YouTube-метаданных и
-  скачивание медиа.
-- `PyQt5` / `Qt` — графический интерфейс.
-- `ffmpeg` и `ffprobe` — объединение, проверка и обработка медиа.
-- `Deno` — JavaScript runtime для случаев, когда YouTube требует JS-обработку.
-- `curl` и [Telegram Bot API](https://core.telegram.org/bots/api) —
-  Telegram-уведомления.
-- `pynput` — глобальный хоткей в Linux/X11.
-
-## English
-
-**YouTube Harvester** is a desktop YouTube downloader for Linux and Windows. It
-watches selected channels, downloads new videos through `yt-dlp`, manages a
-manual queue, keeps a local archive, supports scheduled runs, and can send
-notifications or files to Telegram.
-
-Version `1.0.0` uses the Python downloader engine on both Linux and Windows. The
-legacy Bash engine is kept only as reference code.
-
-Special thanks to Dmitry **'Minion'** Pogorilov for invaluable help with Windows
-beta testing.
-
-### Main Features
-
-- Tray-first PyQt5 desktop UI.
-- Live overview with current channel, media type, progress, events, and preview.
-- Channel cards with separate toggles for Videos, Shorts, and live streams.
-- Manual queue with metadata and thumbnail preview.
-- Quick Download window with clipboard URL detection, resolution selector,
-  immediate download, queue add, and Telegram checkbox.
-- Default quick-download hotkey: `Ctrl+Shift+Alt+Y`.
-- Clipboard watcher for YouTube URLs.
-- Scheduler, archive browser, log viewer, and safe stop.
-- Telegram settings in the UI and `.env`.
-- Dark, light, and system theme modes.
-- Windows packages bundle `ffmpeg`, `ffprobe`, and `deno`.
-- Linux `.deb` package with standard user data paths.
-
-### Launch Options
+## Launch Options
 
 ```bash
 yt-harvester
@@ -269,24 +162,101 @@ yt-harvester --start-window
 yt-harvester --start-both
 ```
 
+- `--quick-download` opens Quick Download. If another instance is already
+  running, the request is handed to that instance.
+- `--start-tray` starts in the system tray without a taskbar window.
+- `--start-window` starts as a normal taskbar window.
+- `--start-both` enables both tray and taskbar presence.
+
 Internal packaged-build options:
 
 - `--run-yt-dlp ...`
 - `--run-script <script.py> ...`
 
-### Release Assets
+Maintenance helpers:
 
-- `YouTubeHarvester_1.0.0_linux_all.deb`
-- `YouTubeHarvester_1.0.0_source.tar.gz`
-- `YouTubeHarvester_1.0.0_windows_setup.exe`
-- `YouTubeHarvester_1.0.0_windows_x64.msi`
-- `YouTubeHarvester_1.0.0_windows_portable.zip`
-- `SHA256SUMS-linux.txt`
-- `SHA256SUMS-windows.txt`
+```bash
+python3 scripts/check_channel_sections.py --channel <url> [--timeout 45]
+python3 scripts/mark_channel_archived.py --channel <url> --archive yt_archive.txt \
+  [--videos-limit 5] [--shorts-limit 5] [--streams-limit 5]
+python3 scripts/migrate_archive_details.py --archive yt_archive.txt \
+  --details archive_details.jsonl --scan-dir <downloads> [--include-missing]
+```
 
-### Responsible Use
+## Quick Download, X11, and Wayland
 
-YouTube Harvester is not affiliated with YouTube, Google, Telegram, or `yt-dlp`.
-Use it only for videos you own, videos you have permission to download, or
-content that you may lawfully save for personal use. Keep Telegram tokens
-private.
+Windows uses a native global hotkey. Linux/X11 uses `pynput`. Wayland normally
+blocks applications from registering global keys directly, so YouTube
+Harvester can create a Cinnamon/GNOME system shortcut that runs
+`yt-harvester --quick-download`.
+
+Quick Download is always available from the tray menu and the Overview tab.
+Clipboard monitoring works through the regular clipboard on Windows/X11 and
+through `wl-paste` on Wayland when `wl-clipboard` is installed.
+
+## Channel and Queue Workflow
+
+The application checks enabled channel sections in order and pauses briefly
+after each completed section so its result remains visible. Paid-content
+probing is performed only during an explicit channel check when enabled. If a
+members-only video is encountered during a normal download scan, the channel
+status is still updated and the inaccessible item is reported calmly as an
+important event.
+
+The queue is processed at the start of a run and again after every channel has
+been checked. Already archived videos and duplicate queue entries are skipped.
+A failed queue item can be returned for a later retry.
+
+## Telegram
+
+Telegram delivery can be turned off completely. When enabled, configure it in
+Settings or in `.env`:
+
+```bash
+BOT_TOKEN=your-telegram-bot-token
+CHANNEL_ID=your-telegram-channel-id
+PROXY_URL=127.0.0.1:9050
+```
+
+`PROXY_URL` is optional. A Telegram failure never removes a successfully saved
+local video.
+
+## Building a Release
+
+Linux artifacts:
+
+```bash
+packaging/build_release.sh 1.1.0 1.1.0
+```
+
+Windows artifacts, from Windows:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
+  -Version 1.1.0 -MsiVersion 1.1.0
+```
+
+GitHub Actions builds Linux and Windows artifacts for tags matching `v*`.
+
+## Responsible Use
+
+YouTube Harvester is not affiliated with YouTube, Google, Telegram, or
+`yt-dlp`. Download only material you own, have permission to download, or may
+lawfully save for personal use. Follow the
+[YouTube Terms of Service](https://www.youtube.com/t/terms), copyright law, and
+the laws of your country. Keep Telegram credentials private.
+
+External components include
+[`yt-dlp`](https://github.com/yt-dlp/yt-dlp), PyQt5/Qt, FFmpeg/FFprobe, Deno,
+`curl`, Telegram Bot API, and `pynput`. Each component is distributed under its
+own license and terms.
+
+## Thanks
+
+Special thanks to Dmitry **'Minion' Pogorilov** for invaluable help beta-testing
+the Windows version.
+
+A Harvester from **Command & Conquer: Red Alert** has been added to the program
+logo. 🙂
+
+See the [English changelog](CHANGELOG.md) for the complete release history.

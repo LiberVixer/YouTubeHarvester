@@ -291,6 +291,7 @@ if ($OfflineMode) {
     Invoke-Checked $VenvPython @("-m", "pip", "install", "--upgrade", "pip")
     Invoke-Checked $VenvPython @(
         "-m", "pip", "install",
+        "--upgrade",
         "-r", (Join-Path $RootDir "requirements.txt"),
         "pyinstaller",
         "pillow"

@@ -1,278 +1,164 @@
 # Changelog
 
+<p align="center">
+  <a href="CHANGELOG.md">🇺🇸 🇬🇧 English</a> ·
+  <a href="CHANGELOG.ru.md">🇷🇺 Русский</a> ·
+  <a href="CHANGELOG.uk.md">🇺🇦 Українська</a> ·
+  <a href="CHANGELOG.fr.md">🇫🇷 Français</a> ·
+  <a href="CHANGELOG.es.md">🇪🇸 Español</a> ·
+  <a href="CHANGELOG.hi.md">🇮🇳 हिन्दी</a> ·
+  <a href="CHANGELOG.zh.md">🇨🇳 中文</a> ·
+  <a href="CHANGELOG.ar.md">🇸🇦 العربية</a>
+</p>
+
 All notable changes to **YouTube Harvester** are documented here.
+
+## [1.1.0] - 2026-07-25
+
+### Added
+
+- Complete interface localization for English, Russian, Ukrainian, French,
+  Spanish, Hindi, Chinese, and Arabic; English is the default for new installs.
+- Separate localized README files, changelogs, and UI screenshots for every
+  supported language.
+- Diagnostics view for the operating system, X11/Wayland session, system tray,
+  hotkey, clipboard, bundled tools, paths, cache, permissions, and disk space.
+- Built-in current/latest `yt-dlp` version check.
+- Paid-content status on every channel and optional members-only probing during
+  explicit channel checks.
+- Daily download report split into Videos, Shorts, streams, and queue items.
+- All, Important, and Errors filters in the log viewer.
+- Immediate Download button and Quick Download shortcut on the Overview tab.
+- Reproducible localized README screenshot generator using cached channel art.
+
+### Changed
+
+- Application and release-build defaults now use version `1.1.0`.
+- The queue is processed both before channel scanning and after all channels
+  have been checked.
+- Members-only items are treated as important access information instead of a
+  red download error.
+- Channel checks show the active section, animate its progress, and can be
+  stopped from the same button.
+- Interface spacing, checkbox contrast, channel controls, settings limits,
+  Overview toolbar buttons, and Quick Download layout were refined.
+- Linux exposes the Python downloader only; the disabled Bash engine is kept as
+  legacy source code.
+- Configuration files now follow an explicitly selected `YTD_CONFIG_DIR`, so
+  portable and test instances do not inherit another installation's settings.
+
+### Fixed
+
+- Windows console output, logs, archive tables, and subprocess decoding handle
+  Cyrillic and emoji safely as UTF-8.
+- Successfully downloaded Windows files are no longer removed during failed
+  Telegram delivery or an unsuccessful post-processing path.
+- Linux/X11 temporary cleanup ignores the `.yth-temp` marker and safely removes
+  completed temporary files.
+- The Overview preview returns to its placeholder after a manual download and
+  no longer flashes the previous channel artwork at startup.
+- Clipboard monitoring no longer reopens Quick Download repeatedly for the same
+  URL after a download starts.
+- Quick Download preserves its position, loads channel artwork more reliably,
+  keeps its thumbnail inside the panel, and uses a circular hover highlight.
 
 ## [1.0.0] - 2026-07-02
 
 ### Added
 
-- First stable release of YouTube Harvester.
-- New README with full Linux/Windows usage, launch keys, build instructions,
-  Telegram setup, hotkey notes, release assets, and responsible-use notes.
-- New release notes and refreshed screenshot/placeholder assets for the 1.0.0
-  GitHub release.
+- First stable release for Linux and Windows.
+- Full Overview, channel cards, manual queue, scheduler, archive browser, logs,
+  Quick Download, clipboard monitoring, hotkeys, Telegram settings, themes, and
+  startup modes.
+- Linux `.deb`, source archive, Windows Setup EXE, MSI, portable ZIP, and SHA256
+  checksum artifacts.
+- Bundled `yt-dlp`, FFmpeg/FFprobe, and Deno in Windows releases.
+- First-run responsible-use dialog and third-party component notice.
 
 ### Changed
 
-- Application, Linux package, Windows installers, GitHub Actions, offline build
-  docs, and release publishing defaults now use `1.0.0`.
-- Shared runtime helpers were moved into `yth_common.py` and included in Linux,
-  Windows, and source release artifacts.
-- Quick-download startup now uses a single-instance handoff instead of spawning
+- Python became the shared downloader engine on Linux and Windows.
+- Shared runtime helpers moved to `yth_common.py` and were included in every
+  package format.
+- Quick-download launch uses a single-instance request instead of creating
   duplicate tray processes.
-- Source release packaging includes the shared helper even before it is tracked
-  by git during local release builds.
 
 ### Fixed
 
-- Telegram delivery errors no longer block saving a successfully downloaded file
-  locally.
-- Downloader exit code now reports failed items correctly.
-- Temporary folder cleanup is guarded by a marker and path checks to avoid
-  unsafe deletion.
-- Windows/PyInstaller helper scripts can import project runtime helpers.
-- GitHub Actions validation includes `yth_common.py`.
+- Telegram errors no longer block or remove locally saved media.
+- Downloader exit codes correctly report failed items.
+- Temporary cleanup is protected by a marker and path validation.
+- Windows/PyInstaller helper scripts can import project runtime modules.
 
 ## [0.2.5-beta] - 2026-06-28
 
-### English
+### Added
 
-#### Added
+- Quick Download window with clipboard URL detection, metadata preview,
+  immediate download, queue action, resolution selection, and Telegram option.
+- Native Windows global hotkey, Linux/X11 `pynput` support, and Cinnamon/GNOME
+  Wayland system-shortcut installation.
 
-- Quick-download window with clipboard URL detection, metadata preview, immediate download, queue add, and a persistent Telegram notification checkbox.
-- Configurable quick-download hotkey with native Windows support, Linux/X11 `pynput` support, and Cinnamon/GNOME Wayland desktop shortcut installation.
+### Changed
 
-#### Changed
+- Linux switched to the Python downloader; the Bash engine was disabled.
+- Overview and Quick Download layouts became more compact.
 
-- Linux now uses the Python downloader engine only; the legacy Bash engine is disabled and documented as obsolete.
-- Overview and quick-download layouts were tightened so controls, counters, previews, and logs fit more cleanly.
-- README, release notes, and packaging defaults were refreshed for the `0.2.5-beta` release.
+### Fixed
 
-#### Fixed
-
-- Windows text display is more resilient to mojibake and console encoding problems.
-- Quick-download channel/video previews load more reliably and the quick-download window remembers its position.
-- The archive button and overview log panel spacing were adjusted for the current interface.
-
-### Русский
-
-#### Добавлено
-
-- Окно быстрого скачивания: URL из буфера обмена, предпросмотр метаданных, немедленное скачивание, добавление в очередь и сохраняющаяся галочка Telegram-уведомления.
-- Настраиваемая горячая клавиша быстрого скачивания: native Windows, Linux/X11 через `pynput`, Cinnamon/GNOME Wayland через системную пользовательскую команду.
-
-#### Изменено
-
-- Linux теперь использует только Python-движок скачивания; устаревший Bash-движок отключён и описан как legacy.
-- Вкладка обзора и окно быстрого скачивания стали компактнее: кнопки, счётчики, предпросмотры и логи аккуратнее помещаются в интерфейсе.
-- README, release notes и упаковочные дефолты обновлены под релиз `0.2.5-beta`.
-
-#### Исправлено
-
-- Отображение текста в Windows стало устойчивее к кракозябрам и проблемам кодировки консоли.
-- Предпросмотры канала/видео в быстром скачивании грузятся надёжнее, окно быстрого скачивания запоминает позицию.
-- Кнопка архива и отступы панели логов на вкладке обзора подогнаны под текущий интерфейс.
+- More reliable channel/video previews and saved Quick Download position.
+- Better Windows text decoding and interface spacing.
 
 ## [0.2.4-beta] - 2026-06-25
 
-### English
+### Added
 
-#### Added
+- Windows builds bundle `ffmpeg.exe`, `ffprobe.exe`, and `deno.exe`.
+- Automated GitHub release notes and refreshed release assets.
 
-- Windows beta builds now bundle `ffmpeg.exe`, `ffprobe.exe`, and `deno.exe`.
-- GitHub release notes are included with the automated release workflow.
-- README thanks Windows beta tester Dmitry 'minion' Pogorily.
+### Fixed
 
-#### Changed
-
-- README, offline Windows instructions, and screenshots were refreshed for the `0.2.4-beta` release.
-- Windows Python downloads now pass bundled media tools and the Deno JavaScript runtime directly to `yt-dlp`.
-- Release workflow uses `0.2.4-beta` names for Linux, Windows, source, and checksum artifacts.
-
-#### Fixed
-
-- Windows subprocess output is decoded as UTF-8 to avoid broken Cyrillic titles and console encoding crashes.
-- Quoted `yt-dlp` paths with spaces are handled correctly in bundled Windows builds.
-- Failed Windows downloads no longer clean the temp directory as if the media had been moved successfully.
-- Windows output names are shortened and use Windows-safe filename rules to reduce path-length failures.
-
-### Русский
-
-#### Добавлено
-
-- Windows beta-сборки теперь кладут внутрь `ffmpeg.exe`, `ffprobe.exe` и `deno.exe`.
-- Автоматический GitHub release получает отдельное описание релиза.
-- В README добавлена благодарность бета-тестеру Windows-версии Дмитрию 'minion' Погорилому.
-
-#### Изменено
-
-- README, инструкция офлайн-сборки Windows и скриншоты обновлены под релиз `0.2.4-beta`.
-- Windows Python-движок передаёт bundled media-инструменты и Deno JavaScript runtime прямо в `yt-dlp`.
-- GitHub Actions собирает Linux, Windows, исходники и checksum-файлы с именами `0.2.4-beta`.
-
-#### Исправлено
-
-- Вывод Windows-процессов читается как UTF-8, чтобы не ломались кириллические названия и emoji.
-- Пути к `yt-dlp` в кавычках и с пробелами корректно работают в bundled Windows-сборке.
-- При ошибке скачивания Windows-сборка больше не чистит temp-папку так, будто файл успешно перенесён.
-- Имена выходных файлов на Windows сокращаются и приводятся к Windows-safe правилам, чтобы реже упираться в длину пути.
+- UTF-8 subprocess decoding for Cyrillic titles and emoji on Windows.
+- Correct handling of quoted tool paths and Windows-safe output filenames.
+- Failed downloads no longer clean the temporary directory as if processing had
+  succeeded.
 
 ## [0.2.3-beta] - 2026-06-18
 
-### English
+### Changed
 
-#### Changed
-
-- The upper overview progress bar keeps showing checked channels while a video is downloading.
-- Shorts now use a clear lightning icon throughout the interface and downloader messages.
-
-### Русский
-
-#### Изменено
-
-- Верхний прогресс-бар продолжает показывать проверенные каналы во время скачивания видео.
-- Для Shorts во всём интерфейсе и сообщениях движков используется понятная иконка молнии.
+- The Overview progress bar keeps showing checked channels while media is being
+  downloaded.
+- Shorts use a clear lightning icon throughout the interface.
 
 ## [0.2.2-beta] - 2026-06-13
 
-### English
+### Added
 
-#### Added
+- Responsible-use dialog, settings, experimental Python downloader, Windows
+  launcher/build preparation, release packaging, and GitHub Actions.
 
-- First-run responsible-use dialog with required acknowledgement checkboxes.
-- Settings button for reopening the usage rules and third-party component notice.
-- Download engine selector with stable Bash mode and experimental Python mode.
-- Experimental `scripts/downloader.py` engine for portability testing.
-- Windows launch preparation through `start_tray_windows.bat`, platform-specific user-data paths, Current User registry autostart, and Windows system theme detection.
-- Windows EXE build script based on PyInstaller.
-- `requirements.txt` for source launches on Windows and other pip-based environments.
-- Release packaging scripts and GitHub Actions for `.deb`, Windows installer `.exe`, Windows `.msi`, portable `.zip`, and source `.tar.gz` artifacts.
+### Changed
 
-#### Changed
+- Compact settings limits, larger event area, channel progress, download stage,
+  one-second pauses after checked media sections, and clean idle reports.
 
-- Settings media limits are back on one compact line.
-- Overview event list now has more vertical space, and idle download status says that the app is waiting for a download.
-- Overview search status now shows checked channels as a progress bar.
-- Download progress now names the active stage: video, audio, merging, or post-processing.
-- The idle overview no longer shows an empty download progress section.
-- Channel scanning pauses for one second after each checked Videos, Shorts, and Streams section.
-- The idle event panel now shows a clean emoji summary of the latest download run.
-- Linux desktop launcher metadata now uses the final app name and localized labels.
-- README now includes expanded responsible-use and third-party component notes.
-- Windows runs the Python downloader engine only; Bash remains a Linux option.
+### Fixed
 
-#### Fixed
-
-- Manual queue now refuses videos already present in the archive.
-- Downloader skips already archived queued videos and avoids duplicate detailed archive entries.
-- Windows Python downloader no longer crashes when the system console encoding cannot represent emoji.
-
-### Русский
-
-#### Добавлено
-
-- Диалог правил ответственного использования при первом запуске с обязательными галочками подтверждения.
-- Кнопка в настройках для повторного открытия правил и сведений о внешних компонентах.
-- Выбор движка скачивания: стабильный Bash и экспериментальный Python.
-- Экспериментальный движок `scripts/downloader.py` для проверки переносимости.
-- Подготовка запуска на Windows: `start_tray_windows.bat`, платформенные пользовательские папки, автозапуск через реестр Current User и определение системной темы Windows.
-- Скрипт сборки Windows EXE на базе PyInstaller.
-- `requirements.txt` для запуска из исходников на Windows и в других pip-окружениях.
-- Скрипты упаковки релиза и GitHub Actions для `.deb`, Windows installer `.exe`, Windows `.msi`, portable `.zip` и исходного `.tar.gz`.
-
-#### Изменено
-
-- Лимиты типов во вкладке настроек снова отображаются в одну компактную строку.
-- На главном экране блок событий стал выше, а простой блока скачивания показывает ожидание скачивания.
-- Во время поиска верхняя плашка показывает прогресс проверенных каналов.
-- При скачивании блок прогресса показывает текущий этап: видео, аудио, объединение или обработка.
-- В простое пустой блок прогресса скачивания больше не отображается.
-- После проверки каждого включённого раздела Видео, Shorts и Трансляции выдерживается пауза в одну секунду.
-- В простое панель событий показывает чистый отчёт с эмодзи о последнем запуске скачивания.
-- Метаданные ярлыка Linux приведены к финальному названию программы и русским подписям.
-- README расширен правилами ответственного использования и сведениями о внешних компонентах.
-- На Windows используется только Python-движок; Bash остаётся вариантом для Linux.
-
-#### Исправлено
-
-- Ручная очередь больше не принимает видео, которое уже есть в архиве.
-- Скрипт скачивания пропускает уже архивные ссылки из очереди и не создаёт дубли в подробном архиве.
-- Python-движок на Windows больше не падает, если системная кодировка консоли не поддерживает emoji.
+- Queue/archive duplicate checks and safe Windows emoji logging.
 
 ## [0.2.0-beta.1] - 2026-06-12
 
-First public beta release.
+### Added
 
-### English
+- First public beta with Overview, channel artwork, per-type channel switches,
+  manual queue, scheduler, settings, Telegram, themes, logs, and Linux `.deb`.
 
-#### Added
+### Fixed
 
-- New overview tab with live downloader status, counters, current channel artwork, and current video thumbnail.
-- Channel grid with cached channel images.
-- Per-channel toggles for videos, Shorts, and live broadcasts.
-- Manual YouTube video queue with URL preview and fallback queueing when metadata cannot be read.
-- Combined horizontal queue and scheduler tab with dedicated artwork.
-- Settings tab with download folder, temp folder, media limits, max resolution, log retention, autostart, temp cleanup, and queue retry options.
-- Telegram settings block with masked `BOT_TOKEN`, `CHANNEL_ID`, and `PROXY_URL` fields plus eye buttons.
-- Dark, light, and system theme modes.
-- Linux `.deb` packaging for Linux Mint and Ubuntu-like systems.
-- GitHub README screenshots and bilingual documentation.
-
-#### Changed
-
-- Default download folder is now `~/Downloads/YouTubeHarvester`.
-- Default temp folder is now `~/temp/YTH`.
-- Logs are now shown in the lower part of the Settings tab.
-- `yt-dlp` quality selection is configurable while keeping `1080p` as the default.
-- Telegram can be disabled, allowing local-only downloads without bot credentials.
-
-#### Fixed
-
-- More reliable tray double-click window opening.
-- Cleaner log positioning and refresh behavior.
-- Better emoji rendering in PyQt labels and buttons.
-- Safer temp cleanup behavior when processing errors occur.
-
-### Русский
-
-#### Добавлено
-
-- Новая вкладка обзора со статусом скачивания, счётчиками, картинкой текущего канала и заставкой текущего видео.
-- Сетка каналов с кешированными картинками.
-- Для каждого канала отдельные переключатели Видео, Shorts и Трансляция.
-- Ручная очередь YouTube-видео с предпросмотром ссылки и возможностью добавить ссылку даже без метаданных.
-- Объединённая горизонтальная вкладка очереди и планировщика с отдельной иллюстрацией.
-- Вкладка настроек: папка загрузки, временная папка, лимиты типов, максимальное разрешение, хранение логов, автозапуск, очистка временной папки и повтор очереди.
-- Telegram-блок с маскированными полями `BOT_TOKEN`, `CHANNEL_ID`, `PROXY_URL` и кнопками-глазами.
-- Ночной, дневной и системный режимы темы.
-- Сборка `.deb` для Linux Mint и Ubuntu-подобных систем.
-- Скриншоты и двуязычный README для GitHub.
-
-#### Изменено
-
-- Папка загрузки по умолчанию: `~/Downloads/YouTubeHarvester`.
-- Временная папка по умолчанию: `~/temp/YTH`.
-- Логи теперь находятся в нижней части вкладки настроек.
-- Выбор качества `yt-dlp` теперь настраивается, при этом `1080p` остаётся значением по умолчанию.
-- Telegram можно отключить и скачивать локально без токена бота.
-
-#### Исправлено
-
-- Более надёжное открытие окна по двойному клику на иконке в трее.
-- Более аккуратное отображение и обновление логов.
-- Улучшено отображение emoji в PyQt-интерфейсе.
-- Более безопасная очистка временной папки при ошибках обработки.
+- Tray opening, log refresh, emoji rendering, and temporary cleanup behavior.
 
 ## [0.1.0] - 2026-06-11
 
-### English
-
-- Initial packaged build.
-- Tray launcher for the downloader script.
-- Channel list, scheduled runs, manual queue, logs, and Telegram delivery.
-
-### Русский
-
-- Первая пакетная сборка.
-- Трей-лаунчер для скрипта скачивания.
-- Список каналов, запуск по расписанию, ручная очередь, логи и отправка в Telegram.
+- Initial packaged build with tray launcher, channel list, scheduled runs,
+  manual queue, logs, and Telegram delivery.

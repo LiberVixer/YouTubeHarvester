@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PACKAGE="yt-harvester"
-VERSION="${1:-1.0.0}"
+VERSION="${1:-1.1.0}"
 ARCH="all"
 BUILD_DIR="$ROOT_DIR/dist/deb-build"
 PKG_DIR="$BUILD_DIR/${PACKAGE}_${VERSION}_${ARCH}"
@@ -18,6 +18,7 @@ mkdir -p "$APP_DIR/assets" "$APP_DIR/scripts" "$BIN_DIR" "$DESKTOP_DIR" "$ICON_D
 
 install -m 0755 "$ROOT_DIR/tray_launcher.py" "$APP_DIR/tray_launcher.py"
 install -m 0644 "$ROOT_DIR/yth_common.py" "$APP_DIR/yth_common.py"
+install -m 0644 "$ROOT_DIR/i18n_locales.py" "$APP_DIR/i18n_locales.py"
 install -m 0755 "$ROOT_DIR/run_download.sh" "$APP_DIR/run_download.sh"
 install -m 0755 "$ROOT_DIR/start_tray.sh" "$APP_DIR/start_tray.sh"
 install -m 0755 "$ROOT_DIR/scripts/downloader.py" "$APP_DIR/scripts/downloader.py"
@@ -29,6 +30,7 @@ install -m 0644 "$ROOT_DIR/assets/yt-harvester.png" "$APP_DIR/assets/yt-harveste
 install -m 0644 "$ROOT_DIR/assets/overview-logo.png" "$APP_DIR/assets/overview-logo.png"
 install -m 0644 "$ROOT_DIR/assets/video-placeholder.png" "$APP_DIR/assets/video-placeholder.png"
 install -m 0644 "$ROOT_DIR/assets/queue-scheduler.png" "$APP_DIR/assets/queue-scheduler.png"
+install -m 0644 "$ROOT_DIR/assets/ui.dat" "$APP_DIR/assets/ui.dat"
 install -m 0644 "$ROOT_DIR/assets/YTH-logo.png" "$ICON_DIR/yt-harvester.png"
 
 cat > "$BIN_DIR/yt-harvester" <<'EOF'
@@ -65,6 +67,7 @@ export YTD_CHANNEL_RULES_FILE="$CONFIG_DIR/channel_rules.json"
 export YTD_QUICK_REQUEST_FILE="$CONFIG_DIR/quick_download.request"
 export YTD_TEMP_DIR="${YTD_TEMP_DIR:-$HOME/temp/YTH}"
 export YTD_FINAL_DIR="${YTD_FINAL_DIR:-$HOME/Downloads/YouTubeHarvester}"
+export PATH="$HOME/.npm-global/bin:$HOME/.local/bin:$HOME/.deno/bin:$PATH"
 
 exec python3 "$APP_DIR/tray_launcher.py" "$@"
 EOF
@@ -76,10 +79,28 @@ Version=1.0
 Type=Application
 Name=YouTube Harvester
 Name[ru]=YouTube Harvester
+Name[uk]=YouTube Harvester
+Name[fr]=YouTube Harvester
+Name[es]=YouTube Harvester
+Name[hi]=YouTube Harvester
+Name[zh]=YouTube Harvester
+Name[ar]=YouTube Harvester
 GenericName=YouTube downloader
 GenericName[ru]=Загрузчик YouTube
+GenericName[uk]=Завантажувач YouTube
+GenericName[fr]=Téléchargeur YouTube
+GenericName[es]=Descargador de YouTube
+GenericName[hi]=YouTube डाउनलोडर
+GenericName[zh]=YouTube 下载器
+GenericName[ar]=أداة تنزيل YouTube
 Comment=YouTube downloader with tray interface
 Comment[ru]=Загрузчик YouTube с интерфейсом в трее
+Comment[uk]=Завантажувач YouTube з інтерфейсом у системному треї
+Comment[fr]=Téléchargeur YouTube avec interface de zone de notification
+Comment[es]=Descargador de YouTube con interfaz de bandeja del sistema
+Comment[hi]=सिस्टम ट्रे इंटरफ़ेस के साथ YouTube डाउनलोडर
+Comment[zh]=带系统托盘界面的 YouTube 下载器
+Comment[ar]=أداة تنزيل YouTube بواجهة علبة النظام
 Exec=yt-harvester
 Icon=yt-harvester
 Terminal=false
@@ -93,7 +114,9 @@ Version: $VERSION
 Section: net
 Priority: optional
 Architecture: $ARCH
-Depends: python3, python3-pyqt5, python3-pynput, yt-dlp, curl
+Depends: python3, python3-pyqt5, python3-pynput, yt-dlp, ffmpeg, curl
+Recommends: wl-clipboard
+Suggests: deno
 Maintainer: YouTube Harvester <noreply@users.noreply.github.com>
 Description: YouTube downloader with tray interface
  YouTube Harvester watches configured YouTube channels and a manual queue,

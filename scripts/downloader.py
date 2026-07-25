@@ -55,6 +55,14 @@ MISSING_PAGE_RE = re.compile(
     re.IGNORECASE,
 )
 
+MEMBERS_ONLY_RE = re.compile(
+    r"members-only|join this channel|get access to members-only|exclusive perks|channel members",
+    re.IGNORECASE,
+)
+PAID_CONTENT_STATUS_KEY = "paid_content_status"
+PAID_CONTENT_HAS = "has_paid"
+MIN_FREE_SPACE_MB = 1024
+
 
 def short_channel_name(channel: str) -> str:
     text = channel.rstrip("/")
@@ -195,12 +203,45 @@ class Downloader:
         with contextlib.suppress(OSError):
             self.stop_file.unlink(missing_ok=True)
 
+    def human_size(self, size: int) -> str:
+        value = float(max(0, int(size or 0)))
+        for unit in ("Б", "КиБ", "МиБ", "ГиБ", "ТиБ"):
+            if value < 1024 or unit == "ТиБ":
+                return f"{value:.1f} {unit}" if unit != "Б" else f"{int(value)} {unit}"
+            value /= 1024
+        return f"{value:.1f} ТиБ"
+
+    def minimum_free_space_bytes(self) -> int:
+        try:
+            mb = int(os.environ.get("YTD_MIN_FREE_SPACE_MB", MIN_FREE_SPACE_MB))
+        except (TypeError, ValueError):
+            mb = MIN_FREE_SPACE_MB
+        return max(128, mb) * 1024 * 1024
+
+    def validate_free_space(self) -> bool:
+        required = self.minimum_free_space_bytes()
+        ok = True
+        for label, path in (("временной папке", self.temp_dir), ("папке загрузок", self.final_dir)):
+            try:
+                usage = shutil.disk_usage(path)
+            except OSError as exc:
+                self.log(f"❌ Не удалось проверить место в {label}: {exc}")
+                ok = False
+                continue
+            if usage.free < required:
+                self.log(
+                    f"❌ Мало места в {label}: свободно {self.human_size(usage.free)}, "
+                    f"нужно хотя бы {self.human_size(required)}"
+                )
+                ok = False
+        return ok
+
     def ensure_temp_marker(self) -> None:
         try:
             if self.temp_marker_file.exists():
                 return
             has_files = any(self.temp_dir.iterdir())
-            if not has_files:
+            if not has_files or self.is_dedicated_temp_dir():
                 self.temp_marker_file.write_text("YouTube Harvester temp directory\n", encoding="utf-8")
         except OSError:
             pass
@@ -297,6 +338,41 @@ class Downloader:
             return data if isinstance(data, dict) else {}
         except Exception:
             return {}
+
+    def save_channel_rules_data(self, rules_data: dict) -> None:
+        try:
+            self.channel_rules_file.parent.mkdir(parents=True, exist_ok=True)
+            self.channel_rules_file.write_text(
+                json.dumps(rules_data, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+        except OSError:
+            pass
+
+    def normalize_channel_key(self, channel: str) -> str:
+        return str(channel or "").strip().rstrip("/")
+
+    def looks_like_channel_url(self, url: str) -> bool:
+        text = self.normalize_channel_key(url)
+        return (
+            text.startswith(("https://www.youtube.com/", "https://youtube.com/"))
+            and ("/@" in text or "/channel/" in text or "/c/" in text or "/user/" in text)
+        )
+
+    def set_channel_paid_content_status(self, channel: str, status: str) -> None:
+        channel_key = self.normalize_channel_key(channel)
+        if not self.looks_like_channel_url(channel_key):
+            return
+        rules_data = self.load_channel_rules()
+        stored_key = next((key for key in rules_data if self.normalize_channel_key(key) == channel_key), channel_key)
+        rules = rules_data.get(stored_key)
+        if not isinstance(rules, dict):
+            rules = {}
+        if rules.get(PAID_CONTENT_STATUS_KEY) == status:
+            return
+        rules[PAID_CONTENT_STATUS_KEY] = status
+        rules_data[stored_key] = rules
+        self.save_channel_rules_data(rules_data)
 
     def channel_type_enabled(self, channel: str, type_name: str) -> bool:
         rules_data = self.load_channel_rules()
@@ -552,13 +628,44 @@ class Downloader:
             line = fix_mojibake(raw_line.rstrip("\n"))
             self.update_status_from_line(line, type_name)
             if not re.match(r"^\[download\]\s+[0-9]+(?:\.[0-9]+)?%", line):
-                self.log(line)
-                lines.append(line)
+                if self.is_members_only_line(line):
+                    message = self.members_only_log_line(line)
+                    self.set_channel_paid_content_status(self.channel_url, PAID_CONTENT_HAS)
+                    self.log(message)
+                    lines.append(message)
+                else:
+                    self.log(line)
+                    lines.append(line)
         return_code = proc.wait()
         if return_code != 0:
-            self.failed_count += 1
-            self.log(f"   ❌ yt-dlp завершился с кодом {return_code}")
+            if self.output_is_members_only_only(lines):
+                self.log("   🔒 Закрытое для участников видео пропущено без ошибки")
+            else:
+                self.failed_count += 1
+                self.log(f"   ❌ yt-dlp завершился с кодом {return_code}")
         return lines
+
+    def is_members_only_line(self, line: str) -> bool:
+        return bool(MEMBERS_ONLY_RE.search(line or ""))
+
+    def members_only_log_line(self, line: str) -> str:
+        match = re.search(r"\[youtube\]\s+([A-Za-z0-9_-]{11})", line or "")
+        video_id = f" {match.group(1)}" if match else ""
+        return f"   🔒 Закрыто для участников:{video_id}"
+
+    def output_has_members_only(self, lines: list[str]) -> bool:
+        return any(self.is_members_only_line(line) or "🔒 Закрыто для участников" in line for line in lines)
+
+    def output_is_members_only_only(self, lines: list[str]) -> bool:
+        has_members_only = False
+        for line in lines:
+            if self.is_members_only_line(line) or "🔒 Закрыто для участников" in line:
+                has_members_only = True
+                continue
+            lowered = line.lower()
+            if "error:" in lowered or "failed" in lowered or "traceback" in lowered:
+                return False
+        return has_members_only
 
     def downloaded_files_from_lines(self, lines: list[str]) -> list[Path]:
         found: set[Path] = set()
@@ -777,6 +884,9 @@ class Downloader:
             lines = self.run_yt_dlp(command, "queue")
             self.process_type_lines(lines, url, "Очередь", "queue")
             if self.new_count == before and not any("has already been recorded in the archive" in line for line in lines):
+                if self.output_has_members_only(lines):
+                    self.log("   🔒 Ссылка из очереди закрыта для участников, повтор не нужен")
+                    continue
                 if retry_failed:
                     with self.queue_file.open("a", encoding="utf-8") as queue:
                         queue.write(url + "\n")
@@ -885,6 +995,18 @@ class Downloader:
         except ValueError:
             return False
 
+    def is_dedicated_temp_dir(self) -> bool:
+        try:
+            temp = self.temp_dir.resolve(strict=False)
+        except OSError:
+            temp = self.temp_dir
+        name = temp.name.casefold()
+        parent_name = temp.parent.name.casefold()
+        dedicated_names = {"yth", "ytd", "yt-harvester", "youtube-harvester", "youtubeharvester"}
+        if name in dedicated_names:
+            return True
+        return parent_name in {"temp", "tmp"} and any(part in name for part in dedicated_names)
+
     def can_cleanup_temp_dir(self) -> bool:
         try:
             temp = self.temp_dir.resolve(strict=False)
@@ -901,7 +1023,12 @@ class Downloader:
                 return False
             if self._path_contains(temp, final):
                 return False
-            return self.temp_marker_file.exists()
+            if self.temp_marker_file.exists():
+                return True
+            if self.is_dedicated_temp_dir():
+                self.temp_marker_file.write_text("YouTube Harvester temp directory\n", encoding="utf-8")
+                return True
+            return False
         except OSError:
             return False
 
@@ -947,6 +1074,8 @@ class Downloader:
 
     def run(self) -> int:
         self.prepare()
+        if not self.validate_free_space():
+            return self.rotate_logs(1)
         if not self.validate_telegram():
             return 1
         if os.name == "nt" and not self.ffmpeg_dir:
@@ -969,6 +1098,9 @@ class Downloader:
             else:
                 self.process_queue()
                 self.process_channels()
+                if self.read_nonempty_lines(self.queue_file):
+                    self.log("📥 Повторная обработка очереди после проверки каналов")
+                    self.process_queue()
         except KeyboardInterrupt:
             return self.rotate_logs(0)
 

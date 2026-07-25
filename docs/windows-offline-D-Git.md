@@ -88,9 +88,9 @@ BUILD_WINDOWS_OFFLINE.cmd
 Ожидаемые файлы:
 
 ```text
-YouTubeHarvester_1.0.0_windows_portable.zip
-YouTubeHarvester_1.0.0_windows_setup.exe
-YouTubeHarvester_1.0.0_windows_x64.msi
+YouTubeHarvester_1.1.0_windows_portable.zip
+YouTubeHarvester_1.1.0_windows_setup.exe
+YouTubeHarvester_1.1.0_windows_x64.msi
 SHA256SUMS-windows.txt
 ```
 
@@ -103,7 +103,7 @@ Set-Location "<offline-bundle>\source\dist\windows\YouTubeHarvester"
 .\YouTubeHarvester.exe
 ```
 
-Должно открыться приложение **YouTube Harvester 1.0.0**.
+Должно открыться приложение **YouTube Harvester 1.1.0**.
 
 Потом можно проверить installer EXE и MSI из папки:
 

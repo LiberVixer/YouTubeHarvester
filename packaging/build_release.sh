@@ -2,8 +2,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DEB_VERSION="${1:-1.0.0}"
-RELEASE_VERSION="${2:-1.0.0}"
+DEB_VERSION="${1:-1.1.0}"
+RELEASE_VERSION="${2:-1.1.0}"
 RELEASE_DIR="$ROOT_DIR/dist/release"
 SOURCE_TAR="$RELEASE_DIR/YouTubeHarvester_${RELEASE_VERSION}_source.tar.gz"
 DEB_SOURCE="$ROOT_DIR/dist/yt-harvester_${DEB_VERSION}_all.deb"
@@ -21,6 +21,9 @@ if git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     git -C "$ROOT_DIR" ls-files -z > "$SOURCE_LIST"
     if [ -f "$ROOT_DIR/yth_common.py" ] && ! grep -z -q -x -F -- "yth_common.py" "$SOURCE_LIST"; then
         printf 'yth_common.py\0' >> "$SOURCE_LIST"
+    fi
+    if [ -f "$ROOT_DIR/i18n_locales.py" ] && ! grep -z -q -x -F -- "i18n_locales.py" "$SOURCE_LIST"; then
+        printf 'i18n_locales.py\0' >> "$SOURCE_LIST"
     fi
     tar --null \
         --transform "s#^#${SOURCE_ROOT}/#" \

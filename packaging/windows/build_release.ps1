@@ -1,6 +1,6 @@
 param(
-    [string]$Version = "1.0.0",
-    [string]$MsiVersion = "1.0.0",
+    [string]$Version = "1.1.0",
+    [string]$MsiVersion = "1.1.0",
     [switch]$Offline,
     [string]$Wheelhouse = "",
     [string]$FfmpegDir = "",
@@ -303,6 +303,23 @@ if ($hashFiles) {
         "$($hash.Hash.ToLower())  $($file.Name)"
     }
     $hashLines | Set-Content -Encoding ascii (Join-Path $ReleaseDir "SHA256SUMS-windows.txt")
+}
+
+$requiredReleaseFiles = @(
+    "YouTubeHarvester_${Version}_windows_portable.zip",
+    "YouTubeHarvester_${Version}_windows_setup.exe"
+)
+if (-not $SkipMsi) {
+    $requiredReleaseFiles += "YouTubeHarvester_${Version}_windows_x64.msi"
+}
+foreach ($requiredFile in $requiredReleaseFiles) {
+    $requiredPath = Join-Path $ReleaseDir $requiredFile
+    if (-not (Test-Path $requiredPath)) {
+        throw "Required Windows release artifact was not built: $requiredPath"
+    }
+}
+if (-not (Test-Path (Join-Path $ReleaseDir "SHA256SUMS-windows.txt"))) {
+    throw "Windows checksum file was not built."
 }
 
 Write-Host ""

@@ -2,6 +2,7 @@
 # Запуск tray_launcher с проверкой зависимостей
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export PATH="$HOME/.npm-global/bin:$HOME/.local/bin:$HOME/.deno/bin:$PATH"
 
 # Проверяем PyQt5
 python3 -c "import PyQt5" 2>/dev/null || {
