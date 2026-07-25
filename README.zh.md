@@ -190,7 +190,7 @@ FFmpeg/FFprobe、Deno、`curl`、Telegram Bot API 和 `pynput`，各自采用独
 
 ## 致谢
 
-特别感谢 Dmitry **'Minion' Pogorilov** 对 Windows 版本测试提供的宝贵帮助。
+特别感谢 Dmitry **'Minion' Pororiliy** 对 Windows 版本测试提供的宝贵帮助。
 
 程序标志中加入了 **Command & Conquer: Red Alert** 的 Harvester。🙂
 

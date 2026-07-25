@@ -200,7 +200,7 @@ FFmpeg/FFprobe, Deno, `curl`, Telegram Bot API और `pynput`; हर घटक
 ## धन्यवाद
 
 Windows संस्करण की बीटा जाँच में अमूल्य सहायता के लिए Dmitry
-**'Minion' Pogorilov** को विशेष धन्यवाद।
+**'Minion' Pororiliy** को विशेष धन्यवाद।
 
 प्रोग्राम के लोगो में **Command & Conquer: Red Alert** का Harvester जोड़ा गया
 है। 🙂

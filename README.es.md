@@ -205,7 +205,7 @@ licencia.
 
 ## Agradecimientos
 
-Un agradecimiento especial a Dmitry **'Minion' Pogorilov** por su ayuda
+Un agradecimiento especial a Dmitry **'Minion' Pororiliy** por su ayuda
 inestimable en las pruebas beta de la versión para Windows.
 
 Se añadió al logotipo del programa un Harvester de

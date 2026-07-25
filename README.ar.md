@@ -194,7 +194,7 @@ powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
 
 ## شكر وتقدير
 
-شكر خاص إلى Dmitry **'Minion' Pogorilov** على مساعدته القيّمة في الاختبار
+شكر خاص إلى Dmitry **'Minion' Pororiliy** على مساعدته القيّمة في الاختبار
 التجريبي لإصدار Windows.
 
 أُضيف Harvester من **Command & Conquer: Red Alert** إلى شعار البرنامج. 🙂

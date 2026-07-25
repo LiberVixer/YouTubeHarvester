@@ -253,7 +253,7 @@ own license and terms.
 
 ## Thanks
 
-Special thanks to Dmitry **'Minion'** Pogoriliy for invaluable help beta-testing
+Special thanks to Dmitry **'Minion' Pororiliy** for invaluable help beta-testing
 the Windows version.
 
 A Harvester from **Command & Conquer: Red Alert** has been added to the program

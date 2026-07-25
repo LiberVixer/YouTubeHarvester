@@ -207,7 +207,7 @@ licence.
 
 ## Remerciements
 
-Un grand merci à Dmitry **'Minion' Pogorilov** pour son aide inestimable lors
+Un grand merci à Dmitry **'Minion' Pororiliy** pour son aide inestimable lors
 des tests bêta de la version Windows.
 
 Un Harvester de **Command & Conquer: Red Alert** a été ajouté au logo du
