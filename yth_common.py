@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import contextlib
 import os
+import re
 import shlex
 import shutil
 import sys
@@ -22,6 +23,8 @@ YOUTUBE_URL_PREFIXES = (
     "https://m.youtube.com/",
     "https://youtu.be/",
 )
+
+MEDIA_RESOLUTION_RE = re.compile(r"\[(?P<height>\d{3,4})p\]", re.IGNORECASE)
 
 
 def text_quality(text: str) -> int:
@@ -195,6 +198,101 @@ def extract_video_id(url: str) -> str:
     except Exception:
         return ""
     return ""
+
+
+def media_resolution_from_path(value: str | Path | None) -> str:
+    match = MEDIA_RESOLUTION_RE.search(str(value or ""))
+    return match.group("height") if match else ""
+
+
+def archive_entry_file_exists(entry: dict) -> bool:
+    path_text = str(entry.get("file_path") or "").strip()
+    if not path_text:
+        return False
+    path = Path(path_text)
+    candidates = [path]
+    if path.name and not path.name.startswith("+"):
+        candidates.append(path.with_name("+" + path.name))
+    elif path.name.startswith("+") and len(path.name) > 1:
+        candidates.append(path.with_name(path.name[1:]))
+    for candidate in candidates:
+        try:
+            if candidate.is_file():
+                return True
+        except OSError:
+            continue
+    return False
+
+
+def archive_entry_matches_variant(
+    entry: dict,
+    *,
+    resolution: str,
+    audio_format_id: str = "",
+    audio_language: str = "",
+    subtitle_selection: str = "none",
+    audio_format_ids: list[str] | None = None,
+    audio_languages: list[str] | None = None,
+    subtitle_selections: list[str] | None = None,
+) -> bool:
+    requested_resolution = str(entry.get("requested_resolution") or entry.get("resolution") or "").strip().lower()
+    if not requested_resolution:
+        requested_resolution = media_resolution_from_path(entry.get("filename") or entry.get("file_path"))
+    if requested_resolution.rstrip("p") != str(resolution or "").strip().lower().rstrip("p"):
+        return False
+
+    selected_audio_ids = sorted({
+        str(value or "").strip()
+        for value in (audio_format_ids if audio_format_ids is not None else [audio_format_id])
+        if str(value or "").strip()
+    })
+    selected_audio_languages = sorted({
+        str(value or "").strip().lower()
+        for value in (audio_languages if audio_languages is not None else [audio_language])
+        if str(value or "").strip().lower() not in {"", "auto"}
+    })
+    entry_audio_tracks = entry.get("audio_tracks")
+    if isinstance(entry_audio_tracks, list):
+        entry_audio_ids = sorted({
+            str(track.get("format_id") or "").strip()
+            for track in entry_audio_tracks
+            if isinstance(track, dict) and str(track.get("format_id") or "").strip()
+        })
+        entry_audio_languages = sorted({
+            str(track.get("language") or "").strip().lower()
+            for track in entry_audio_tracks
+            if isinstance(track, dict) and str(track.get("language") or "").strip().lower() not in {"", "auto"}
+        })
+    else:
+        entry_audio_id = str(entry.get("audio_format_id") or "").strip()
+        entry_audio_ids = [entry_audio_id] if entry_audio_id else []
+        entry_audio_language = str(entry.get("audio_language") or "").strip().lower()
+        entry_audio_languages = [entry_audio_language] if entry_audio_language not in {"", "auto"} else []
+    if selected_audio_ids:
+        if entry_audio_ids:
+            if entry_audio_ids != selected_audio_ids:
+                return False
+        elif not selected_audio_languages or entry_audio_languages != selected_audio_languages:
+            return False
+    elif entry_audio_ids or entry_audio_languages:
+        return False
+
+    selected_subtitles = sorted({
+        str(value or "").strip().lower()
+        for value in (subtitle_selections if subtitle_selections is not None else [subtitle_selection])
+        if str(value or "").strip().lower() not in {"", "none"}
+    })
+    entry_subtitle_values = entry.get("subtitle_selections")
+    if isinstance(entry_subtitle_values, list):
+        entry_subtitles = sorted({
+            str(value or "").strip().lower()
+            for value in entry_subtitle_values
+            if str(value or "").strip().lower() not in {"", "none"}
+        })
+    else:
+        legacy_subtitle = str(entry.get("subtitle_selection") or "none").strip().lower()
+        entry_subtitles = [] if legacy_subtitle in {"", "none"} else [legacy_subtitle]
+    return entry_subtitles == selected_subtitles
 
 
 class SingleInstanceLock:

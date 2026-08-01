@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.1
+# YouTube Harvester 1.1.2
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="Logotipo de YouTube Harvester" width="128">
@@ -12,6 +12,7 @@
   <a href="README.es.md">🇪🇸 Español</a> ·
   <a href="README.hi.md">🇮🇳 हिन्दी</a> ·
   <a href="README.zh.md">🇨🇳 中文</a> ·
+  <a href="README.ja.md">🇯🇵 日本語</a> ·
   <a href="README.ar.md">🇸🇦 العربية</a>
 </p>
 
@@ -21,7 +22,10 @@
   a Telegram.
 </p>
 
-> **UPD 1.1.1:** Se han corregido pequeños detalles.
+> **UPD 2:** La Descarga rápida ahora integra varias pistas de audio y
+> subtítulos en un mismo vídeo. El archivo distingue variantes por calidad y
+> pistas, el fallo de un subtítulo ya no cancela la descarga y se ha añadido la
+> localización japonesa completa.
 
 ![Descripción general de YouTube Harvester](docs/screenshots/es/overview.png)
 
@@ -32,7 +36,7 @@ vídeos, Shorts y emisiones con `yt-dlp`. También admite enlaces individuales,
 mantiene un archivo local, muestra informes y puede enviar notificaciones o
 archivos a Telegram.
 
-La versión `1.1.1` usa el motor Python tanto en Linux como en Windows. El antiguo
+La versión `1.1.2` usa el motor Python tanto en Linux como en Windows. El antiguo
 motor Bash permanece en el código fuente únicamente como código heredado y
 desactivado.
 
@@ -49,12 +53,13 @@ desactivado.
 - Cola con título, canal, miniatura, control de duplicados y archivo, reintentos
   y una segunda pasada después de revisar todos los canales.
 - Ventana de Descarga rápida con URL del portapapeles, metadatos, resolución,
-  descarga inmediata, cola y casilla persistente de Telegram.
+  varias pistas de audio y subtítulos, descarga inmediata, cola y casilla
+  persistente de Telegram.
 - Atajo global configurable; el valor predeterminado es `Ctrl+Shift+Alt+Y`.
 - Vigilancia opcional del portapapeles para enlaces válidos de YouTube.
 - Programador de ejecuciones automáticas por hora.
-- Archivo detallado con tipo, canal, título, fecha, enlace de YouTube, archivo
-  local, carpeta y eliminación de registros.
+- Archivo detallado con tipo, canal, título, fecha, enlace de YouTube, variantes
+  de calidad y pistas, archivo local, carpeta y eliminación de registros.
 - Registros con filtros Todos, Importante y Errores.
 - Comprobación de versión de `yt-dlp` y diagnóstico de sistema, X11/Wayland,
   bandeja, atajo, herramientas, rutas, caché, escritura y espacio libre.
@@ -62,8 +67,8 @@ desactivado.
 - Inicio solo en bandeja, solo en barra de tareas o en ambos lugares.
 - Parada segura, limpieza temporal protegida, nombres compatibles con Windows y
   UTF-8 correcto en registros y archivos.
-- Inglés por defecto, además de ruso, ucraniano, francés, español, hindi, chino
-  y árabe.
+- Inglés por defecto, además de ruso, ucraniano, francés, español, hindi, chino,
+  japonés y árabe.
 
 ## Capturas de pantalla
 
@@ -80,12 +85,12 @@ desactivado.
 Los paquetes se publican en
 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases).
 
-Linux: `YouTubeHarvester_1.1.1_linux_all.deb`,
-`YouTubeHarvester_1.1.1_source.tar.gz` y `SHA256SUMS-linux.txt`.
+Linux: `YouTubeHarvester_1.1.2_linux_all.deb`,
+`YouTubeHarvester_1.1.2_source.tar.gz` y `SHA256SUMS-linux.txt`.
 
-Windows: `YouTubeHarvester_1.1.1_windows_setup.exe`,
-`YouTubeHarvester_1.1.1_windows_x64.msi`,
-`YouTubeHarvester_1.1.1_windows_portable.zip` y `SHA256SUMS-windows.txt`.
+Windows: `YouTubeHarvester_1.1.2_windows_setup.exe`,
+`YouTubeHarvester_1.1.2_windows_x64.msi`,
+`YouTubeHarvester_1.1.2_windows_portable.zip` y `SHA256SUMS-windows.txt`.
 
 Las compilaciones para Windows incluyen `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` y
 `deno.exe`.
@@ -93,7 +98,7 @@ Las compilaciones para Windows incluyen `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` y
 ## Instalación en Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.1_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.2_linux_all.deb
 yt-harvester
 ```
 
@@ -185,12 +190,12 @@ localmente.
 ## Compilación
 
 ```bash
-packaging/build_release.sh 1.1.1 1.1.1
+packaging/build_release.sh 1.1.2 1.1.2
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.1 -MsiVersion 1.1.1
+  -Version 1.1.2 -MsiVersion 1.1.2
 ```
 
 ## Uso responsable

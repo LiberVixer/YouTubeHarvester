@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.1
+# YouTube Harvester 1.1.2
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="YouTube Harvester लोगो" width="128">
@@ -12,6 +12,7 @@
   <a href="README.es.md">🇪🇸 Español</a> ·
   <a href="README.hi.md">🇮🇳 हिन्दी</a> ·
   <a href="README.zh.md">🇨🇳 中文</a> ·
+  <a href="README.ja.md">🇯🇵 日本語</a> ·
   <a href="README.ar.md">🇸🇦 العربية</a>
 </p>
 
@@ -20,7 +21,9 @@
   कतार, त्वरित डाउनलोड, समय-सारणी, संग्रह और वैकल्पिक Telegram प्रेषण के साथ।
 </p>
 
-> **UPD 1.1.1:** छोटी कमियों को ठीक किया गया है।
+> **UPD 2:** त्वरित डाउनलोड अब एक वीडियो में कई ऑडियो और उपशीर्षक ट्रैक जोड़
+> सकता है। संग्रह गुणवत्ता और ट्रैक के अनुसार संस्करण अलग रखता है, किसी एक
+> उपशीर्षक की विफलता डाउनलोड नहीं रोकती, और पूर्ण जापानी स्थानीयकरण जोड़ा गया है।
 
 ![YouTube Harvester अवलोकन](docs/screenshots/hi/overview.png)
 
@@ -31,7 +34,7 @@
 जोड़े जा सकते हैं, स्थानीय संग्रह रखा जा सकता है, रिपोर्ट देखी जा सकती है और
 Telegram पर सूचनाएँ या फ़ाइलें भेजी जा सकती हैं।
 
-संस्करण `1.1.1` Linux और Windows दोनों पर Python इंजन का उपयोग करता है। पुराना
+संस्करण `1.1.2` Linux और Windows दोनों पर Python इंजन का उपयोग करता है। पुराना
 Bash इंजन स्रोत में केवल निष्क्रिय विरासत कोड के रूप में रखा गया है।
 
 ## मुख्य सुविधाएँ
@@ -45,13 +48,13 @@ Bash इंजन स्रोत में केवल निष्क्र�
 - अवलोकन टैब पर URL फ़ील्ड, तुरंत डाउनलोड और कतार में जोड़ने की क्रियाएँ।
 - शीर्षक, चैनल और थंबनेल पूर्वावलोकन वाली वीडियो कतार; डुप्लिकेट/संग्रह जाँच,
   पुनः प्रयास और सभी चैनलों के बाद दूसरी कतार प्रक्रिया।
-- क्लिपबोर्ड URL, मेटाडेटा, रिज़ॉल्यूशन, तुरंत डाउनलोड, कतार और सहेजी गई
-  Telegram चेकबॉक्स वाली त्वरित डाउनलोड विंडो।
+- क्लिपबोर्ड URL, मेटाडेटा, रिज़ॉल्यूशन, कई ऑडियो व उपशीर्षक ट्रैक, तुरंत
+  डाउनलोड, कतार और सहेजी गई Telegram चेकबॉक्स वाली त्वरित डाउनलोड विंडो।
 - बदलने योग्य ग्लोबल हॉटकी; डिफ़ॉल्ट `Ctrl+Shift+Alt+Y`।
 - मान्य YouTube URL मिलने पर त्वरित डाउनलोड खोलने वाली क्लिपबोर्ड निगरानी।
 - चुने हुए घंटों पर स्वचालित चलाने का समय-सारणी प्रबंधक।
-- प्रकार, चैनल, शीर्षक, तारीख, YouTube लिंक, स्थानीय फ़ाइल, फ़ोल्डर और रिकॉर्ड
-  हटाने वाला विस्तृत संग्रह।
+- प्रकार, चैनल, शीर्षक, तारीख, YouTube लिंक, गुणवत्ता व ट्रैक संस्करण, स्थानीय
+  फ़ाइल, फ़ोल्डर और रिकॉर्ड हटाने वाला विस्तृत संग्रह।
 - सभी, महत्वपूर्ण और त्रुटियाँ फ़िल्टर वाले लॉग।
 - `yt-dlp` संस्करण जाँच और OS, X11/Wayland, ट्रे, हॉटकी, टूल, पथ, कैश, लिखने
   की अनुमति तथा डिस्क स्थान की डायग्नोस्टिक्स।
@@ -59,8 +62,8 @@ Bash इंजन स्रोत में केवल निष्क्र�
 - केवल सिस्टम ट्रे, केवल टास्कबार या दोनों में शुरुआत।
 - सुरक्षित रोक, संरक्षित अस्थायी सफ़ाई, Windows-सुरक्षित नाम और Windows लॉग व
   संग्रह में सही UTF-8।
-- डिफ़ॉल्ट अंग्रेज़ी; रूसी, यूक्रेनी, फ़्रेंच, स्पेनी, हिन्दी, चीनी और अरबी भी
-  उपलब्ध।
+- डिफ़ॉल्ट अंग्रेज़ी; रूसी, यूक्रेनी, फ़्रेंच, स्पेनी, हिन्दी, चीनी, जापानी और
+  अरबी भी उपलब्ध।
 
 ## स्क्रीनशॉट
 
@@ -78,19 +81,19 @@ Bash इंजन स्रोत में केवल निष्क्र�
 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases) पर
 मिलते हैं।
 
-Linux: `YouTubeHarvester_1.1.1_linux_all.deb`,
-`YouTubeHarvester_1.1.1_source.tar.gz` और `SHA256SUMS-linux.txt`।
+Linux: `YouTubeHarvester_1.1.2_linux_all.deb`,
+`YouTubeHarvester_1.1.2_source.tar.gz` और `SHA256SUMS-linux.txt`।
 
-Windows: `YouTubeHarvester_1.1.1_windows_setup.exe`,
-`YouTubeHarvester_1.1.1_windows_x64.msi`,
-`YouTubeHarvester_1.1.1_windows_portable.zip` और `SHA256SUMS-windows.txt`।
+Windows: `YouTubeHarvester_1.1.2_windows_setup.exe`,
+`YouTubeHarvester_1.1.2_windows_x64.msi`,
+`YouTubeHarvester_1.1.2_windows_portable.zip` और `SHA256SUMS-windows.txt`।
 
 Windows पैकेज में `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` और `deno.exe` शामिल हैं।
 
 ## Linux में स्थापना
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.1_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.2_linux_all.deb
 yt-harvester
 ```
 
@@ -179,12 +182,12 @@ PROXY_URL=127.0.0.1:9050
 ## रिलीज़ बनाना
 
 ```bash
-packaging/build_release.sh 1.1.1 1.1.1
+packaging/build_release.sh 1.1.2 1.1.2
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.1 -MsiVersion 1.1.1
+  -Version 1.1.2 -MsiVersion 1.1.2
 ```
 
 ## ज़िम्मेदार उपयोग

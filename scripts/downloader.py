@@ -28,8 +28,11 @@ if str(ROOT_DIR) not in sys.path:
 
 from yth_common import (  # noqa: E402
     SingleInstanceLock,
+    archive_entry_file_exists,
+    archive_entry_matches_variant,
     extract_video_id,
     fix_mojibake,
+    media_resolution_from_path,
     positive_int,
     read_env_file,
     safe_print,
@@ -44,6 +47,16 @@ TYPE_LABELS = {
     "shorts": ("⚡", "Shorts"),
     "streams": ("🔴", "Трансляция"),
     "queue": ("📥", "Очередь"),
+}
+
+ISO_639_2_CODES = {
+    "ar": "ara", "bg": "bul", "ca": "cat", "cs": "ces", "da": "dan", "de": "deu",
+    "el": "ell", "en": "eng", "es": "spa", "et": "est", "fa": "fas", "fi": "fin",
+    "fr": "fra", "he": "heb", "hi": "hin", "hr": "hrv", "hu": "hun", "id": "ind",
+    "it": "ita", "ja": "jpn", "ko": "kor", "lt": "lit", "lv": "lav", "nl": "nld",
+    "no": "nor", "pl": "pol", "pt": "por", "ro": "ron", "ru": "rus", "sk": "slk",
+    "sl": "slv", "sr": "srp", "sv": "swe", "th": "tha", "tr": "tur", "uk": "ukr",
+    "vi": "vie", "zh": "zho",
 }
 
 MEDIA_FILE_RE = re.compile(
@@ -64,6 +77,10 @@ PAID_CONTENT_STATUS_KEY = "paid_content_status"
 PAID_CONTENT_HAS = "has_paid"
 MIN_FREE_SPACE_MB = 1024
 PLAYLIST_ITEM_RE = re.compile(r"^\[download\] Downloading item \d+ of \d+")
+SUBTITLE_DOWNLOAD_ERROR_RE = re.compile(
+    r"Unable to download video subtitles for ['\"]([^'\"]+)['\"]",
+    re.IGNORECASE,
+)
 
 
 def short_channel_name(channel: str) -> str:
@@ -71,6 +88,13 @@ def short_channel_name(channel: str) -> str:
     if "/@" in text:
         return text.rsplit("/@", 1)[-1]
     return text.rsplit("/", 1)[-1]
+
+
+def iso_639_2_code(language: str) -> str:
+    base = str(language or "").strip().lower().split("-", 1)[0]
+    if len(base) == 3:
+        return base
+    return ISO_639_2_CODES.get(base, "und")
 
 
 class Downloader:
@@ -110,7 +134,60 @@ class Downloader:
         self.cleanup_temp = truthy(os.environ.get("YTD_CLEANUP_TEMP", env_values.get("CLEANUP_TEMP", "1")))
         self.retry_failed_queue = truthy(os.environ.get("YTD_RETRY_FAILED_QUEUE", env_values.get("RETRY_FAILED_QUEUE", "1")))
         self.max_resolution = os.environ.get("YTD_MAX_RESOLUTION", env_values.get("MAX_RESOLUTION", "1080")).strip()
-        self.format_selector = self.build_format_selector(self.max_resolution)
+        self.audio_tracks: list[dict] = []
+        try:
+            configured_audio_tracks = json.loads(os.environ.get("YTD_AUDIO_TRACKS_JSON", "[]"))
+        except json.JSONDecodeError:
+            configured_audio_tracks = []
+        if isinstance(configured_audio_tracks, list):
+            for track in configured_audio_tracks:
+                if not isinstance(track, dict):
+                    continue
+                format_id = str(track.get("format_id") or "").strip()
+                if not re.fullmatch(r"[A-Za-z0-9._-]+", format_id):
+                    continue
+                format_kind = str(track.get("format_kind") or "audio").strip().lower()
+                player_client = str(track.get("player_client") or "").strip()
+                self.audio_tracks.append({
+                    "format_id": format_id,
+                    "format_kind": format_kind if format_kind in {"audio", "combined"} else "audio",
+                    "language": str(track.get("language") or "").strip(),
+                    "name": fix_mojibake(str(track.get("name") or "").strip()),
+                    "player_client": player_client if re.fullmatch(r"[A-Za-z0-9_-]+", player_client) else "",
+                })
+        if not self.audio_tracks:
+            audio_format_id = os.environ.get("YTD_AUDIO_FORMAT_ID", "").strip()
+            if re.fullmatch(r"[A-Za-z0-9._-]+", audio_format_id):
+                audio_format_kind = os.environ.get("YTD_AUDIO_FORMAT_KIND", "audio").strip().lower()
+                audio_player_client = os.environ.get("YTD_YOUTUBE_AUDIO_PLAYER_CLIENT", "").strip()
+                self.audio_tracks.append({
+                    "format_id": audio_format_id,
+                    "format_kind": audio_format_kind if audio_format_kind in {"audio", "combined"} else "audio",
+                    "language": os.environ.get("YTD_AUDIO_LANGUAGE", "").strip(),
+                    "name": fix_mojibake(os.environ.get("YTD_AUDIO_TRACK_NAME", "").strip()),
+                    "player_client": audio_player_client if re.fullmatch(r"[A-Za-z0-9_-]+", audio_player_client) else "",
+                })
+        self.audio_format_id = str(self.audio_tracks[0].get("format_id") or "") if self.audio_tracks else ""
+        self.audio_format_kind = str(self.audio_tracks[0].get("format_kind") or "audio") if self.audio_tracks else "audio"
+        self.audio_language = str(self.audio_tracks[0].get("language") or "") if self.audio_tracks else ""
+        self.audio_track_name = str(self.audio_tracks[0].get("name") or "") if self.audio_tracks else ""
+        self.audio_player_client = next((str(track.get("player_client") or "") for track in self.audio_tracks if track.get("player_client")), "")
+
+        try:
+            configured_subtitles = json.loads(os.environ.get("YTD_SUBTITLE_SELECTIONS_JSON", "[]"))
+        except json.JSONDecodeError:
+            configured_subtitles = []
+        self.subtitle_selections = sorted({
+            str(value or "").strip()
+            for value in configured_subtitles
+            if isinstance(value, str) and str(value or "").strip().lower() not in {"", "none"}
+        }, key=str.casefold) if isinstance(configured_subtitles, list) else []
+        if not self.subtitle_selections:
+            legacy_subtitle = os.environ.get("YTD_SUBTITLE_SELECTION", "").strip()
+            if legacy_subtitle.lower() not in {"", "none"}:
+                self.subtitle_selections = [legacy_subtitle]
+        self.subtitle_selection = self.subtitle_selections[0] if self.subtitle_selections else "none"
+        self.format_selector = self.build_format_selector(self.max_resolution, self.audio_tracks)
 
         self.state = "sleep"
         self.channel_url = ""
@@ -130,10 +207,30 @@ class Downloader:
         self.new_count = 0
         self.failed_count = 0
         self.downloaded_counts = {"videos": 0, "shorts": 0, "streams": 0, "queue": 0}
+        self.last_yt_dlp_return_code = 0
         self.run_completed_at = 0
         self.archived_log = self.data_dir / f"download_{_dt.datetime.now():%Y-%m-%d_%H-%M}.log"
 
-    def build_format_selector(self, value: str) -> str:
+    def build_format_selector(self, value: str, audio_tracks: list[dict] | None = None) -> str:
+        audio_tracks = audio_tracks or []
+        if audio_tracks:
+            combined_ids = [str(track.get("format_id") or "") for track in audio_tracks if track.get("format_kind") == "combined"]
+            audio_ids = [str(track.get("format_id") or "") for track in audio_tracks if track.get("format_kind") != "combined"]
+            if combined_ids:
+                return "+".join([combined_ids[0], *audio_ids])
+            audio_suffix = "+".join(audio_ids)
+            if value in {"480", "720", "1080", "1440", "2160"}:
+                return (
+                    f"bestvideo[ext=mp4][height<={value}]+{audio_suffix}/"
+                    f"bestvideo[height<={value}]+{audio_suffix}"
+                )
+            self.max_resolution = "best" if value.lower() == "best" else "1080"
+            if self.max_resolution == "best":
+                return f"bestvideo[ext=mp4]+{audio_suffix}/bestvideo+{audio_suffix}"
+            return (
+                f"bestvideo[ext=mp4][height<=1080]+{audio_suffix}/"
+                f"bestvideo[height<=1080]+{audio_suffix}"
+            )
         if value in {"480", "720", "1080", "1440", "2160"}:
             return (
                 f"bestvideo[ext=mp4][height<={value}]+bestaudio[ext=m4a]/"
@@ -143,6 +240,17 @@ class Downloader:
         if self.max_resolution == "best":
             return "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best"
         return "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/best[ext=mp4][height<=1080]/best[height<=1080]"
+
+    def ordered_audio_tracks(self) -> list[dict]:
+        combined = [track for track in self.audio_tracks if track.get("format_kind") == "combined"]
+        separate = [track for track in self.audio_tracks if track.get("format_kind") != "combined"]
+        return [*combined[:1], *separate]
+
+    def audio_metadata_postprocessor_args(self) -> str:
+        arguments: list[str] = []
+        for index, track in enumerate(self.ordered_audio_tracks()):
+            arguments.extend([f"-metadata:s:a:{index}", f"language={iso_639_2_code(track.get('language'))}"])
+        return f"Merger+ffmpeg_o:{' '.join(arguments)}" if arguments else ""
 
     def detect_ffmpeg_dir(self) -> Path | None:
         configured = os.environ.get("YTD_FFMPEG_DIR", "").strip()
@@ -402,30 +510,111 @@ class Downloader:
             pass
         return self.archive_details_has_video(video_id)
 
+    def archive_detail_entries(self, video_id: str = "") -> list[dict]:
+        entries: list[dict] = []
+        try:
+            lines = self.archive_details_file.read_text(encoding="utf-8", errors="ignore").splitlines()
+        except OSError:
+            return entries
+        for line in lines:
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(entry, dict):
+                continue
+            if video_id and str(entry.get("video_id") or "").strip() != video_id:
+                continue
+            entries.append(entry)
+        return entries
+
     def archive_details_has_video(self, video_id: str) -> bool:
         if not video_id:
             return False
-        needle = f'"video_id":"{video_id}"'
+        return bool(self.archive_detail_entries(video_id))
+
+    def archive_details_has_variant(self, video_id: str) -> bool:
+        return any(
+            archive_entry_file_exists(entry)
+            and archive_entry_matches_variant(
+                entry,
+                resolution=self.max_resolution,
+                audio_format_ids=[str(track.get("format_id") or "") for track in self.audio_tracks],
+                audio_languages=[str(track.get("language") or "") for track in self.audio_tracks],
+                subtitle_selections=self.subtitle_selections,
+            )
+            for entry in self.archive_detail_entries(video_id)
+        )
+
+    def ensure_video_in_archive(self, video_id: str) -> None:
+        if not video_id or video_id == "unknown":
+            return
         try:
-            return needle in self.archive_details_file.read_text(encoding="utf-8", errors="ignore").replace(" ", "")
+            lines = self.archive_file.read_text(encoding="utf-8", errors="ignore").splitlines() if self.archive_file.exists() else []
+            if any(video_id in line.split() for line in lines):
+                return
+            self.archive_file.parent.mkdir(parents=True, exist_ok=True)
+            with self.archive_file.open("a", encoding="utf-8") as archive:
+                archive.write(f"youtube {video_id}\n")
         except OSError:
-            return False
+            pass
 
     def remove_video_from_archive(self, video_id: str) -> None:
         if not video_id or not self.archive_file.exists():
             return
+        if self.archive_details_has_video(video_id):
+            self.log(f"   ↩️ ID оставлен в архиве: сохранены другие варианты {video_id}")
+            return
         try:
             lines = self.archive_file.read_text(encoding="utf-8", errors="ignore").splitlines()
-            kept = [line for line in lines if video_id not in line]
+            kept = [line for line in lines if video_id not in line.split()]
             self.archive_file.write_text("\n".join(kept) + ("\n" if kept else ""), encoding="utf-8")
             self.log(f"   ↩️ Убран из архива для повтора: {video_id}")
         except OSError:
             pass
 
     def append_archive_details(self, video_id: str, url: str, title: str, channel: str, channel_url: str, type_name: str, file_path: Path) -> None:
-        if video_id != "unknown" and self.archive_details_has_video(video_id):
-            self.log(f"   🗃 Запись уже есть в архиве: {video_id}")
-            return
+        if video_id != "unknown":
+            existing_lines: list[str] = []
+            kept_lines: list[str] = []
+            has_existing_variant = False
+            try:
+                existing_lines = self.archive_details_file.read_text(encoding="utf-8", errors="ignore").splitlines()
+            except OSError:
+                pass
+            for raw_line in existing_lines:
+                try:
+                    existing = json.loads(raw_line)
+                except json.JSONDecodeError:
+                    kept_lines.append(raw_line)
+                    continue
+                matches = (
+                    isinstance(existing, dict)
+                    and str(existing.get("video_id") or "").strip() == video_id
+                    and archive_entry_matches_variant(
+                        existing,
+                        resolution=self.max_resolution,
+                        audio_format_ids=[str(track.get("format_id") or "") for track in self.audio_tracks],
+                        audio_languages=[str(track.get("language") or "") for track in self.audio_tracks],
+                        subtitle_selections=self.subtitle_selections,
+                    )
+                )
+                if matches and archive_entry_file_exists(existing):
+                    has_existing_variant = True
+                    kept_lines.append(raw_line)
+                elif not matches:
+                    kept_lines.append(raw_line)
+            if has_existing_variant:
+                self.log(f"   🗃 Такой вариант уже есть в архиве: {video_id}")
+                return
+            if kept_lines != existing_lines:
+                try:
+                    self.archive_details_file.write_text(
+                        "\n".join(kept_lines) + ("\n" if kept_lines else ""),
+                        encoding="utf-8",
+                    )
+                except OSError:
+                    pass
         entry = {
             "video_id": video_id,
             "youtube_url": url,
@@ -437,6 +626,14 @@ class Downloader:
             "type": type_name,
             "file_path": str(file_path),
             "filename": fix_mojibake(file_path.name),
+            "resolution": media_resolution_from_path(file_path),
+            "requested_resolution": self.max_resolution,
+            "audio_format_id": self.audio_format_id,
+            "audio_language": self.audio_language or "auto",
+            "audio_track_name": fix_mojibake(self.audio_track_name),
+            "subtitle_selection": self.subtitle_selection or "none",
+            "audio_tracks": self.audio_tracks,
+            "subtitle_selections": self.subtitle_selections,
         }
         try:
             with self.archive_details_file.open("a", encoding="utf-8") as details:
@@ -612,6 +809,8 @@ class Downloader:
         command: list[str],
         type_name: str,
         item_completed: Callable[[list[str]], None] | None = None,
+        *,
+        report_failure: bool = True,
     ) -> list[str]:
         lines: list[str] = []
         item_lines: list[str] = []
@@ -628,8 +827,10 @@ class Downloader:
                 bufsize=1,
             )
         except FileNotFoundError:
-            self.log("❌ yt-dlp не найден")
-            self.failed_count += 1
+            self.last_yt_dlp_return_code = 127
+            if report_failure:
+                self.log("❌ yt-dlp не найден")
+                self.failed_count += 1
             return lines
 
         def finish_item(completed_lines: list[str]) -> None:
@@ -674,20 +875,100 @@ class Downloader:
                     if playlist_item_started:
                         item_lines.append(message)
                 else:
-                    self.log(line)
+                    if report_failure or not SUBTITLE_DOWNLOAD_ERROR_RE.search(line):
+                        self.log(line)
                     lines.append(line)
                     if playlist_item_started:
                         item_lines.append(line)
         return_code = proc.wait()
+        self.last_yt_dlp_return_code = return_code
         if return_code != 0:
             if self.output_is_members_only_only(lines):
                 self.log("   🔒 Закрытое для участников видео пропущено без ошибки")
-            else:
+            elif report_failure:
                 self.failed_count += 1
                 self.log(f"   ❌ yt-dlp завершился с кодом {return_code}")
         if item_completed is not None:
             finish_item(item_lines if playlist_item_started else lines)
         return lines
+
+    @staticmethod
+    def failed_subtitle_languages(lines: list[str]) -> set[str]:
+        return {
+            match.group(1).strip().casefold()
+            for line in lines
+            if (match := SUBTITLE_DOWNLOAD_ERROR_RE.search(line))
+        }
+
+    @staticmethod
+    def command_with_subtitles(command: list[str], selections: list[str], *, bypass_archive: bool) -> list[str]:
+        subtitle_flags = {
+            "--write-subs",
+            "--no-write-subs",
+            "--write-auto-subs",
+            "--no-write-auto-subs",
+            "--embed-subs",
+            "--no-embed-subs",
+        }
+        cleaned: list[str] = []
+        skip_next = False
+        for argument in command:
+            if skip_next:
+                skip_next = False
+                continue
+            if argument == "--sub-langs":
+                skip_next = True
+                continue
+            if argument in subtitle_flags:
+                continue
+            cleaned.append(argument)
+
+        subtitle_args: list[str] = []
+        if selections:
+            languages = [selection.partition(":")[2] for selection in selections if selection.partition(":")[2]]
+            modes = {selection.partition(":")[0] for selection in selections}
+            subtitle_args.extend(["--sub-langs", ",".join(languages), "--embed-subs"])
+            subtitle_args.append("--write-subs" if "manual" in modes else "--no-write-subs")
+            subtitle_args.append("--write-auto-subs" if "auto" in modes else "--no-write-auto-subs")
+        else:
+            subtitle_args.extend(["--no-write-subs", "--no-write-auto-subs", "--no-embed-subs"])
+        if bypass_archive and "--no-download-archive" not in cleaned:
+            subtitle_args.append("--no-download-archive")
+
+        insert_at = max(0, len(cleaned) - 1)
+        cleaned[insert_at:insert_at] = subtitle_args
+        return cleaned
+
+    def run_yt_dlp_with_subtitle_fallback(self, command: list[str], type_name: str) -> list[str]:
+        if not self.subtitle_selections:
+            return self.run_yt_dlp(command, type_name)
+
+        active_selections = list(self.subtitle_selections)
+        active_command = list(command)
+        collected_lines: list[str] = []
+        while True:
+            attempt_lines = self.run_yt_dlp(active_command, type_name, report_failure=False)
+            collected_lines.extend(attempt_lines)
+            if self.last_yt_dlp_return_code == 0 or self.output_is_members_only_only(attempt_lines):
+                return collected_lines
+
+            failed_languages = self.failed_subtitle_languages(attempt_lines)
+            remaining = [
+                selection
+                for selection in active_selections
+                if selection.partition(":")[2].strip().casefold() not in failed_languages
+            ]
+            if not failed_languages or len(remaining) == len(active_selections):
+                self.log(f"   ❌ yt-dlp завершился с кодом {self.last_yt_dlp_return_code}")
+                return collected_lines
+
+            unavailable = ", ".join(sorted(failed_languages))
+            reason = "HTTP 429" if any("HTTP Error 429" in line for line in attempt_lines) else "ошибка YouTube"
+            self.log(f"   ⚠️ Субтитры {unavailable} недоступны ({reason}); повторяем без них")
+            active_selections = remaining
+            self.subtitle_selections = list(remaining)
+            self.subtitle_selection = remaining[0] if remaining else "none"
+            active_command = self.command_with_subtitles(command, remaining, bypass_archive=True)
 
     def is_members_only_line(self, line: str) -> bool:
         return bool(MEMBERS_ONLY_RE.search(line or ""))
@@ -772,6 +1053,34 @@ class Downloader:
                 return alternate
         return self.final_dir / f"{stem} ({int(time.time())}){suffix}"
 
+    def variant_final_basename(self, basename: str) -> str:
+        tags: list[str] = []
+        if self.audio_tracks:
+            audio_labels = [
+                re.sub(r"[^A-Za-z0-9_-]+", "-", str(track.get("language") or "track")).strip("-") or "track"
+                for track in self.audio_tracks
+            ]
+            audio_label = "+".join(audio_labels)
+            if len(audio_label) > 48:
+                digest = hashlib.sha1("|".join(str(track.get("format_id") or "") for track in self.audio_tracks).encode("utf-8")).hexdigest()[:8]
+                audio_label = f"{len(audio_labels)}-tracks-{digest}"
+            tags.append(f"audio-{audio_label}")
+        if self.subtitle_selections:
+            subtitle_labels = []
+            for subtitle_selection in self.subtitle_selections:
+                mode, _separator, language = subtitle_selection.partition(":")
+                safe_language = re.sub(r"[^A-Za-z0-9_-]+", "-", language or "sub").strip("-") or "sub"
+                subtitle_labels.append(f"auto-{safe_language}" if mode == "auto" else safe_language)
+            subtitle_label = "+".join(subtitle_labels)
+            if len(subtitle_label) > 56:
+                digest = hashlib.sha1("|".join(self.subtitle_selections).encode("utf-8")).hexdigest()[:8]
+                subtitle_label = f"{len(subtitle_labels)}-tracks-{digest}"
+            tags.append(f"subs-{subtitle_label}")
+        if not tags:
+            return basename
+        path = Path(basename)
+        return f"{path.stem} {' '.join(f'[{tag}]' for tag in tags)}{path.suffix}"
+
     def short_final_basename(self, basename: str) -> str:
         if os.name != "nt":
             return basename
@@ -805,8 +1114,8 @@ class Downloader:
 
         processed = 0
         for file_path in files:
-            basename = file_path.name
-            match = MEDIA_FILE_RE.match(basename)
+            source_basename = file_path.name
+            match = MEDIA_FILE_RE.match(source_basename)
             video_id = match.group("video_id") if match else "unknown"
             status_type = match.group("type") if match else "videos"
             base = match.group("base") if match else file_path.stem
@@ -854,8 +1163,9 @@ class Downloader:
 
             try:
                 self.final_dir.mkdir(parents=True, exist_ok=True)
-                final_path = self.unique_final_path(basename)
+                final_path = self.unique_final_path(self.variant_final_basename(source_basename))
                 shutil.move(str(file_path), str(final_path))
+                self.ensure_video_in_archive(video_id)
                 self.append_archive_details(video_id, video_url, title, uploader, channel_link, status_type, final_path)
                 self.downloaded_counts[status_type] = self.downloaded_counts.get(status_type, 0) + 1
                 self.log(f"   ⚓ Видео перемещено: {final_path}")
@@ -906,11 +1216,26 @@ class Downloader:
         ]
         if self.ffmpeg_dir:
             command.extend(["--ffmpeg-location", str(self.ffmpeg_dir)])
+        if len(self.audio_tracks) > 1:
+            command.append("--audio-multistreams")
+        audio_metadata_args = self.audio_metadata_postprocessor_args()
+        if audio_metadata_args:
+            command.extend(["--postprocessor-args", audio_metadata_args])
+        if self.audio_format_id and self.audio_player_client:
+            command.extend(["--extractor-args", f"youtube:player_client={self.audio_player_client}"])
+        if not self.subtitle_selections:
+            command.extend(["--no-write-subs", "--no-write-auto-subs", "--no-embed-subs"])
+        else:
+            languages = [selection.partition(":")[2] for selection in self.subtitle_selections if selection.partition(":")[2]]
+            modes = {selection.partition(":")[0] for selection in self.subtitle_selections}
+            command.extend(["--sub-langs", ",".join(languages), "--sub-format", "vtt/best", "--embed-subs"])
+            command.append("--write-subs" if "manual" in modes else "--no-write-subs")
+            command.append("--write-auto-subs" if "auto" in modes else "--no-write-auto-subs")
         if os.name == "nt":
             command.append("--windows-filenames")
         return command
 
-    def process_queue_urls(self, queued_urls: list[str], retry_failed: bool) -> None:
+    def process_queue_urls(self, queued_urls: list[str], retry_failed: bool, *, allow_variants: bool = False) -> None:
         for url in queued_urls:
             self.check_stop()
             self.state = "searching"
@@ -924,17 +1249,28 @@ class Downloader:
 
             self.log(f"📥 Очередь: {url}")
             video_id = extract_video_id(url)
-            if video_id and self.archive_has_video(video_id):
-                self.log(f"   🗃 Уже есть в архиве, пропускаем: {video_id}")
-                self.state = "searching"
-                self.write_status()
-                continue
+            bypass_service_archive = False
+            if video_id:
+                if allow_variants:
+                    if self.archive_details_has_variant(video_id):
+                        self.log(f"   🗃 Такой вариант уже есть в архиве, пропускаем: {video_id}")
+                        self.state = "searching"
+                        self.write_status()
+                        continue
+                    bypass_service_archive = self.archive_has_video(video_id)
+                elif self.archive_has_video(video_id):
+                    self.log(f"   🗃 Уже есть в архиве, пропускаем: {video_id}")
+                    self.state = "searching"
+                    self.write_status()
+                    continue
 
             before = self.new_count
             command = self.yt_dlp_base_command(str(self.temp_dir / "%(title).150s - %(uploader).80s [%(id)s] [queue] [%(height)sp].%(ext)s"))
             command.append("--no-playlist")
+            if bypass_service_archive:
+                command.append("--no-download-archive")
             command.append(url)
-            lines = self.run_yt_dlp(command, "queue")
+            lines = self.run_yt_dlp_with_subtitle_fallback(command, "queue")
             self.process_type_lines(lines, url, "Очередь", "queue")
             if self.new_count == before and not any("has already been recorded in the archive" in line for line in lines):
                 if self.output_has_members_only(lines):
@@ -1156,7 +1492,7 @@ class Downloader:
         try:
             self.check_stop()
             if self.single_queue_url:
-                self.process_queue_urls([self.single_queue_url], retry_failed=False)
+                self.process_queue_urls([self.single_queue_url], retry_failed=False, allow_variants=True)
             else:
                 self.process_queue()
                 self.process_channels()

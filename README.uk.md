@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.1
+# YouTube Harvester 1.1.2
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="Логотип YouTube Harvester" width="128">
@@ -12,6 +12,7 @@
   <a href="README.es.md">🇪🇸 Español</a> ·
   <a href="README.hi.md">🇮🇳 हिन्दी</a> ·
   <a href="README.zh.md">🇨🇳 中文</a> ·
+  <a href="README.ja.md">🇯🇵 日本語</a> ·
   <a href="README.ar.md">🇸🇦 العربية</a>
 </p>
 
@@ -21,7 +22,10 @@
   надсилання до Telegram.
 </p>
 
-> **UPD 1.1.1:** Виправлено дрібні недоліки.
+> **UPD 2:** Швидке завантаження тепер вбудовує кілька аудіодоріжок і
+> субтитрів в одне відео. Архів розрізняє варіанти за якістю та доріжками,
+> помилки окремих субтитрів не скасовують завантаження, додано повну японську
+> локалізацію.
 
 ![Огляд YouTube Harvester](docs/screenshots/uk/overview.png)
 
@@ -32,7 +36,7 @@
 посилання, вести локальний архів, переглядати звіти та надсилати сповіщення або
 файли до Telegram.
 
-Версія `1.1.1` використовує Python-рушій у Linux і Windows. Старий Bash-рушій
+Версія `1.1.2` використовує Python-рушій у Linux і Windows. Старий Bash-рушій
 залишено у вихідному коді лише як вимкнений застарілий компонент.
 
 ## Основні можливості
@@ -48,13 +52,14 @@
 - Черга з попереднім переглядом назви, каналу й обкладинки, перевіркою дублів та
   архіву, повтором невдалих посилань і другою обробкою після всіх каналів.
 - Вікно швидкого завантаження з URL із буфера, метаданими, вибором роздільності,
-  негайним завантаженням, чергою та збереженим прапорцем Telegram.
+  кількох аудіодоріжок і субтитрів, негайним завантаженням, чергою та збереженим
+  прапорцем Telegram.
 - Налаштовувана глобальна гаряча клавіша, типово `Ctrl+Shift+Alt+Y`.
 - Стеження за буфером обміну та відкриття швидкого завантаження для коректного
   YouTube URL.
 - Планувальник автоматичних запусків за годинами.
 - Докладний архів із типом, каналом, назвою, датою, посиланням YouTube,
-  локальним файлом, папкою та видаленням записів.
+  варіантами якості й доріжок, локальним файлом, папкою та видаленням записів.
 - Журнали з фільтрами «Усе», «Важливе» та «Помилки».
 - Перевірка версії `yt-dlp` і діагностика ОС, X11/Wayland, трея, гарячої
   клавіші, інструментів, шляхів, кешу, доступу до запису та вільного місця.
@@ -63,7 +68,7 @@
 - М'яка зупинка, захищене очищення тимчасових файлів, безпечні імена Windows і
   коректний UTF-8 у журналах та архіві.
 - Англійська мова типово; також доступні російська, українська, французька,
-  іспанська, гінді, китайська та арабська.
+  іспанська, гінді, китайська, японська та арабська.
 
 ## Знімки екрана
 
@@ -80,19 +85,19 @@
 Файли публікуються в
 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases).
 
-Linux: `YouTubeHarvester_1.1.1_linux_all.deb`,
-`YouTubeHarvester_1.1.1_source.tar.gz` і `SHA256SUMS-linux.txt`.
+Linux: `YouTubeHarvester_1.1.2_linux_all.deb`,
+`YouTubeHarvester_1.1.2_source.tar.gz` і `SHA256SUMS-linux.txt`.
 
-Windows: `YouTubeHarvester_1.1.1_windows_setup.exe`,
-`YouTubeHarvester_1.1.1_windows_x64.msi`,
-`YouTubeHarvester_1.1.1_windows_portable.zip` і `SHA256SUMS-windows.txt`.
+Windows: `YouTubeHarvester_1.1.2_windows_setup.exe`,
+`YouTubeHarvester_1.1.2_windows_x64.msi`,
+`YouTubeHarvester_1.1.2_windows_portable.zip` і `SHA256SUMS-windows.txt`.
 
 Windows-збірки вже містять `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` і `deno.exe`.
 
 ## Встановлення в Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.1_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.2_linux_all.deb
 yt-harvester
 ```
 
@@ -181,12 +186,12 @@ PROXY_URL=127.0.0.1:9050
 ## Збирання релізу
 
 ```bash
-packaging/build_release.sh 1.1.1 1.1.1
+packaging/build_release.sh 1.1.2 1.1.2
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.1 -MsiVersion 1.1.1
+  -Version 1.1.2 -MsiVersion 1.1.2
 ```
 
 ## Відповідальне використання

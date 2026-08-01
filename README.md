@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.1
+# YouTube Harvester 1.1.2
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="YouTube Harvester logo" width="128">
@@ -12,6 +12,7 @@
   <a href="README.es.md">🇪🇸 Español</a> ·
   <a href="README.hi.md">🇮🇳 हिन्दी</a> ·
   <a href="README.zh.md">🇨🇳 中文</a> ·
+  <a href="README.ja.md">🇯🇵 日本語</a> ·
   <a href="README.ar.md">🇸🇦 العربية</a>
 </p>
 
@@ -21,7 +22,10 @@
   optional Telegram delivery.
 </p>
 
-> **UPD 1.1.1:** Minor issues have been fixed.
+> **UPD 2:** Quick Download now embeds multiple audio and subtitle tracks in
+> one video. The archive distinguishes variants by quality and tracks,
+> subtitle failures no longer cancel the download, and Japanese localization
+> has been added.
 
 ![YouTube Harvester overview](docs/screenshots/en/overview.png)
 
@@ -32,7 +36,7 @@ Videos, Shorts, and live streams through `yt-dlp`. It also accepts individual
 video links, keeps a searchable local archive, reports what was downloaded,
 and can send notifications or files to Telegram.
 
-Version `1.1.1` uses the Python downloader on both Linux and Windows. The old
+Version `1.1.2` uses the Python downloader on both Linux and Windows. The old
 Bash engine remains in the source tree only as disabled legacy code.
 
 ## Main Features
@@ -48,15 +52,15 @@ Bash engine remains in the source tree only as disabled legacy code.
 - Video queue with title, channel, thumbnail preview, duplicate/archive checks,
   retry support, and a second queue pass after all channels are scanned.
 - Quick Download window with clipboard URL detection, metadata preview,
-  resolution selection, immediate download, queue action, and a persistent
-  Telegram checkbox.
+  resolution selection, multiple audio and subtitle tracks, immediate download,
+  queue action, and a persistent Telegram checkbox.
 - Configurable global quick-download hotkey. The default is
   `Ctrl+Shift+Alt+Y`.
 - Optional clipboard watcher that opens Quick Download when a valid YouTube URL
   appears.
 - Scheduler for automatic runs at selected hours.
 - Download archive with type, channel, title, date, YouTube link, local file,
-  containing folder, and record deletion.
+  quality/track variants, containing folder, and record deletion.
 - Log viewer with All, Important, and Errors filters.
 - Built-in `yt-dlp` version check and a diagnostics report for the OS, display
   session, tray, hotkey, tools, paths, cache, write access, and free disk space.
@@ -65,7 +69,7 @@ Bash engine remains in the source tree only as disabled legacy code.
 - Safe stop, guarded temporary-file cleanup, Windows-safe filenames, and UTF-8
   handling for Windows logs and archive data.
 - English by default, with Russian, Ukrainian, French, Spanish, Hindi, Chinese,
-  and Arabic interfaces.
+  Japanese, and Arabic interfaces.
 
 ## Screenshots
 
@@ -84,15 +88,15 @@ Ready-to-use packages are published on
 
 Linux:
 
-- `YouTubeHarvester_1.1.1_linux_all.deb`
-- `YouTubeHarvester_1.1.1_source.tar.gz`
+- `YouTubeHarvester_1.1.2_linux_all.deb`
+- `YouTubeHarvester_1.1.2_source.tar.gz`
 - `SHA256SUMS-linux.txt`
 
 Windows:
 
-- `YouTubeHarvester_1.1.1_windows_setup.exe` — standard installer.
-- `YouTubeHarvester_1.1.1_windows_x64.msi` — x64 MSI package.
-- `YouTubeHarvester_1.1.1_windows_portable.zip` — portable build.
+- `YouTubeHarvester_1.1.2_windows_setup.exe` — standard installer.
+- `YouTubeHarvester_1.1.2_windows_x64.msi` — x64 MSI package.
+- `YouTubeHarvester_1.1.2_windows_portable.zip` — portable build.
 - `SHA256SUMS-windows.txt`
 
 The Windows packages bundle `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe`, and
@@ -101,7 +105,7 @@ The Windows packages bundle `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe`, and
 ## Install on Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.1_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.2_linux_all.deb
 ```
 
 Start it from the application menu or run:
@@ -228,14 +232,14 @@ local video.
 Linux artifacts:
 
 ```bash
-packaging/build_release.sh 1.1.1 1.1.1
+packaging/build_release.sh 1.1.2 1.1.2
 ```
 
 Windows artifacts, from Windows:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.1 -MsiVersion 1.1.1
+  -Version 1.1.2 -MsiVersion 1.1.2
 ```
 
 GitHub Actions builds Linux and Windows artifacts for tags matching `v*`.

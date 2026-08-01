@@ -13,7 +13,7 @@ import tempfile
 import time
 
 
-LANGUAGES = ("en", "ru", "uk", "fr", "es", "hi", "zh", "ar")
+LANGUAGES = ("en", "ru", "uk", "fr", "es", "hi", "zh", "ja", "ar")
 
 
 def parse_args() -> argparse.Namespace:
@@ -95,7 +95,7 @@ def prepare_fixture(root: Path, source_root: Path, args: argparse.Namespace) -> 
     )
     (data_dir / "last_download_at.txt").write_text(str(now - 420) + "\n", encoding="ascii")
     (data_dir / "download.log").write_text(
-        "[info] YouTube Harvester 1.1.1\n"
+        "[info] YouTube Harvester 1.1.2\n"
         "[info] Channel scan completed\n"
         "[info] Downloaded 2 videos, 1 Short and 1 stream\n"
         "[info] Queue will be checked again after all channels\n"

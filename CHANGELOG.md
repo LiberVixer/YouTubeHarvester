@@ -8,10 +8,47 @@
   <a href="CHANGELOG.es.md">🇪🇸 Español</a> ·
   <a href="CHANGELOG.hi.md">🇮🇳 हिन्दी</a> ·
   <a href="CHANGELOG.zh.md">🇨🇳 中文</a> ·
+  <a href="CHANGELOG.ja.md">🇯🇵 日本語</a> ·
   <a href="CHANGELOG.ar.md">🇸🇦 العربية</a>
 </p>
 
 All notable changes to **YouTube Harvester** are documented here.
+
+## [1.1.2] - 2026-08-01
+
+### Added
+
+- Quick Download can select and embed multiple audio tracks and multiple manual
+  or automatic subtitle tracks into one MP4.
+- Full Japanese interface, Japanese usage rules, localized README, changelog,
+  and interface screenshots.
+- Audio and subtitle menus prioritize original/manual tracks, followed by
+  Russian, English, Ukrainian, and the other interface languages; remaining
+  languages are shown alphabetically in a separate group.
+
+### Changed
+
+- The archive treats each resolution, audio-track set, and subtitle-track set
+  as a separate variant of the same video.
+- The archive quality column shows only the video resolution; its tooltip lists
+  the selected audio and subtitle tracks line by line.
+- Merged MP4 audio streams receive ISO 639 language metadata.
+- The subtitle selector uses a font-compatible `🔤` icon.
+- Manual/original subtitles and automatic subtitles are separated visually in
+  the track menu.
+
+### Fixed
+
+- Quick Download uses an additional YouTube metadata client to discover
+  alternate dubbed tracks, including tracks that the default client omits.
+- When an individual subtitle fails to download, including HTTP 429 responses,
+  `yt-dlp` retries without that track; if every subtitle fails, video and audio
+  still download normally.
+- Saving the Quick Download window position is debounced on Windows, preventing
+  the window from jerking while it is dragged.
+- Multiple-track selections and older single-track archive records are compared
+  correctly, and Windows-safe variant filenames remain within practical limits.
+- The tray Stop action uses the clearly rendered `🛑` icon in every language.
 
 ## [1.1.1] - 2026-07-25
 

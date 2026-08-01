@@ -61,8 +61,8 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
     QStackedWidget,
 )
-from PyQt5.QtGui import QIcon, QPixmap, QPainter, QColor, QBrush, QFont, QPen, QDesktopServices, QTextCursor, QPalette, QKeySequence, QPainterPath
-from PyQt5.QtCore import Qt, QTimer, QTime, QDate, QUrl, QPoint, QSize, pyqtSignal, QObject, QEvent, QAbstractNativeEventFilter
+from PyQt5.QtGui import QIcon, QPixmap, QPainter, QColor, QBrush, QFont, QPen, QDesktopServices, QTextCursor, QPalette, QKeySequence, QPainterPath, QStandardItem, QStandardItemModel
+from PyQt5.QtCore import Qt, QTimer, QTime, QDate, QUrl, QPoint, QSize, QLocale, pyqtSignal, QObject, QEvent, QAbstractNativeEventFilter
 try:
     from PyQt5.QtMultimedia import QSoundEffect
 except Exception:
@@ -72,9 +72,12 @@ import glob
 
 from yth_common import (
     SingleInstanceLock,
+    archive_entry_file_exists,
+    archive_entry_matches_variant,
     extract_video_id,
     fix_mojibake,
     looks_like_youtube_url,
+    media_resolution_from_path,
     normalize_text_value,
     read_text_for_display,
     yt_dlp_command as common_yt_dlp_command,
@@ -702,10 +705,12 @@ PAID_CONTENT_EMOJIS = {
 }
 
 APP_NAME = "YouTube Harvester"
-APP_VERSION = "1.1.1"
+APP_VERSION = "1.1.2"
 APP_TITLE = f"{APP_NAME} {APP_VERSION}"
 USAGE_RULES_VERSION = "2026-06-13"
 DEFAULT_QUICK_DOWNLOAD_HOTKEY = "Ctrl+Shift+Alt+Y"
+QUICK_AUDIO_PLAYER_CLIENT = "tv_downgraded"
+SUBTITLE_ICON = "🔤"
 MIN_FREE_SPACE_MB = 1024
 CACHE_PREVIEW_MAX_AGE_DAYS = 7
 CACHE_CHANNEL_MAX_AGE_DAYS = 90
@@ -735,9 +740,17 @@ LANGUAGE_OPTIONS = (
     ("Español", "es"),
     ("हिन्दी", "hi"),
     ("中文", "zh"),
+    ("日本語", "ja"),
     ("العربية", "ar"),
 )
 VALID_LANGUAGES = {value for _label, value in LANGUAGE_OPTIONS}
+PRIORITY_LANGUAGE_CODES = (
+    "ru",
+    "en",
+    "uk",
+    *sorted(VALID_LANGUAGES - {"ru", "en", "uk"}),
+)
+PRIORITY_LANGUAGE_RANK = {language: index for index, language in enumerate(PRIORITY_LANGUAGE_CODES)}
 
 I18N_EN = {
     "app.language": "Language",
@@ -752,7 +765,7 @@ I18N_EN = {
     "tray.status.partial": "🟢 Status: partial downloads",
     "tray.quick_download": "⚡ Quick download ({hotkey})",
     "tray.start": "⏬ Start",
-    "tray.stop": "⏹ Stop",
+    "tray.stop": "🛑 Stop",
     "tray.downloads": "📁 Downloads",
     "tray.temp": "⌛ Temp",
     "tray.exit": "🚪 Exit",
@@ -831,11 +844,20 @@ I18N_EN = {
     "preview.failed_detail": "{message}\nYou can add the link to the queue without preview.",
     "preview.clipboard_error": "Clipboard does not contain a valid YouTube link",
     "preview.in_archive": "Video is already in archive",
+    "preview.variant_in_archive": "This video with the selected quality, audio and subtitles is already in archive",
     "preview.in_queue": "Video is already in queue",
     "preview.added": "Added to queue",
     "preview.added_front": "Placed first in queue",
     "quick.title": "Quick download",
     "quick.resolution_tip": "Resolution for immediate download",
+    "quick.audio_auto": "🎧 Audio: Auto",
+    "quick.audio_tip": "Audio tracks for immediate download",
+    "quick.audio_selected": "🎧 Audio: {count}",
+    "quick.subtitles_none": "🔤 Subtitles: None",
+    "quick.subtitles_tip": "Subtitles to embed in the downloaded video",
+    "quick.subtitles_selected": "🔤 Subtitles: {count}",
+    "quick.subtitles_auto_suffix": "auto",
+    "quick.combined_audio_limit": "Select no more than one combined video/audio track",
     "quick.download_now": "Download immediately",
     "quick.close_tip": "Close quick download window",
     "quick.queue_easter": "To the queue, sons of cinema",
@@ -937,6 +959,7 @@ I18N_EN = {
     "archive.channel": "Channel",
     "archive.name": "Title",
     "archive.date": "Date",
+    "archive.quality": "Quality",
     "archive.refresh_tip": "Reload archive and check files",
     "archive.youtube_tip": "Open selected video on YouTube",
     "archive.file": "🎬 File",
@@ -1066,7 +1089,7 @@ I18N_EN.update({
     "archive.migration_total": "Total added: {count}",
     "archive.selected_entry": "selected entry",
     "archive.delete_question": "Delete archive entry \"{title}\"?",
-    "archive.delete_note": "The file on disk will not be deleted. The entry will disappear from the detailed archive and service yt_archive.txt.",
+    "archive.delete_note": "The file on disk will not be deleted. Only the selected variant is removed; the service ID remains while other variants exist.",
     "archive.deleted": "Entry deleted.",
     "archive.deleted_details": "Detailed archive: removed {count}",
     "archive.deleted_service": "Service archive: removed {count}",
@@ -1136,7 +1159,7 @@ I18N = {
         "app.language": "Язык",
         "tab.overview": "📊 Обзор", "tab.channels": "📺 Каналы", "tab.queue": "📥 Очередь", "tab.settings": "⚙ Настройки", "tab.diagnostics": "Диагностика",
         "tray.status.idle": "😴 Статус: сон", "tray.status.stopping": "⏹ Статус: останавливается", "tray.status.downloading": "⬇️ Статус: скачивание", "tray.status.partial": "🟢 Статус: есть недокачанные",
-        "tray.quick_download": "⚡ Быстрое скачивание ({hotkey})", "tray.start": "⏬ Старт", "tray.stop": "⏹ Стоп", "tray.downloads": "📁 Загрузки", "tray.temp": "⌛ Врем.", "tray.exit": "🚪 Выход",
+        "tray.quick_download": "⚡ Быстрое скачивание ({hotkey})", "tray.start": "⏬ Старт", "tray.stop": "🛑 Стоп", "tray.downloads": "📁 Загрузки", "tray.temp": "⌛ Врем.", "tray.exit": "🚪 Выход",
         "status.channels": "Каналов", "status.queue": "Очередь", "status.archive": "Архив", "status.files": "Файлы", "status.last_download": "Последнее скаченное видео: {value}", "status.temp_files": "Временных файлов: {temp}\nНедокачанных файлов: {part}",
         "button.archive": "🗃 Архив", "button.quick": "Быстрое скачивание", "button.open_downloads": "Открыть папку загрузок", "button.open_temp": "Открыть временную папку", "button.open_archive": "Открыть подробный архив скачиваний", "button.add_queue": "Добавить в очередь", "button.queue_short": "В очередь", "button.download": "Скачать", "button.cancel": "Отмена", "button.save_settings": "Сохранить настройки", "button.open_env": "Открыть .env", "button.refresh_list": "Обновить список", "button.reload_log": "Перечитать лог", "button.refresh": "Обновить", "button.copy": "Скопировать",
         "overview.run": "Запустить проверку очереди и каналов", "overview.stop_requested": "Остановка уже запрошена; скрипт завершится на безопасном шаге", "overview.stop_soft": "Мягко остановить скачивание после текущего безопасного шага", "overview.add_queue_tip": "Добавить указанное YouTube-видео в очередь скачивания", "overview.download_tip": "Скачать указанное YouTube-видео сразу", "overview.logo_tip": "Логотип YouTube Harvester", "overview.video_placeholder_tip": "Заставка текущего видео или заглушка", "overview.channel": "Канал", "overview.video": "Видео", "overview.shorts": "Shorts", "overview.stream": "Трансляция",
@@ -1194,6 +1217,8 @@ def normalize_language(value) -> str:
     text = str(value or "").strip().lower().replace("_", "-")
     if text.startswith("zh"):
         return "zh"
+    if text.startswith("ja"):
+        return "ja"
     if text.startswith("ar"):
         return "ar"
     if text.startswith("hi"):
@@ -1219,6 +1244,212 @@ def ui_text(language: str, key: str, **values) -> str:
 
 def localized_resolution_options(language: str):
     return tuple((ui_text(language, "resolution.best") if value == "best" else label, value) for label, value in RESOLUTION_OPTIONS)
+
+
+def media_audio_track_name(media_format: dict) -> str:
+    audio_track = media_format.get("audio_track") if isinstance(media_format.get("audio_track"), dict) else {}
+    name = str(audio_track.get("display_name") or audio_track.get("name") or "").strip()
+    if name:
+        return fix_mojibake(name)
+    note_parts = [part.strip() for part in str(media_format.get("format_note") or "").split(",")]
+    descriptive = [
+        part
+        for part in note_parts
+        if part.casefold() not in {"low", "medium", "high", "default"}
+        and not re.fullmatch(r"\d{3,4}p(?:\d+)?", part, re.IGNORECASE)
+    ]
+    return fix_mojibake(descriptive[0] if descriptive else "")
+
+
+def media_language_root(value: str) -> str:
+    return str(value or "und").strip().casefold().replace("_", "-").split("-", 1)[0]
+
+
+def media_option_sort_key(option: dict) -> tuple:
+    language = str(option.get("language") or "und").strip()
+    root = media_language_root(language)
+    if root in {"ru", "en", "uk"}:
+        priority = ("ru", "en", "uk").index(root)
+    elif root in PRIORITY_LANGUAGE_RANK:
+        priority = 3
+    else:
+        priority = 4
+    display_name = str(option.get("name") or language).casefold()
+    return (priority, display_name, language.casefold())
+
+
+def prioritized_media_sections(options: list[dict]) -> tuple[list[dict], list[dict]]:
+    original = []
+    preferred = []
+    remaining = []
+    for option in options:
+        if option.get("is_original") or option.get("mode") == "manual":
+            original.append(option)
+        elif media_language_root(option.get("language")) in PRIORITY_LANGUAGE_RANK:
+            preferred.append(option)
+        else:
+            remaining.append(option)
+    first_section = sorted(original, key=media_option_sort_key) + sorted(preferred, key=media_option_sort_key)
+    return first_section, sorted(remaining, key=media_option_sort_key)
+
+
+def subtitle_media_sections(options: list[dict]) -> tuple[list[dict], list[dict], list[dict]]:
+    manual = sorted(
+        (option for option in options if option.get("mode") == "manual"),
+        key=media_option_sort_key,
+    )
+    automatic = [option for option in options if option.get("mode") != "manual"]
+    preferred_automatic, other_automatic = prioritized_media_sections(automatic)
+    return manual, preferred_automatic, other_automatic
+
+
+def audio_track_options(metadata: dict) -> list[dict]:
+    selected: dict[tuple[str, str], tuple[tuple[int, int, float, int], dict]] = {}
+    for media_format in metadata.get("formats") or []:
+        if not isinstance(media_format, dict):
+            continue
+        if media_format.get("vcodec") != "none" or media_format.get("acodec") in {None, "none"}:
+            continue
+        format_id = str(media_format.get("format_id") or "").strip()
+        if not re.fullmatch(r"[A-Za-z0-9._-]+", format_id):
+            continue
+        language = str(media_format.get("language") or "und").strip()
+        name = media_audio_track_name(media_format)
+        format_note = str(media_format.get("format_note") or "")
+        try:
+            language_preference = float(media_format.get("language_preference") or 0)
+        except (TypeError, ValueError):
+            language_preference = 0.0
+        key = (language.casefold(), name.casefold())
+        try:
+            abr = float(media_format.get("abr") or media_format.get("tbr") or 0)
+        except (TypeError, ValueError):
+            abr = 0.0
+        try:
+            sample_rate = int(float(media_format.get("asr") or 0))
+        except (TypeError, ValueError):
+            sample_rate = 0
+        score = (
+            0 if re.search(r"\bDRC\b", str(media_format.get("format_note") or ""), re.IGNORECASE) else 1,
+            1 if str(media_format.get("ext") or "").lower() == "m4a" else 0,
+            abr,
+            sample_rate,
+        )
+        option = {
+            "format_id": format_id,
+            "format_kind": "audio",
+            "language": language,
+            "name": name,
+            "is_original": bool(
+                re.search(r"\boriginal\b|\(default\)", format_note, re.IGNORECASE)
+                or language_preference > 0
+            ),
+        }
+        if key not in selected or score > selected[key][0]:
+            selected[key] = (score, option)
+
+    audio_language_roots = {key[0].split("-", 1)[0] for key in selected}
+    combined: dict[tuple[str, str], dict] = {}
+    for media_format in metadata.get("formats") or []:
+        if not isinstance(media_format, dict):
+            continue
+        if media_format.get("vcodec") in {None, "none"} or media_format.get("acodec") in {None, "none"}:
+            continue
+        format_id = str(media_format.get("format_id") or "").strip()
+        language = str(media_format.get("language") or "").strip()
+        if not language or not re.fullmatch(r"[A-Za-z0-9._-]+", format_id):
+            continue
+        name = media_audio_track_name(media_format)
+        format_note = str(media_format.get("format_note") or "")
+        try:
+            language_preference = float(media_format.get("language_preference") or 0)
+        except (TypeError, ValueError):
+            language_preference = 0.0
+        if not name and language.casefold().split("-", 1)[0] in audio_language_roots:
+            continue
+        try:
+            height = int(media_format.get("height") or 0)
+        except (TypeError, ValueError):
+            height = 0
+        try:
+            bitrate = float(media_format.get("tbr") or 0)
+        except (TypeError, ValueError):
+            bitrate = 0.0
+        key = (language.casefold(), name.casefold())
+        option = combined.setdefault(key, {
+            "format_id": "",
+            "format_kind": "combined",
+            "language": language,
+            "name": name,
+            "is_original": bool(
+                re.search(r"\boriginal\b|\(default\)", format_note, re.IGNORECASE)
+                or language_preference > 0
+            ),
+            "formats": [],
+        })
+        option["formats"].append({
+            "format_id": format_id,
+            "height": height,
+            "ext": str(media_format.get("ext") or ""),
+            "tbr": bitrate,
+        })
+
+    options = [item[1] for item in selected.values()] + list(combined.values())
+    first_section, remaining = prioritized_media_sections(options)
+    return first_section + remaining
+
+
+def resolve_audio_track_option(track: dict, resolution: str) -> dict:
+    option = dict(track or {})
+    if option.get("format_kind") != "combined":
+        return option
+    formats = [item for item in option.get("formats") or [] if isinstance(item, dict) and item.get("format_id")]
+    if not formats:
+        return {}
+    try:
+        target_height = int(resolution)
+    except (TypeError, ValueError):
+        target_height = 0
+    eligible = [item for item in formats if not target_height or 0 < int(item.get("height") or 0) <= target_height]
+    if target_height and not eligible:
+        selected_format = min(formats, key=lambda item: int(item.get("height") or 0) or sys.maxsize)
+    else:
+        selected_format = max(
+            eligible or formats,
+            key=lambda item: (
+                int(item.get("height") or 0),
+                1 if str(item.get("ext") or "").casefold() == "mp4" else 0,
+                float(item.get("tbr") or 0),
+            ),
+        )
+    option["format_id"] = str(selected_format.get("format_id") or "")
+    option["selected_height"] = int(selected_format.get("height") or 0)
+    return option
+
+
+def subtitle_track_options(metadata: dict) -> list[dict]:
+    options: list[dict] = []
+    for mode, key in (("manual", "subtitles"), ("auto", "automatic_captions")):
+        tracks = metadata.get(key) or {}
+        if not isinstance(tracks, dict):
+            continue
+        for language, formats in tracks.items():
+            language = str(language or "").strip()
+            if not language or language == "live_chat":
+                continue
+            name = ""
+            if isinstance(formats, list):
+                first = next((item for item in formats if isinstance(item, dict)), {})
+                name = str(first.get("name") or "").strip()
+            options.append({
+                "selection": f"{mode}:{language}",
+                "language": language,
+                "name": fix_mojibake(name),
+                "mode": mode,
+                "is_original": mode == "manual",
+            })
+    first_section, remaining = prioritized_media_sections(options)
+    return first_section + remaining
 
 
 def localized_startup_display_modes(language: str):
@@ -1650,6 +1881,11 @@ USAGE_RULES_HTML = {
 <p><b>重要：</b>本应用与 YouTube、Google、Telegram 或 yt-dlp 没有隶属关系。它是在您的电脑上运行外部工具的本地界面。</p>
 <h3>需要了解的事项</h3><ul><li>仅下载您拥有权利、获得作者许可或有合法个人使用依据的内容。</li><li>请遵守 YouTube 规则、版权法和您所在国家/地区的法律。</li><li>请勿用本应用绕过访问限制、大规模复制、传播盗版、出售或公开转播他人的内容。</li><li>Telegram 通知可能发送标题、链接和文件。请妥善保管 BOT_TOKEN 和 CHANNEL_ID。</li><li>您需要自行负责频道、队列、下载文件及其后续使用。</li></ul>
 <h3>外部组件</h3><ul><li><b>yt-dlp</b> 读取页面并下载媒体。</li><li><b>PyQt5/Qt</b> 提供图形界面。</li><li><b>curl</b> 用于通过 SOCKS 代理发送 Telegram 通知。</li><li><b>pynput</b> 用于 Linux/X11 的全局快捷键。</li><li><b>Bash 引擎</b> 作为旧代码保留，但已禁用。</li></ul><p>每个组件都有自己的许可证和文档。README 中包含相关链接。</p>""",
+    "ja": f"""
+<h2>{APP_NAME}: 利用規約</h2>
+<p><b>重要:</b> 本アプリは YouTube、Google、Telegram、yt-dlp のいずれとも提携していません。お使いのコンピューター上で外部ツールを実行するローカルインターフェースです。</p>
+<h3>ご理解いただきたいこと</h3><ul><li>権利を所有している、作者の許可を得ている、または個人利用の法的根拠がある素材のみをダウンロードしてください。</li><li>YouTube の利用規約、著作権法、お住まいの国の法律を遵守してください。</li><li>アクセス制限の回避、大量複製、海賊版の配布、他者のコンテンツの販売や公開再配信に本アプリを使用しないでください。</li><li>Telegram 通知はタイトル、リンク、ファイルを送信する場合があります。BOT_TOKEN と CHANNEL_ID は公開しないでください。</li><li>選択したチャンネル、キュー、ダウンロードしたファイル、およびその利用については利用者が責任を負います。</li></ul>
+<h3>外部コンポーネント</h3><ul><li><b>yt-dlp</b> はページを読み取り、メディアをダウンロードします。</li><li><b>PyQt5/Qt</b> はグラフィカルインターフェースを提供します。</li><li><b>curl</b> は SOCKS プロキシ経由の Telegram 通知に使用されます。</li><li><b>pynput</b> は Linux/X11 のグローバルホットキーに使用されます。</li><li><b>Bash エンジン</b> は旧コードとして残されていますが、無効化され使用されません。</li></ul><p>各外部コンポーネントには独自のライセンスとドキュメントがあります。主な規約とプロジェクトへのリンクは README にあります。</p>""",
     "ar": f"""
 <h2>{APP_NAME}: قواعد الاستخدام</h2>
 <p><b>مهم:</b> هذا التطبيق غير تابع لـ YouTube أو Google أو Telegram أو yt-dlp. إنه واجهة محلية تشغّل أدوات خارجية على جهازك.</p>
@@ -1816,6 +2052,8 @@ class TrayLauncher:
         self.quick_telegram_override = None
         self.quick_single_url = ""
         self.quick_resolution_override = ""
+        self.quick_audio_overrides = []
+        self.quick_subtitle_overrides = []
         self.clipboard_last_url = ""
         self.clipboard_last_trigger_at = 0.0
         self.clipboard_check_pending = False
@@ -2713,13 +2951,32 @@ class TrayLauncher:
         })
         if self.quick_single_url:
             env["YTD_SINGLE_QUEUE_URL"] = self.quick_single_url
+        if self.quick_audio_overrides:
+            env["YTD_AUDIO_TRACKS_JSON"] = json.dumps(self.quick_audio_overrides, ensure_ascii=False)
+            first_audio = self.quick_audio_overrides[0]
+            env["YTD_AUDIO_FORMAT_ID"] = str(first_audio.get("format_id") or "")
+            env["YTD_AUDIO_FORMAT_KIND"] = str(first_audio.get("format_kind") or "audio")
+            env["YTD_AUDIO_LANGUAGE"] = str(first_audio.get("language") or "")
+            env["YTD_AUDIO_TRACK_NAME"] = str(first_audio.get("name") or "")
+            if first_audio.get("player_client"):
+                env["YTD_YOUTUBE_AUDIO_PLAYER_CLIENT"] = str(first_audio["player_client"])
+        if self.quick_subtitle_overrides:
+            env["YTD_SUBTITLE_SELECTIONS_JSON"] = json.dumps(self.quick_subtitle_overrides, ensure_ascii=False)
+            env["YTD_SUBTITLE_SELECTION"] = self.quick_subtitle_overrides[0]
         if self.ffmpeg_dir:
             env["YTD_FFMPEG_DIR"] = str(self.ffmpeg_dir)
         if self.deno_path:
             env["YTD_DENO_PATH"] = str(self.deno_path)
         return env
 
-    def run_script(self, telegram_override=None, single_queue_url: str = "", max_resolution_override: str = ""):
+    def run_script(
+        self,
+        telegram_override=None,
+        single_queue_url: str = "",
+        max_resolution_override: str = "",
+        audio_track_overrides: list[dict] | None = None,
+        subtitle_overrides: list[str] | None = None,
+    ):
         if self.is_running:
             self.show_notification("⚠️", self.tr("notify.already_running"), self.tr("notify.wait_finish"))
             return
@@ -2744,6 +3001,8 @@ class TrayLauncher:
         self.quick_single_url = str(single_queue_url or "").strip()
         resolution_override = str(max_resolution_override or "").strip()
         self.quick_resolution_override = resolution_override if resolution_override in VALID_RESOLUTIONS else ""
+        self.quick_audio_overrides = [dict(track) for track in (audio_track_overrides or [])]
+        self.quick_subtitle_overrides = [str(value).strip() for value in (subtitle_overrides or []) if str(value).strip()]
         self.update_icon()
         self.update_tray_menu()
         self.show_notification("▶️", self.tr("notify.download_started"), self.tr("notify.script_started"))
@@ -2832,6 +3091,8 @@ class TrayLauncher:
         self.quick_telegram_override = None
         self.quick_single_url = ""
         self.quick_resolution_override = ""
+        self.quick_audio_overrides = []
+        self.quick_subtitle_overrides = []
         self.update_icon()
         self.update_tray_menu()
         if self.main_window is not None and self.main_window.isVisible():
@@ -3034,7 +3295,7 @@ class ArchiveWindow(QMainWindow):
         toolbar.addWidget(self.delete_button)
         layout.addLayout(toolbar)
 
-        self.table = QTableWidget(0, 6)
+        self.table = QTableWidget(0, 7)
         self.apply_language()
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -3051,6 +3312,7 @@ class ArchiveWindow(QMainWindow):
         header.setSectionResizeMode(3, QHeaderView.Stretch)
         header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)
         layout.addWidget(self.table, 1)
 
         self.setCentralWidget(central)
@@ -3078,6 +3340,7 @@ class ArchiveWindow(QMainWindow):
                 self.tr("archive.type"),
                 self.tr("archive.channel"),
                 self.tr("archive.name"),
+                self.tr("archive.quality"),
                 "ID",
                 self.tr("archive.date"),
             ])
@@ -3090,6 +3353,42 @@ class ArchiveWindow(QMainWindow):
             "queue": "📥 " + self.tr("status.queue"),
         }
         return labels.get(type_name, type_name)
+
+    def quality_tooltip(self, entry: dict) -> str:
+        lines: list[str] = []
+        entry_audio_tracks = entry.get("audio_tracks")
+        if isinstance(entry_audio_tracks, list):
+            for track in entry_audio_tracks:
+                if not isinstance(track, dict):
+                    continue
+                name = fix_mojibake(str(track.get("name") or "").strip())
+                language = str(track.get("language") or "").strip()
+                label = name or language
+                if name and language and not name.casefold().endswith(f"({language})".casefold()):
+                    label = f"{name} ({language})"
+                if label:
+                    lines.append(f"🎧 {label}")
+        else:
+            legacy_audio = fix_mojibake(str(entry.get("audio_track_name") or entry.get("audio_language") or "").strip())
+            if legacy_audio and legacy_audio.casefold() != "auto":
+                lines.append(f"🎧 {legacy_audio}")
+        if not lines:
+            lines.append(self.tr("quick.audio_auto"))
+
+        entry_subtitles = entry.get("subtitle_selections")
+        if not isinstance(entry_subtitles, list):
+            legacy_subtitle = str(entry.get("subtitle_selection") or "none").strip()
+            entry_subtitles = [] if legacy_subtitle.casefold() in {"", "none"} else [legacy_subtitle]
+        subtitle_lines = []
+        for subtitle_selection in entry_subtitles:
+            mode, _separator, language = str(subtitle_selection).partition(":")
+            language = language.strip()
+            if not language:
+                continue
+            suffix = f" ({self.tr('quick.subtitles_auto_suffix')})" if mode == "auto" else ""
+            subtitle_lines.append(f"{SUBTITLE_ICON} {language}{suffix}")
+        lines.extend(subtitle_lines or [self.tr("quick.subtitles_none")])
+        return "\n".join(lines)
 
     def refresh(self):
         entries = self.read_entries()
@@ -3147,10 +3446,14 @@ class ArchiveWindow(QMainWindow):
         type_name = str(entry.get("type") or "").strip()
         type_emoji = self.TYPE_EMOJIS.get(type_name, type_name)
         video_id = str(entry.get("video_id") or "").strip()
+        resolution = str(entry.get("resolution") or media_resolution_from_path(entry.get("filename") or entry.get("file_path"))).strip()
+        quality_text = f"{resolution}p" if resolution.isdigit() else (resolution or "-")
+        quality_tooltip = self.quality_tooltip(entry)
         values = [
             type_emoji,
             fix_mojibake(str(entry.get("channel_name") or "")),
             fix_mojibake(str(entry.get("title") or "")),
+            quality_text,
             video_id,
             fix_mojibake(str(entry.get("downloaded_at") or "")),
         ]
@@ -3159,9 +3462,11 @@ class ArchiveWindow(QMainWindow):
             item = QTableWidgetItem(display_value)
             if col == 1:
                 item.setToolTip(self.type_label(type_name))
+            elif col == 4:
+                item.setToolTip(quality_tooltip)
             else:
                 item.setToolTip(value.strip())
-            if col in (1, 4, 5):
+            if col in (1, 4, 5, 6):
                 item.setTextAlignment(Qt.AlignCenter)
             self.table.setItem(row, col, item)
 
@@ -3244,7 +3549,7 @@ class ArchiveWindow(QMainWindow):
             return
 
         details_removed = self.remove_from_details_archive(entry)
-        service_removed = self.remove_from_service_archive(video_id)
+        service_removed = 0 if self.details_archive_contains_video(video_id) else self.remove_from_service_archive(video_id)
         self.refresh()
         parent = self.parent()
         if parent is not None and hasattr(parent, "refresh_overview"):
@@ -3267,31 +3572,29 @@ class ArchiveWindow(QMainWindow):
         if not path.exists():
             return 0
 
-        video_id = str(entry.get("video_id") or "").strip()
         selected_index = entry.get("_index")
         removed = 0
         kept_lines = []
         for index, raw_line in enumerate(read_text_for_display(path).splitlines()):
-            should_remove = False
-            try:
-                current = json.loads(raw_line)
-            except json.JSONDecodeError:
-                current = None
-
-            if isinstance(current, dict):
-                current_id = str(current.get("video_id") or "").strip()
-                if video_id and current_id == video_id:
-                    should_remove = True
-            if not should_remove and not video_id and selected_index == index:
-                should_remove = True
-
-            if should_remove:
+            if selected_index == index:
                 removed += 1
             else:
                 kept_lines.append(raw_line)
 
         path.write_text("\n".join(kept_lines).rstrip() + ("\n" if kept_lines else ""), encoding="utf-8")
         return removed
+
+    def details_archive_contains_video(self, video_id: str) -> bool:
+        if not video_id or not self.launcher.archive_details_file.exists():
+            return False
+        for raw_line in read_text_for_display(self.launcher.archive_details_file).splitlines():
+            try:
+                entry = json.loads(raw_line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(entry, dict) and str(entry.get("video_id") or "").strip() == video_id:
+                return True
+        return False
 
     def remove_from_service_archive(self, video_id: str) -> int:
         video_id = str(video_id or "").strip()
@@ -3305,7 +3608,7 @@ class ArchiveWindow(QMainWindow):
         removed = 0
         kept_lines = []
         for raw_line in read_text_for_display(path).splitlines():
-            if video_id in raw_line:
+            if video_id in raw_line.split():
                 removed += 1
             else:
                 kept_lines.append(raw_line)
@@ -3469,6 +3772,85 @@ class ArchiveWindow(QMainWindow):
         return None
 
 
+class CheckableComboBox(QComboBox):
+    selectionChanged = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setEditable(True)
+        self.lineEdit().setReadOnly(True)
+        self.lineEdit().installEventFilter(self)
+        self.setModel(QStandardItemModel(self))
+        self.view().pressed.connect(self.toggle_item)
+        self.model().dataChanged.connect(self.update_summary)
+        self._skip_next_hide = False
+        self.empty_text = ""
+        self.count_template = "{count}"
+
+    def eventFilter(self, watched, event):
+        if watched is self.lineEdit() and event.type() == QEvent.MouseButtonRelease and self.isEnabled():
+            self.showPopup()
+            return True
+        return super().eventFilter(watched, event)
+
+    def hidePopup(self):
+        if self._skip_next_hide:
+            self._skip_next_hide = False
+            return
+        super().hidePopup()
+
+    def toggle_item(self, index):
+        item = self.model().itemFromIndex(index)
+        if item is None or not item.isEnabled() or item.data(Qt.UserRole) is None:
+            return
+        item.setCheckState(Qt.Unchecked if item.checkState() == Qt.Checked else Qt.Checked)
+        self._skip_next_hide = True
+        self.update_summary()
+        self.selectionChanged.emit()
+
+    def set_display_texts(self, empty_text: str, count_template: str):
+        self.empty_text = empty_text
+        self.count_template = count_template
+        self.update_summary()
+
+    def add_check_item(self, text: str, data, *, checked: bool = False):
+        item = QStandardItem(text)
+        item.setFlags(Qt.ItemIsEnabled)
+        item.setData(data, Qt.UserRole)
+        item.setData(Qt.Checked if checked else Qt.Unchecked, Qt.CheckStateRole)
+        item.setToolTip(text)
+        self.model().appendRow(item)
+        self.update_summary()
+
+    def add_separator(self):
+        self.insertSeparator(self.count())
+
+    def checked_data(self) -> list:
+        return [
+            self.model().item(index).data(Qt.UserRole)
+            for index in range(self.model().rowCount())
+            if self.model().item(index).checkState() == Qt.Checked
+        ]
+
+    def checked_keys(self, key_function) -> set:
+        return {key_function(value) for value in self.checked_data()}
+
+    def update_summary(self, *_args):
+        labels = [
+            self.model().item(index).text()
+            for index in range(self.model().rowCount())
+            if self.model().item(index).checkState() == Qt.Checked
+        ]
+        if not labels:
+            text = self.empty_text
+        elif len(labels) == 1:
+            text = labels[0]
+        else:
+            text = self.count_template.format(count=len(labels))
+        self.lineEdit().setText(text)
+        self.lineEdit().setToolTip("\n".join(labels) if labels else self.toolTip())
+
+
 class QuickDownloadDialog(QDialog):
     def __init__(self, main_window):
         super().__init__(main_window)
@@ -3476,9 +3858,13 @@ class QuickDownloadDialog(QDialog):
         self.launcher = main_window.launcher
         self.setWindowTitle(self.main_window.tr("quick.title"))
         self.setModal(False)
-        self.setFixedSize(900, 235)
+        self.setFixedSize(900, 270)
         self.launcher.apply_taskbar_mode_to_window(self)
         self._position_ready = False
+        self.position_save_timer = QTimer(self)
+        self.position_save_timer.setSingleShot(True)
+        self.position_save_timer.setInterval(600)
+        self.position_save_timer.timeout.connect(self.save_position)
         if self.launcher.app_icon_path.exists():
             self.setWindowIcon(QIcon(str(self.launcher.app_icon_path)))
 
@@ -3541,7 +3927,7 @@ class QuickDownloadDialog(QDialog):
         preview_row.setSpacing(10)
         self.thumbnail_label = QLabel(self.main_window.tr("preview.thumbnail"))
         self.thumbnail_label.setAlignment(Qt.AlignCenter)
-        self.thumbnail_label.setFixedSize(285, 150)
+        self.thumbnail_label.setFixedSize(285, 165)
         self.thumbnail_label.setObjectName("quickThumbnail")
         preview_row.addWidget(self.thumbnail_label, 0, Qt.AlignTop)
 
@@ -3564,6 +3950,20 @@ class QuickDownloadDialog(QDialog):
         info_layout.addWidget(self.video_status_label)
         info_layout.addStretch()
 
+        media_row = QHBoxLayout()
+        media_row.setSpacing(8)
+        self.audio_combo = CheckableComboBox()
+        self.audio_combo.setFixedHeight(28)
+        self.audio_combo.view().setMinimumWidth(300)
+        self.audio_combo.setToolTip(self.main_window.tr("quick.audio_tip"))
+        self.subtitle_combo = CheckableComboBox()
+        self.subtitle_combo.setFixedHeight(28)
+        self.subtitle_combo.view().setMinimumWidth(300)
+        self.subtitle_combo.setToolTip(self.main_window.tr("quick.subtitles_tip"))
+        media_row.addWidget(self.audio_combo, 1)
+        media_row.addWidget(self.subtitle_combo, 1)
+        info_layout.addLayout(media_row)
+
         bottom_row = QHBoxLayout()
         bottom_row.setSpacing(8)
         bottom_row.addStretch()
@@ -3578,6 +3978,7 @@ class QuickDownloadDialog(QDialog):
         preview_row.addLayout(info_layout, 1)
         right_layout.addLayout(preview_row, 1)
 
+        self.reset_media_options()
         self.update_actions(False)
 
     def apply_language(self):
@@ -3585,6 +3986,16 @@ class QuickDownloadDialog(QDialog):
         self.setLayoutDirection(Qt.RightToLeft if self.main_window.language == "ar" else Qt.LeftToRight)
         self.url_input.setPlaceholderText(self.main_window.tr("placeholder.youtube_url"))
         self.resolution_combo.setToolTip(self.main_window.tr("quick.resolution_tip"))
+        self.audio_combo.setToolTip(self.main_window.tr("quick.audio_tip"))
+        self.subtitle_combo.setToolTip(self.main_window.tr("quick.subtitles_tip"))
+        self.audio_combo.set_display_texts(
+            self.main_window.tr("quick.audio_auto"),
+            self.main_window.tr("quick.audio_selected"),
+        )
+        self.subtitle_combo.set_display_texts(
+            self.main_window.tr("quick.subtitles_none"),
+            self.main_window.tr("quick.subtitles_selected"),
+        )
         self.main_window._replace_combo_items(
             self.resolution_combo,
             localized_resolution_options(self.main_window.language),
@@ -3595,6 +4006,7 @@ class QuickDownloadDialog(QDialog):
         self.add_queue_button.setToolTip(self.main_window.tr("quick.queue_easter"))
         self.cancel_button.setText(self.main_window.tr("button.cancel"))
         self.cancel_button.setToolTip(self.main_window.tr("quick.close_tip"))
+        self.set_media_options(self.main_window.current_previews.get("quick", {}))
         if self.thumbnail_label.text():
             self.thumbnail_label.setText(self.main_window.tr("preview.thumbnail"))
         if not self.url_input.text().strip() and not self.main_window.current_previews.get("quick"):
@@ -3629,18 +4041,23 @@ class QuickDownloadDialog(QDialog):
 
     def moveEvent(self, event):
         super().moveEvent(event)
+        if self._position_ready:
+            self.position_save_timer.start()
+
+    def save_position_now(self):
+        self.position_save_timer.stop()
         self.save_position()
 
     def closeEvent(self, event):
-        self.save_position()
+        self.save_position_now()
         super().closeEvent(event)
 
     def accept(self):
-        self.save_position()
+        self.save_position_now()
         super().accept()
 
     def reject(self):
-        self.save_position()
+        self.save_position_now()
         super().reject()
 
     def _load_logo(self):
@@ -3679,7 +4096,111 @@ class QuickDownloadDialog(QDialog):
         value = str(self.resolution_combo.currentData() or self.launcher.quick_download_resolution or "1080")
         return value if value in VALID_RESOLUTIONS else "1080"
 
+    def language_label(self, language: str, name: str = "") -> str:
+        language = str(language or "und").strip()
+        name = fix_mojibake(str(name or "").strip())
+        if name:
+            suffix = f"({language})".casefold()
+            return name if name.casefold().endswith(suffix) else f"{name} ({language})"
+        locale_name = QLocale(language.replace("-", "_")).nativeLanguageName().strip()
+        return f"{locale_name} ({language})" if locale_name else language
+
+    def reset_media_options(self):
+        self.audio_combo.clear()
+        self.audio_combo.set_display_texts(
+            self.main_window.tr("quick.audio_auto"),
+            self.main_window.tr("quick.audio_selected"),
+        )
+        self.audio_combo.setEnabled(False)
+        self.subtitle_combo.clear()
+        self.subtitle_combo.set_display_texts(
+            self.main_window.tr("quick.subtitles_none"),
+            self.main_window.tr("quick.subtitles_selected"),
+        )
+        self.subtitle_combo.setEnabled(False)
+
+    @staticmethod
+    def audio_option_key(option: dict) -> tuple[str, str, str]:
+        return (
+            str(option.get("format_kind") or ""),
+            str(option.get("language") or "").casefold(),
+            str(option.get("name") or "").casefold(),
+        )
+
+    def set_media_options(self, info: dict):
+        selected_audio_keys = self.audio_combo.checked_keys(self.audio_option_key)
+        selected_subtitles = {str(value) for value in self.subtitle_combo.checked_data()}
+        audio_options = info.get("audio_tracks") or []
+        subtitle_options = info.get("subtitle_tracks") or []
+
+        self.audio_combo.clear()
+        self.audio_combo.set_display_texts(
+            self.main_window.tr("quick.audio_auto"),
+            self.main_window.tr("quick.audio_selected"),
+        )
+        preferred_audio, other_audio = prioritized_media_sections(audio_options)
+        for option in preferred_audio:
+            label = self.language_label(option.get("language"), option.get("name"))
+            self.audio_combo.add_check_item(
+                f"🎧 {label}",
+                option,
+                checked=self.audio_option_key(option) in selected_audio_keys,
+            )
+        if preferred_audio and other_audio:
+            self.audio_combo.add_separator()
+        for option in other_audio:
+            label = self.language_label(option.get("language"), option.get("name"))
+            self.audio_combo.add_check_item(
+                f"🎧 {label}",
+                option,
+                checked=self.audio_option_key(option) in selected_audio_keys,
+            )
+        self.audio_combo.setEnabled(bool(audio_options))
+        self.audio_combo.update_summary()
+
+        self.subtitle_combo.clear()
+        self.subtitle_combo.set_display_texts(
+            self.main_window.tr("quick.subtitles_none"),
+            self.main_window.tr("quick.subtitles_selected"),
+        )
+        subtitle_sections = [
+            section
+            for section in subtitle_media_sections(subtitle_options)
+            if section
+        ]
+        for section_index, section in enumerate(subtitle_sections):
+            if section_index:
+                self.subtitle_combo.add_separator()
+            for option in section:
+                label = self.language_label(option.get("language"), option.get("name"))
+                if option.get("mode") == "auto":
+                    label = f"{label} ({self.main_window.tr('quick.subtitles_auto_suffix')})"
+                selection = str(option.get("selection") or "")
+                self.subtitle_combo.add_check_item(
+                    f"{SUBTITLE_ICON} {label}",
+                    selection,
+                    checked=selection in selected_subtitles,
+                )
+        self.subtitle_combo.setEnabled(bool(subtitle_options))
+        self.subtitle_combo.update_summary()
+
+    def selected_audio_tracks(self) -> list[dict]:
+        return [dict(value) for value in self.audio_combo.checked_data() if isinstance(value, dict)]
+
+    def selected_subtitles(self) -> list[str]:
+        return [str(value) for value in self.subtitle_combo.checked_data() if value]
+
+    def selected_audio_track(self) -> dict:
+        tracks = self.selected_audio_tracks()
+        return tracks[0] if tracks else {}
+
+    def selected_subtitle(self) -> str:
+        subtitles = self.selected_subtitles()
+        return subtitles[0] if subtitles else "none"
+
     def open_from_clipboard(self, initial_url: str = ""):
+        self._position_ready = False
+        self.position_save_timer.stop()
         clipboard_text = (initial_url or self.launcher.clipboard_text()).strip()
         clipboard_url = self.launcher.extract_youtube_url_from_text(clipboard_text) or clipboard_text
         self.main_window.current_previews["quick"] = {}
@@ -3688,6 +4209,7 @@ class QuickDownloadDialog(QDialog):
         self._load_logo()
         self.video_uploader_label.setText("")
         self.video_status_label.setText("")
+        self.reset_media_options()
         self.select_resolution(self.launcher.quick_download_resolution)
         if self.main_window._looks_like_youtube_url(clipboard_url):
             self.url_input.setText(clipboard_url)
@@ -6359,20 +6881,39 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, self.tr("quick.title"), self.tr("preview.need_youtube"))
             return False
         video_id = (preview.get("video_id") or self.youtube_video_id_from_url(url)).strip()
-        if video_id and self.archive_contains_video(video_id):
-            QMessageBox.information(self, self.tr("quick.title"), self.tr("preview.in_archive"))
-            widgets["status"].setText(self.tr("preview.in_archive"))
-            return False
-
         telegram_notify = False
         resolution = self.launcher.quick_download_resolution
+        audio_tracks = []
+        subtitle_selections = []
         if self.quick_download_dialog is not None:
             telegram_notify = self.quick_download_dialog.telegram_check.isChecked()
             resolution = self.quick_download_dialog.selected_resolution()
+            audio_tracks = [
+                resolve_audio_track_option(track, resolution)
+                for track in self.quick_download_dialog.selected_audio_tracks()
+            ]
+            audio_tracks = [track for track in audio_tracks if track.get("format_id")]
+            subtitle_selections = self.quick_download_dialog.selected_subtitles()
+        if sum(track.get("format_kind") == "combined" for track in audio_tracks) > 1:
+            message = self.tr("quick.combined_audio_limit")
+            QMessageBox.warning(self, self.tr("quick.title"), message)
+            widgets["status"].setText(message)
+            return False
+        if video_id and self.archive_contains_variant(
+            video_id,
+            resolution=resolution,
+            audio_tracks=audio_tracks,
+            subtitle_selections=subtitle_selections,
+        ):
+            QMessageBox.information(self, self.tr("quick.title"), self.tr("preview.variant_in_archive"))
+            widgets["status"].setText(self.tr("preview.variant_in_archive"))
+            return False
         self.launcher.run_script(
             telegram_override=telegram_notify,
             single_queue_url=url,
             max_resolution_override=resolution,
+            audio_track_overrides=audio_tracks,
+            subtitle_overrides=subtitle_selections,
         )
         self.refresh_overview()
         return True
@@ -6389,9 +6930,9 @@ class MainWindow(QMainWindow):
             return self.add_video_to_queue("overview", front=True)
 
         video_id = (preview.get("video_id") or self.youtube_video_id_from_url(url)).strip()
-        if video_id and self.archive_contains_video(video_id):
-            QMessageBox.information(self, self.tr("button.download"), self.tr("preview.in_archive"))
-            widgets["status"].setText(self.tr("preview.in_archive"))
+        if video_id and self.archive_contains_variant(video_id, resolution=self.launcher.max_resolution):
+            QMessageBox.information(self, self.tr("button.download"), self.tr("preview.variant_in_archive"))
+            widgets["status"].setText(self.tr("preview.variant_in_archive"))
             return False
 
         widgets["input"].clear()
@@ -8133,6 +8674,7 @@ class MainWindow(QMainWindow):
         if context == "quick" and self.quick_download_dialog is not None:
             self.quick_download_dialog.update_actions(False)
             self.quick_download_dialog.set_channel_logo("")
+            self.quick_download_dialog.reset_media_options()
 
     def schedule_video_preview(self, context: str = "queue"):
         widgets = self._preview_widgets(context)
@@ -8151,6 +8693,7 @@ class MainWindow(QMainWindow):
             download_button.setEnabled(valid)
         if context == "quick" and self.quick_download_dialog is not None:
             self.quick_download_dialog.update_actions(valid)
+            self.quick_download_dialog.reset_media_options()
         if not text:
             self.preview_timer.stop()
             self.preview_request_id += 1
@@ -8186,24 +8729,48 @@ class MainWindow(QMainWindow):
 
     def _metadata_worker(self, request_id: int, context: str, url: str):
         try:
-            result = subprocess.run(
-                self.launcher.yt_dlp_command()
-                + self.launcher.yt_dlp_js_runtime_args()
-                + ["--dump-single-json", "--no-playlist", "--skip-download", url],
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                env=self.launcher.script_environment(),
-                timeout=45,
-                check=False,
-            )
-            if result.returncode != 0:
-                message = result.stderr.strip() or self.tr("preview.failed")
-                self.metadata_failed.emit(request_id, message[-300:])
+            attempts = [("", [])]
+            if context == "quick":
+                attempts.insert(0, (
+                    QUICK_AUDIO_PLAYER_CLIENT,
+                    ["--extractor-args", f"youtube:player_client={QUICK_AUDIO_PLAYER_CLIENT}"],
+                ))
+            data = None
+            metadata_player_client = ""
+            last_error = self.tr("preview.failed")
+            for player_client, extractor_args in attempts:
+                try:
+                    result = subprocess.run(
+                        self.launcher.yt_dlp_command()
+                        + self.launcher.yt_dlp_js_runtime_args()
+                        + extractor_args
+                        + ["--dump-single-json", "--no-playlist", "--skip-download", url],
+                        capture_output=True,
+                        text=True,
+                        encoding="utf-8",
+                        errors="replace",
+                        env=self.launcher.script_environment(),
+                        timeout=45,
+                        check=False,
+                    )
+                except subprocess.TimeoutExpired:
+                    last_error = self.tr("preview.failed")
+                    continue
+                if result.returncode != 0:
+                    last_error = result.stderr.strip() or self.tr("preview.failed")
+                    continue
+                try:
+                    candidate = json.loads(result.stdout)
+                except json.JSONDecodeError:
+                    last_error = self.tr("preview.failed")
+                    continue
+                if isinstance(candidate, dict):
+                    data = candidate
+                    metadata_player_client = player_client
+                    break
+            if data is None:
+                self.metadata_failed.emit(request_id, last_error[-300:])
                 return
-
-            data = json.loads(result.stdout)
             thumbnail_url = data.get("thumbnail") or ""
             thumbnail_path = ""
             if thumbnail_url:
@@ -8241,6 +8808,10 @@ class MainWindow(QMainWindow):
                 except Exception:
                     channel_thumbnail_path = ""
 
+            audio_tracks = audio_track_options(data)
+            if metadata_player_client:
+                for audio_track in audio_tracks:
+                    audio_track["player_client"] = metadata_player_client
             self.metadata_loaded.emit({
                 "request_id": request_id,
                 "context": context,
@@ -8251,6 +8822,8 @@ class MainWindow(QMainWindow):
                 "thumbnail_path": thumbnail_path,
                 "channel_thumbnail_path": channel_thumbnail_path,
                 "channel_url": channel_url,
+                "audio_tracks": audio_tracks,
+                "subtitle_tracks": subtitle_track_options(data),
             })
             if context == "quick" and not channel_thumbnail_path and channel_url:
                 loaded_path = self.fetch_quick_channel_logo(channel_url, request_id)
@@ -8328,6 +8901,7 @@ class MainWindow(QMainWindow):
         if context == "quick" and self.quick_download_dialog is not None:
             self.quick_download_dialog.update_actions(True)
             self.quick_download_dialog.set_channel_logo(info.get("channel_thumbnail_path") or "")
+            self.quick_download_dialog.set_media_options(info)
 
         thumbnail_path = info.get("thumbnail_path")
         if thumbnail_path:
@@ -8358,6 +8932,7 @@ class MainWindow(QMainWindow):
         if context == "quick" and self.quick_download_dialog is not None:
             self.quick_download_dialog.update_actions(self._looks_like_youtube_url(widgets["input"].text().strip()))
             self.quick_download_dialog.set_channel_logo("")
+            self.quick_download_dialog.reset_media_options()
         widgets["title"].setText(self.tr("preview.failed"))
         widgets["status"].setText(self.tr("preview.failed_detail", message=message))
 
@@ -8565,6 +9140,36 @@ class MainWindow(QMainWindow):
                         return True
         except Exception:
             pass
+        return False
+
+    def archive_contains_variant(
+        self,
+        video_id: str,
+        *,
+        resolution: str,
+        audio_tracks: list[dict] | None = None,
+        subtitle_selections: list[str] | None = None,
+    ) -> bool:
+        video_id = str(video_id or "").strip()
+        if not video_id or not self.launcher.archive_details_file.exists():
+            return False
+        audio_tracks = audio_tracks or []
+        subtitle_selections = subtitle_selections or []
+        for line in read_text_for_display(self.launcher.archive_details_file).splitlines():
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(entry, dict) or str(entry.get("video_id") or "").strip() != video_id:
+                continue
+            if archive_entry_file_exists(entry) and archive_entry_matches_variant(
+                entry,
+                resolution=resolution,
+                audio_format_ids=[str(track.get("format_id") or "") for track in audio_tracks],
+                audio_languages=[str(track.get("language") or "") for track in audio_tracks],
+                subtitle_selections=subtitle_selections,
+            ):
+                return True
         return False
 
     def _count_lines(self, path: Path, skip_comments: bool = False):

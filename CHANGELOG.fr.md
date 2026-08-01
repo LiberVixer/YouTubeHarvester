@@ -8,10 +8,49 @@
   <a href="CHANGELOG.es.md">🇪🇸 Español</a> ·
   <a href="CHANGELOG.hi.md">🇮🇳 हिन्दी</a> ·
   <a href="CHANGELOG.zh.md">🇨🇳 中文</a> ·
+  <a href="CHANGELOG.ja.md">🇯🇵 日本語</a> ·
   <a href="CHANGELOG.ar.md">🇸🇦 العربية</a>
 </p>
 
 Toutes les modifications importantes de **YouTube Harvester** sont listées ici.
+
+## [1.1.2] - 2026-08-01
+
+### Ajouté
+
+- Le téléchargement rapide permet de sélectionner et d'intégrer dans un même
+  MP4 plusieurs pistes audio et plusieurs pistes de sous-titres manuelles ou
+  automatiques.
+- Interface complète, règles d'utilisation, README, journal des modifications
+  et captures d'écran en japonais.
+- Les menus audio et sous-titres donnent la priorité aux pistes originales ou
+  manuelles, puis au russe, à l'anglais, à l'ukrainien et aux autres langues de
+  l'interface ; les autres langues sont classées dans un groupe séparé.
+
+### Modifié
+
+- L'archive considère chaque combinaison de résolution, pistes audio et
+  sous-titres comme une variante distincte de la même vidéo.
+- La colonne qualité de l'archive n'affiche que la résolution ; son infobulle
+  liste les pistes audio et les sous-titres ligne par ligne.
+- Les flux audio du MP4 fusionné reçoivent leurs métadonnées de langue ISO 639.
+- Le sélecteur de sous-titres utilise l'icône `🔤`, compatible avec la police.
+- Les sous-titres manuels/originaux et automatiques sont séparés visuellement
+  dans le menu des pistes.
+
+### Corrections
+
+- Le téléchargement rapide utilise un client de métadonnées YouTube
+  supplémentaire pour détecter les doublages que le client standard omet.
+- Si un sous-titre échoue, y compris avec une réponse HTTP 429, `yt-dlp`
+  réessaie sans cette piste ; si tous échouent, la vidéo et l'audio sont tout de
+  même téléchargés.
+- Sous Windows, l'enregistrement différé de la position empêche la fenêtre de
+  téléchargement rapide de tressauter pendant son déplacement.
+- La comparaison des variantes multipistes avec les anciennes entrées de
+  l'archive est corrigée et les noms Windows restent d'une longueur raisonnable.
+- L'action Arrêter de la zone de notification utilise l'icône `🛑`, clairement
+  affichée dans toutes les langues.
 
 ## [1.1.1] - 2026-07-25
 

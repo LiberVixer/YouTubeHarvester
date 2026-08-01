@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.1
+# YouTube Harvester 1.1.2
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="Logo YouTube Harvester" width="128">
@@ -12,6 +12,7 @@
   <a href="README.es.md">🇪🇸 Español</a> ·
   <a href="README.hi.md">🇮🇳 हिन्दी</a> ·
   <a href="README.zh.md">🇨🇳 中文</a> ·
+  <a href="README.ja.md">🇯🇵 日本語</a> ·
   <a href="README.ar.md">🇸🇦 العربية</a>
 </p>
 
@@ -21,7 +22,10 @@
   envoi Telegram facultatif.
 </p>
 
-> **UPD 1.1.1 :** De petits défauts ont été corrigés.
+> **UPD 2 :** Le téléchargement rapide intègre désormais plusieurs pistes
+> audio et sous-titres dans une même vidéo. L'archive distingue les variantes
+> par qualité et pistes, l'échec d'un sous-titre n'annule plus le téléchargement
+> et la localisation japonaise complète a été ajoutée.
 
 ![Aperçu de YouTube Harvester](docs/screenshots/fr/overview.png)
 
@@ -32,7 +36,7 @@ leurs nouvelles vidéos, leurs Shorts et leurs directs avec `yt-dlp`. Il accepte
 aussi des liens individuels, conserve une archive locale, affiche des rapports
 et peut envoyer des notifications ou des fichiers vers Telegram.
 
-La version `1.1.1` utilise le moteur Python sous Linux et Windows. L'ancien
+La version `1.1.2` utilise le moteur Python sous Linux et Windows. L'ancien
 moteur Bash reste dans les sources uniquement comme code historique désactivé.
 
 ## Fonctions principales
@@ -48,12 +52,13 @@ moteur Bash reste dans les sources uniquement comme code historique désactivé.
 - File vidéo avec titre, chaîne, miniature, détection des doublons et archives,
   nouvelle tentative et second passage après toutes les chaînes.
 - Fenêtre Téléchargement rapide avec URL du presse-papiers, métadonnées,
-  résolution, téléchargement immédiat, file et case Telegram persistante.
+  résolution, plusieurs pistes audio et sous-titres, téléchargement immédiat,
+  file et case Telegram persistante.
 - Raccourci global configurable, `Ctrl+Shift+Alt+Y` par défaut.
 - Surveillance facultative du presse-papiers pour les URL YouTube valides.
 - Planificateur d'exécutions automatiques par heure.
-- Archive détaillée avec type, chaîne, titre, date, lien YouTube, fichier local,
-  dossier et suppression d'entrée.
+- Archive détaillée avec type, chaîne, titre, date, lien YouTube, variantes de
+  qualité et de pistes, fichier local, dossier et suppression d'entrée.
 - Journaux filtrables par Tout, Important et Erreurs.
 - Contrôle de version de `yt-dlp` et diagnostic du système, X11/Wayland, zone de
   notification, raccourci, outils, chemins, cache, écriture et espace disque.
@@ -61,8 +66,8 @@ moteur Bash reste dans les sources uniquement comme code historique désactivé.
 - Démarrage dans la zone de notification, la barre des tâches ou les deux.
 - Arrêt sûr, nettoyage temporaire protégé, noms compatibles Windows et UTF-8
   fiable dans les journaux et archives Windows.
-- Anglais par défaut, avec russe, ukrainien, français, espagnol, hindi, chinois
-  et arabe.
+- Anglais par défaut, avec russe, ukrainien, français, espagnol, hindi, chinois,
+  japonais et arabe.
 
 ## Captures d'écran
 
@@ -79,12 +84,12 @@ moteur Bash reste dans les sources uniquement comme code historique désactivé.
 Les paquets sont publiés dans
 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases).
 
-Linux : `YouTubeHarvester_1.1.1_linux_all.deb`,
-`YouTubeHarvester_1.1.1_source.tar.gz` et `SHA256SUMS-linux.txt`.
+Linux : `YouTubeHarvester_1.1.2_linux_all.deb`,
+`YouTubeHarvester_1.1.2_source.tar.gz` et `SHA256SUMS-linux.txt`.
 
-Windows : `YouTubeHarvester_1.1.1_windows_setup.exe`,
-`YouTubeHarvester_1.1.1_windows_x64.msi`,
-`YouTubeHarvester_1.1.1_windows_portable.zip` et `SHA256SUMS-windows.txt`.
+Windows : `YouTubeHarvester_1.1.2_windows_setup.exe`,
+`YouTubeHarvester_1.1.2_windows_x64.msi`,
+`YouTubeHarvester_1.1.2_windows_portable.zip` et `SHA256SUMS-windows.txt`.
 
 Les versions Windows incluent `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` et
 `deno.exe`.
@@ -92,7 +97,7 @@ Les versions Windows incluent `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` et
 ## Installation sous Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.1_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.2_linux_all.deb
 yt-harvester
 ```
 
@@ -186,12 +191,12 @@ enregistrée localement.
 ## Compilation
 
 ```bash
-packaging/build_release.sh 1.1.1 1.1.1
+packaging/build_release.sh 1.1.2 1.1.2
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.1 -MsiVersion 1.1.1
+  -Version 1.1.2 -MsiVersion 1.1.2
 ```
 
 ## Utilisation responsable

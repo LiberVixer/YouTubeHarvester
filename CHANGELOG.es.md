@@ -8,10 +8,47 @@
   <a href="CHANGELOG.es.md">🇪🇸 Español</a> ·
   <a href="CHANGELOG.hi.md">🇮🇳 हिन्दी</a> ·
   <a href="CHANGELOG.zh.md">🇨🇳 中文</a> ·
+  <a href="CHANGELOG.ja.md">🇯🇵 日本語</a> ·
   <a href="CHANGELOG.ar.md">🇸🇦 العربية</a>
 </p>
 
 Aquí se documentan todos los cambios importantes de **YouTube Harvester**.
+
+## [1.1.2] - 2026-08-01
+
+### Añadido
+
+- La Descarga rápida permite seleccionar e integrar en un solo MP4 varias
+  pistas de audio y varias pistas de subtítulos manuales o automáticas.
+- Interfaz completa, reglas de uso, README, registro de cambios y capturas de
+  pantalla en japonés.
+- Los menús de audio y subtítulos priorizan las pistas originales o manuales,
+  seguidas de ruso, inglés, ucraniano y los demás idiomas de la interfaz; el
+  resto aparece por orden alfabético en un grupo separado.
+
+### Cambiado
+
+- El archivo considera cada combinación de resolución, pistas de audio y
+  subtítulos como una variante distinta del mismo vídeo.
+- La columna de calidad muestra solo la resolución; su ayuda emergente enumera
+  las pistas de audio y subtítulos una por línea.
+- Las pistas de audio del MP4 combinado reciben metadatos de idioma ISO 639.
+- El selector de subtítulos usa el icono `🔤`, compatible con la fuente.
+- Los subtítulos manuales/originales y automáticos aparecen separados
+  visualmente en el menú de pistas.
+
+### Corregido
+
+- La Descarga rápida usa un cliente adicional de metadatos de YouTube para
+  encontrar doblajes alternativos omitidos por el cliente predeterminado.
+- Si falla un subtítulo, incluso por HTTP 429, `yt-dlp` reintenta sin esa pista;
+  si fallan todos, el vídeo y el audio se descargan igualmente.
+- En Windows se retrasa el guardado de la posición para que la ventana de
+  Descarga rápida no dé tirones al arrastrarla.
+- Se corrigió la comparación entre variantes con varias pistas y registros
+  antiguos; los nombres compatibles con Windows conservan una longitud segura.
+- La acción Detener de la bandeja usa el icono `🛑`, que se muestra claramente
+  en todos los idiomas.
 
 ## [1.1.1] - 2026-07-25
 
