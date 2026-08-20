@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.2
+# YouTube Harvester 1.1.3
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="Логотип YouTube Harvester" width="128">
@@ -8,6 +8,7 @@
   <a href="README.md">🇺🇸 🇬🇧 English</a> ·
   <a href="README.ru.md">🇷🇺 Русский</a> ·
   <a href="README.uk.md">🇺🇦 Українська</a> ·
+  <a href="README.be.md">🇧🇾 Беларуская</a> ·
   <a href="README.fr.md">🇫🇷 Français</a> ·
   <a href="README.es.md">🇪🇸 Español</a> ·
   <a href="README.hi.md">🇮🇳 हिन्दी</a> ·
@@ -27,6 +28,11 @@
 > ошибки отдельных субтитров не отменяют скачивание, добавлена полная японская
 > локализация.
 
+> **UPD 3:** В версии 1.1.3 добавлено проверенное обновление программы из
+> официальных релизов GitHub, полная белорусская локализация и документация,
+> а встроенный загрузчик обновлён до `yt-dlp 2026.08.19` с более надёжным
+> восстановлением после временных ошибок YouTube HTTP 403.
+
 ![Обзор YouTube Harvester](docs/screenshots/ru/overview.png)
 
 ## Что делает программа
@@ -36,7 +42,7 @@
 ссылки, вести локальный архив, смотреть отчёты о скачанном и отправлять
 уведомления или файлы в Telegram.
 
-Версия `1.1.2` использует Python-движок на Linux и Windows. Старый Bash-движок
+Версия `1.1.3` использует Python-движок на Linux и Windows. Старый Bash-движок
 оставлен в исходниках только как отключённый устаревший код.
 
 ## Основные возможности
@@ -63,14 +69,16 @@
 - Подробный архив с типом, каналом, названием, датой, ссылкой YouTube,
   вариантами качества и дорожек, локальным файлом, папкой и удалением записи.
 - Просмотр логов с фильтрами «Всё», «Важное» и «Ошибки».
-- Проверка версии `yt-dlp` и диагностика ОС, X11/Wayland, трея, горячей
+- Проверенное обновление самой программы из официальных релизов GitHub для
+  установленной, портативной и Linux-версии.
+- Безопасная проверка и обновление `yt-dlp` из интерфейса, диагностика ОС, X11/Wayland, трея, горячей
   клавиши, инструментов, путей, кэша, прав записи и свободного места.
 - Тёмная, светлая и системная темы.
 - Три режима запуска: только системный трей, только панель задач или оба.
 - Мягкая остановка, защищённая очистка временной папки, безопасные имена файлов
   и корректный UTF-8 в Windows-логах и архиве.
 - Английский интерфейс по умолчанию; также доступны русский, украинский,
-  французский, испанский, хинди, китайский, японский и арабский.
+  белорусский, французский, испанский, хинди, китайский, японский и арабский.
 
 ## Скриншоты
 
@@ -89,15 +97,15 @@
 
 Linux:
 
-- `YouTubeHarvester_1.1.2_linux_all.deb`
-- `YouTubeHarvester_1.1.2_source.tar.gz`
+- `YouTubeHarvester_1.1.3_linux_all.deb`
+- `YouTubeHarvester_1.1.3_source.tar.gz`
 - `SHA256SUMS-linux.txt`
 
 Windows:
 
-- `YouTubeHarvester_1.1.2_windows_setup.exe` — обычный установщик.
-- `YouTubeHarvester_1.1.2_windows_x64.msi` — пакет MSI x64.
-- `YouTubeHarvester_1.1.2_windows_portable.zip` — portable-версия.
+- `YouTubeHarvester_1.1.3_windows_setup.exe` — обычный установщик.
+- `YouTubeHarvester_1.1.3_windows_x64.msi` — пакет MSI x64.
+- `YouTubeHarvester_1.1.3_windows_portable.zip` — portable-версия.
 - `SHA256SUMS-windows.txt`
 
 В Windows-сборки уже входят `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` и `deno.exe`.
@@ -105,7 +113,7 @@ Windows:
 ## Установка в Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.2_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.3_linux_all.deb
 ```
 
 После установки запустите программу из меню приложений или командой:
@@ -163,6 +171,7 @@ py -3 -m venv .venv
 ```bash
 yt-harvester
 yt-harvester --quick-download
+yt-harvester --show-main
 yt-harvester --start-tray
 yt-harvester --start-window
 yt-harvester --start-both
@@ -170,6 +179,7 @@ yt-harvester --start-both
 
 - `--quick-download` открывает быстрое скачивание и передаёт запрос уже
   запущенному экземпляру программы.
+- `--show-main` открывает или поднимает главное окно запущенного экземпляра.
 - `--start-tray` запускает программу только в системном трее.
 - `--start-window` запускает обычное окно на панели задач.
 - `--start-both` включает одновременно трей и панель задач.
@@ -229,14 +239,14 @@ PROXY_URL=127.0.0.1:9050
 Linux:
 
 ```bash
-packaging/build_release.sh 1.1.2 1.1.2
+packaging/build_release.sh 1.1.3 1.1.3
 ```
 
 Windows:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.2 -MsiVersion 1.1.2
+  -Version 1.1.3 -MsiVersion 1.1.3
 ```
 
 GitHub Actions собирает Linux- и Windows-артефакты для тегов `v*`.

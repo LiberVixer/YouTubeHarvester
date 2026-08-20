@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PACKAGE="yt-harvester"
-VERSION="${1:-1.1.2}"
+VERSION="${1:-1.1.3}"
 ARCH="all"
 BUILD_DIR="$ROOT_DIR/dist/deb-build"
 PKG_DIR="$BUILD_DIR/${PACKAGE}_${VERSION}_${ARCH}"
@@ -18,6 +18,8 @@ mkdir -p "$APP_DIR/assets" "$APP_DIR/scripts" "$BIN_DIR" "$DESKTOP_DIR" "$ICON_D
 
 install -m 0755 "$ROOT_DIR/tray_launcher.py" "$APP_DIR/tray_launcher.py"
 install -m 0644 "$ROOT_DIR/yth_common.py" "$APP_DIR/yth_common.py"
+install -m 0644 "$ROOT_DIR/yth_updater.py" "$APP_DIR/yth_updater.py"
+install -m 0644 "$ROOT_DIR/yth_app_updater.py" "$APP_DIR/yth_app_updater.py"
 install -m 0644 "$ROOT_DIR/i18n_locales.py" "$APP_DIR/i18n_locales.py"
 install -m 0755 "$ROOT_DIR/run_download.sh" "$APP_DIR/run_download.sh"
 install -m 0755 "$ROOT_DIR/start_tray.sh" "$APP_DIR/start_tray.sh"
@@ -64,7 +66,9 @@ export YTD_ENV_FILE="$CONFIG_DIR/.env"
 export YTD_SETTINGS_FILE="$CONFIG_DIR/settings.json"
 export YTD_SCHEDULES_FILE="$CONFIG_DIR/schedules.json"
 export YTD_CHANNEL_RULES_FILE="$CONFIG_DIR/channel_rules.json"
-export YTD_QUICK_REQUEST_FILE="$CONFIG_DIR/quick_download.request"
+export YTD_QUICK_REQUEST_FILE="$CONFIG_DIR/requests/quick_download.request"
+export YTD_SHOW_MAIN_REQUEST_FILE="$CONFIG_DIR/requests/show_main.request"
+export YTD_COMPLETION_EVENT_DIR="$CONFIG_DIR/completion-events"
 export YTD_TEMP_DIR="${YTD_TEMP_DIR:-$HOME/temp/YTH}"
 export YTD_FINAL_DIR="${YTD_FINAL_DIR:-$HOME/Downloads/YouTubeHarvester}"
 export PATH="$HOME/.npm-global/bin:$HOME/.local/bin:$HOME/.deno/bin:$PATH"
@@ -85,6 +89,8 @@ Name[es]=YouTube Harvester
 Name[hi]=YouTube Harvester
 Name[zh]=YouTube Harvester
 Name[ar]=YouTube Harvester
+Name[ja]=YouTube Harvester
+Name[be]=YouTube Harvester
 GenericName=YouTube downloader
 GenericName[ru]=Загрузчик YouTube
 GenericName[uk]=Завантажувач YouTube
@@ -93,6 +99,8 @@ GenericName[es]=Descargador de YouTube
 GenericName[hi]=YouTube डाउनलोडर
 GenericName[zh]=YouTube 下载器
 GenericName[ar]=أداة تنزيل YouTube
+GenericName[ja]=YouTube ダウンローダー
+GenericName[be]=Загрузнік YouTube
 Comment=YouTube downloader with tray interface
 Comment[ru]=Загрузчик YouTube с интерфейсом в трее
 Comment[uk]=Завантажувач YouTube з інтерфейсом у системному треї
@@ -101,11 +109,14 @@ Comment[es]=Descargador de YouTube con interfaz de bandeja del sistema
 Comment[hi]=सिस्टम ट्रे इंटरफ़ेस के साथ YouTube डाउनलोडर
 Comment[zh]=带系统托盘界面的 YouTube 下载器
 Comment[ar]=أداة تنزيل YouTube بواجهة علبة النظام
+Comment[ja]=システムトレイ対応 YouTube ダウンローダー
+Comment[be]=Загрузнік YouTube з інтэрфейсам у сістэмным трэі
 Exec=yt-harvester
 Icon=yt-harvester
 Terminal=false
 Categories=Network;
 StartupNotify=false
+StartupWMClass=YouTubeHarvester
 EOF
 
 cat > "$PKG_DIR/DEBIAN/control" <<EOF
@@ -114,7 +125,7 @@ Version: $VERSION
 Section: net
 Priority: optional
 Architecture: $ARCH
-Depends: python3, python3-pyqt5, python3-pynput, yt-dlp, ffmpeg, curl
+Depends: python3, python3-pyqt5, python3-pynput, python3-dbus, yt-dlp, ffmpeg, curl
 Recommends: wl-clipboard
 Suggests: deno
 Maintainer: YouTube Harvester <noreply@users.noreply.github.com>

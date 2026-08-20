@@ -4,6 +4,7 @@
   <a href="CHANGELOG.md">🇺🇸 🇬🇧 English</a> ·
   <a href="CHANGELOG.ru.md">🇷🇺 Русский</a> ·
   <a href="CHANGELOG.uk.md">🇺🇦 Українська</a> ·
+  <a href="CHANGELOG.be.md">🇧🇾 Беларуская</a> ·
   <a href="CHANGELOG.fr.md">🇫🇷 Français</a> ·
   <a href="CHANGELOG.es.md">🇪🇸 Español</a> ·
   <a href="CHANGELOG.hi.md">🇮🇳 हिन्दी</a> ·
@@ -13,6 +14,29 @@
 </p>
 
 这里记录 **YouTube Harvester** 的所有重要变化。
+
+## [1.1.3] - 2026-08-20
+
+### 新增
+
+- 内置应用更新器可从 GitHub 官方 Release 下载匹配的安装程序、便携压缩包、
+  Linux 软件包或源码压缩包。
+- 更新支持断点续传，打开前会核对公开的 SHA-256 和 GitHub 资源摘要。
+- 完整的白俄罗斯语界面、使用规则、README、更新日志、桌面元数据和截图。
+- 为 FriendsHub 等桌面集成提供安全的单实例命令和下载完成系统通知。
+
+### 变更
+
+- 内置 `yt-dlp` 更新到 `2026.08.19`，Windows 构建依赖与 GitHub Actions
+  同步更新到当前稳定版。
+- 设置中的 `yt-dlp` 更新器会以原子方式安装经过校验的托管可执行文件。
+- 遇到 HTTP 403 时会刷新 YouTube 媒体地址，并在最终报错前使用备用客户端重试。
+
+### 修复
+
+- 系统托盘、任务栏和组合显示模式会一致地应用于主窗口和快速下载窗口。
+- 只有完成的文件到达最终目录后才写入档案，避免错误的成功记录。
+- Linux 的锁、启动请求和完成事件使用用户私有目录，并拒绝不安全文件。
 
 ## [1.1.2] - 2026-08-01
 

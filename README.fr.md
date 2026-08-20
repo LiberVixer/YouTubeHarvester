@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.2
+# YouTube Harvester 1.1.3
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="Logo YouTube Harvester" width="128">
@@ -8,6 +8,7 @@
   <a href="README.md">🇺🇸 🇬🇧 English</a> ·
   <a href="README.ru.md">🇷🇺 Русский</a> ·
   <a href="README.uk.md">🇺🇦 Українська</a> ·
+  <a href="README.be.md">🇧🇾 Беларуская</a> ·
   <a href="README.fr.md">🇫🇷 Français</a> ·
   <a href="README.es.md">🇪🇸 Español</a> ·
   <a href="README.hi.md">🇮🇳 हिन्दी</a> ·
@@ -27,6 +28,12 @@
 > par qualité et pistes, l'échec d'un sous-titre n'annule plus le téléchargement
 > et la localisation japonaise complète a été ajoutée.
 
+> **UPD 3 :** La version 1.1.3 ajoute la mise à jour vérifiée de l'application
+> depuis les versions officielles GitHub, une localisation et une documentation
+> biélorusses complètes, et met à jour le moteur intégré vers
+> `yt-dlp 2026.08.19` avec une meilleure reprise après les erreurs HTTP 403
+> temporaires de YouTube.
+
 ![Aperçu de YouTube Harvester](docs/screenshots/fr/overview.png)
 
 ## Présentation
@@ -36,7 +43,7 @@ leurs nouvelles vidéos, leurs Shorts et leurs directs avec `yt-dlp`. Il accepte
 aussi des liens individuels, conserve une archive locale, affiche des rapports
 et peut envoyer des notifications ou des fichiers vers Telegram.
 
-La version `1.1.2` utilise le moteur Python sous Linux et Windows. L'ancien
+La version `1.1.3` utilise le moteur Python sous Linux et Windows. L'ancien
 moteur Bash reste dans les sources uniquement comme code historique désactivé.
 
 ## Fonctions principales
@@ -60,14 +67,16 @@ moteur Bash reste dans les sources uniquement comme code historique désactivé.
 - Archive détaillée avec type, chaîne, titre, date, lien YouTube, variantes de
   qualité et de pistes, fichier local, dossier et suppression d'entrée.
 - Journaux filtrables par Tout, Important et Erreurs.
-- Contrôle de version de `yt-dlp` et diagnostic du système, X11/Wayland, zone de
+- Mise à jour vérifiée de l'application depuis les versions GitHub officielles
+  pour les installations, les versions portables et les paquets Linux.
+- Contrôle et mise à jour sécurisée de `yt-dlp` dans l'interface, avec diagnostic du système, X11/Wayland, zone de
   notification, raccourci, outils, chemins, cache, écriture et espace disque.
 - Thèmes sombre, clair et système.
 - Démarrage dans la zone de notification, la barre des tâches ou les deux.
 - Arrêt sûr, nettoyage temporaire protégé, noms compatibles Windows et UTF-8
   fiable dans les journaux et archives Windows.
-- Anglais par défaut, avec russe, ukrainien, français, espagnol, hindi, chinois,
-  japonais et arabe.
+- Anglais par défaut, avec russe, ukrainien, biélorusse, français, espagnol,
+  hindi, chinois, japonais et arabe.
 
 ## Captures d'écran
 
@@ -84,12 +93,12 @@ moteur Bash reste dans les sources uniquement comme code historique désactivé.
 Les paquets sont publiés dans
 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases).
 
-Linux : `YouTubeHarvester_1.1.2_linux_all.deb`,
-`YouTubeHarvester_1.1.2_source.tar.gz` et `SHA256SUMS-linux.txt`.
+Linux : `YouTubeHarvester_1.1.3_linux_all.deb`,
+`YouTubeHarvester_1.1.3_source.tar.gz` et `SHA256SUMS-linux.txt`.
 
-Windows : `YouTubeHarvester_1.1.2_windows_setup.exe`,
-`YouTubeHarvester_1.1.2_windows_x64.msi`,
-`YouTubeHarvester_1.1.2_windows_portable.zip` et `SHA256SUMS-windows.txt`.
+Windows : `YouTubeHarvester_1.1.3_windows_setup.exe`,
+`YouTubeHarvester_1.1.3_windows_x64.msi`,
+`YouTubeHarvester_1.1.3_windows_portable.zip` et `SHA256SUMS-windows.txt`.
 
 Les versions Windows incluent `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` et
 `deno.exe`.
@@ -97,7 +106,7 @@ Les versions Windows incluent `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` et
 ## Installation sous Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.2_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.3_linux_all.deb
 yt-harvester
 ```
 
@@ -144,13 +153,15 @@ si la connexion Internet est instable.
 ```bash
 yt-harvester
 yt-harvester --quick-download
+yt-harvester --show-main
 yt-harvester --start-tray
 yt-harvester --start-window
 yt-harvester --start-both
 ```
 
 `--quick-download` ouvre la fenêtre rapide et transmet la demande à l'instance
-déjà active. Les autres options choisissent la zone de notification, la barre
+déjà active. `--show-main` affiche la fenêtre principale de cette instance.
+Les autres options choisissent la zone de notification, la barre
 des tâches ou les deux. Options internes : `--run-yt-dlp ...` et
 `--run-script <script.py> ...`.
 
@@ -191,12 +202,12 @@ enregistrée localement.
 ## Compilation
 
 ```bash
-packaging/build_release.sh 1.1.2 1.1.2
+packaging/build_release.sh 1.1.3 1.1.3
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.2 -MsiVersion 1.1.2
+  -Version 1.1.3 -MsiVersion 1.1.3
 ```
 
 ## Utilisation responsable

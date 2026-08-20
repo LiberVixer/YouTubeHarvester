@@ -4,6 +4,7 @@
   <a href="CHANGELOG.md">🇺🇸 🇬🇧 English</a> ·
   <a href="CHANGELOG.ru.md">🇷🇺 Русский</a> ·
   <a href="CHANGELOG.uk.md">🇺🇦 Українська</a> ·
+  <a href="CHANGELOG.be.md">🇧🇾 Беларуская</a> ·
   <a href="CHANGELOG.fr.md">🇫🇷 Français</a> ·
   <a href="CHANGELOG.es.md">🇪🇸 Español</a> ·
   <a href="CHANGELOG.hi.md">🇮🇳 हिन्दी</a> ·
@@ -13,6 +14,37 @@
 </p>
 
 Toutes les modifications importantes de **YouTube Harvester** sont listées ici.
+
+## [1.1.3] - 2026-08-20
+
+### Ajouté
+
+- Un programme de mise à jour intégré télécharge l'installateur, l'archive
+  portable, le paquet Linux ou les sources depuis les versions GitHub officielles.
+- Les téléchargements reprennent après une coupure et sont vérifiés avec les
+  sommes SHA-256 publiées et le condensé GitHub avant leur ouverture.
+- Interface, règles, README, historique, métadonnées de bureau et captures
+  d'écran entièrement localisés en biélorusse.
+- Commandes d'intégration mono-instance sécurisées et notifications système de
+  fin de téléchargement pour les outils de bureau comme FriendsHub.
+
+### Modifié
+
+- `yt-dlp` intégré passe à `2026.08.19`; les dépendances Windows et les actions
+  GitHub ont été actualisées vers leurs versions stables.
+- La mise à jour de `yt-dlp` installe atomiquement un exécutable vérifié depuis
+  les Paramètres.
+- Après une erreur HTTP 403, l'URL média YouTube est renouvelée et un client de
+  secours réessaie avant l'affichage d'une erreur définitive.
+
+### Corrigé
+
+- Les modes zone de notification, barre des tâches et combiné s'appliquent de
+  façon cohérente à la fenêtre principale et au Téléchargement rapide.
+- L'archive n'est validée qu'après le déplacement du fichier terminé vers sa
+  destination finale.
+- Les verrous, requêtes de lancement et événements utilisent des emplacements
+  privés par utilisateur et refusent les fichiers Linux non sûrs.
 
 ## [1.1.2] - 2026-08-01
 

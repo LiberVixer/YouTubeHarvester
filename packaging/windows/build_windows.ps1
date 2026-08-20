@@ -37,6 +37,58 @@ function Invoke-Checked {
     }
 }
 
+function Invoke-WebRequestWithRetry {
+    param(
+        [string]$Url,
+        [string]$OutFile = "",
+        [int]$Attempts = 5
+    )
+
+    $lastError = $null
+    for ($attempt = 1; $attempt -le $Attempts; $attempt++) {
+        try {
+            if ([string]::IsNullOrWhiteSpace($OutFile)) {
+                return (Invoke-WebRequest -Uri $Url -UseBasicParsing -UserAgent "YouTubeHarvester-Windows-Build")
+            }
+            Invoke-WebRequest -Uri $Url -OutFile $OutFile -UseBasicParsing -UserAgent "YouTubeHarvester-Windows-Build" |
+                Out-Null
+            return
+        } catch {
+            $lastError = $_
+            if ($attempt -lt $Attempts) {
+                $delay = [Math]::Min(10, [Math]::Pow(2, $attempt - 1))
+                Write-Warning "Download attempt $attempt failed for $Url. Retrying in $delay seconds."
+                Start-Sleep -Seconds ([int]$delay)
+            }
+        }
+    }
+    throw "Download failed after $Attempts attempts: $Url. $lastError"
+}
+
+function Get-RemoteSha256 {
+    param([string]$Url)
+
+    $response = Invoke-WebRequestWithRetry $Url
+    $match = [regex]::Match([string]$response.Content, "(?i)\b[0-9a-f]{64}\b")
+    if (-not $match.Success) {
+        throw "Could not read SHA-256 from: $Url"
+    }
+    return $match.Value.ToLowerInvariant()
+}
+
+function Assert-FileSha256 {
+    param(
+        [string]$Path,
+        [string]$Expected
+    )
+
+    $actual = (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($actual -ne $Expected.ToLowerInvariant()) {
+        throw "SHA-256 mismatch for '$Path'. Expected $Expected, got $actual."
+    }
+    Write-Host "SHA-256 verified: $actual"
+}
+
 function Get-FfmpegBinDirFrom {
     param([string]$Path)
 
@@ -111,7 +163,9 @@ function Get-DownloadedFfmpegBinDir {
 
     Write-Host "Downloading Windows ffmpeg/ffprobe:"
     Write-Host "  $Url"
-    Invoke-WebRequest -Uri $Url -OutFile $zipPath
+    $expectedSha256 = Get-RemoteSha256 "${Url}.sha256"
+    Invoke-WebRequestWithRetry $Url $zipPath
+    Assert-FileSha256 $zipPath $expectedSha256
     Expand-Archive -Path $zipPath -DestinationPath $extractDir -Force
 
     $ffmpegExe = Get-ChildItem -LiteralPath $extractDir -Recurse -Filter "ffmpeg.exe" |
@@ -232,7 +286,9 @@ function Get-DownloadedDenoExe {
 
     Write-Host "Downloading Windows Deno:"
     Write-Host "  $Url"
-    Invoke-WebRequest -Uri $Url -OutFile $zipPath
+    $expectedSha256 = Get-RemoteSha256 "${Url}.sha256sum"
+    Invoke-WebRequestWithRetry $Url $zipPath
+    Assert-FileSha256 $zipPath $expectedSha256
     Expand-Archive -Path $zipPath -DestinationPath $extractDir -Force
 
     $denoExe = Get-ChildItem -LiteralPath $extractDir -Recurse -Filter "deno.exe" |
@@ -284,8 +340,8 @@ if ($OfflineMode) {
         "--disable-pip-version-check",
         "--find-links", "$Wheelhouse",
         "-r", (Join-Path $RootDir "requirements.txt"),
-        "pyinstaller",
-        "pillow"
+        "pyinstaller==6.22.2",
+        "pillow==12.3.0"
     )
 } else {
     Invoke-Checked $VenvPython @("-m", "pip", "install", "--upgrade", "pip")
@@ -293,10 +349,15 @@ if ($OfflineMode) {
         "-m", "pip", "install",
         "--upgrade",
         "-r", (Join-Path $RootDir "requirements.txt"),
-        "pyinstaller",
-        "pillow"
+        "pyinstaller==6.22.2",
+        "pillow==12.3.0"
     )
 }
+
+Invoke-Checked $VenvPython @(
+    "-c",
+    "import importlib.metadata, yt_dlp_ejs; print('yt-dlp-ejs ' + importlib.metadata.version('yt-dlp-ejs'))"
+)
 
 $FfmpegBinDir = Resolve-FfmpegBinDir
 Write-Host "Bundling ffmpeg/ffprobe from:"
@@ -329,7 +390,10 @@ $pyInstallerArgs = @(
     "--name", "YouTubeHarvester",
     "--icon", "$IconIco",
     "--collect-all", "yt_dlp",
+    "--collect-all", "yt_dlp_ejs",
     "--add-data", "$RootDir\yth_common.py;.",
+    "--add-data", "$RootDir\yth_updater.py;.",
+    "--add-data", "$RootDir\yth_app_updater.py;.",
     "--add-data", "$RootDir\assets;assets",
     "--add-data", "$RootDir\scripts;scripts",
     "--add-binary", "$FfmpegBinDir\ffmpeg.exe;ffmpeg",

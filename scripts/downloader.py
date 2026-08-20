@@ -15,6 +15,7 @@ import json
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import time
@@ -50,7 +51,7 @@ TYPE_LABELS = {
 }
 
 ISO_639_2_CODES = {
-    "ar": "ara", "bg": "bul", "ca": "cat", "cs": "ces", "da": "dan", "de": "deu",
+    "ar": "ara", "be": "bel", "bg": "bul", "ca": "cat", "cs": "ces", "da": "dan", "de": "deu",
     "el": "ell", "en": "eng", "es": "spa", "et": "est", "fa": "fas", "fi": "fin",
     "fr": "fra", "he": "heb", "hi": "hin", "hr": "hrv", "hu": "hun", "id": "ind",
     "it": "ita", "ja": "jpn", "ko": "kor", "lt": "lit", "lv": "lav", "nl": "nld",
@@ -81,6 +82,12 @@ SUBTITLE_DOWNLOAD_ERROR_RE = re.compile(
     r"Unable to download video subtitles for ['\"]([^'\"]+)['\"]",
     re.IGNORECASE,
 )
+VIDEO_DATA_HTTP_403_RE = re.compile(
+    r"unable to download video data: HTTP Error 403",
+    re.IGNORECASE,
+)
+HTTP_403_URL_REFRESH_RETRIES = 3
+YOUTUBE_403_FALLBACK_CLIENT = "web_embedded"
 
 
 def short_channel_name(channel: str) -> str:
@@ -112,6 +119,9 @@ class Downloader:
         self.stop_file = Path(os.environ.get("YTD_STOP_FILE", self.data_dir / "stop_requested"))
         self.last_download_file = Path(os.environ.get("YTD_LAST_DOWNLOAD_FILE", self.data_dir / "last_download_at.txt"))
         self.channel_rules_file = Path(os.environ.get("YTD_CHANNEL_RULES_FILE", self.config_dir / "channel_rules.json"))
+        self.completion_event_dir = Path(
+            os.environ.get("YTD_COMPLETION_EVENT_DIR", self.config_dir / "completion-events")
+        )
         self.temp_dir = Path(os.environ.get("YTD_TEMP_DIR", Path.home() / "temp" / "YTH"))
         self.final_dir = Path(os.environ.get("YTD_FINAL_DIR", Path.home() / "Downloads" / "YouTubeHarvester"))
         self.ffmpeg_dir = self.detect_ffmpeg_dir()
@@ -127,6 +137,7 @@ class Downloader:
         self.proxy_url = os.environ.get("PROXY_URL") or env_values.get("PROXY_URL", "")
 
         self.telegram_enabled = truthy(os.environ.get("YTD_TELEGRAM_ENABLED", env_values.get("TELEGRAM_ENABLED", "1")))
+        self.system_notifications_enabled = truthy(os.environ.get("YTD_SYSTEM_NOTIFICATIONS_ENABLED", "0"))
         self.videos_limit = positive_int(os.environ.get("YTD_VIDEOS_LIMIT", env_values.get("VIDEOS_LIMIT")), 5)
         self.shorts_limit = positive_int(os.environ.get("YTD_SHORTS_LIMIT", env_values.get("SHORTS_LIMIT")), 5)
         self.streams_limit = positive_int(os.environ.get("YTD_STREAMS_LIMIT", env_values.get("STREAMS_LIMIT")), 5)
@@ -297,6 +308,26 @@ class Downloader:
             if candidate.is_file():
                 return candidate
         return None
+
+    @staticmethod
+    def command_version(command: list[str]) -> str:
+        if not command:
+            return "не найден"
+        try:
+            result = subprocess.run(
+                [*command, "--version"],
+                capture_output=True,
+                env=utf8_subprocess_env(),
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=10,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return "не удалось определить"
+        output = (result.stdout or result.stderr or "").strip().splitlines()
+        return output[0] if output else "не удалось определить"
 
     def js_runtime_arg(self) -> str:
         if self.deno_path:
@@ -573,7 +604,7 @@ class Downloader:
         except OSError:
             pass
 
-    def append_archive_details(self, video_id: str, url: str, title: str, channel: str, channel_url: str, type_name: str, file_path: Path) -> None:
+    def append_archive_details(self, video_id: str, url: str, title: str, channel: str, channel_url: str, type_name: str, file_path: Path) -> bool:
         if video_id != "unknown":
             existing_lines: list[str] = []
             kept_lines: list[str] = []
@@ -606,7 +637,7 @@ class Downloader:
                     kept_lines.append(raw_line)
             if has_existing_variant:
                 self.log(f"   🗃 Такой вариант уже есть в архиве: {video_id}")
-                return
+                return False
             if kept_lines != existing_lines:
                 try:
                     self.archive_details_file.write_text(
@@ -638,8 +669,61 @@ class Downloader:
         try:
             with self.archive_details_file.open("a", encoding="utf-8") as details:
                 details.write(json.dumps(entry, ensure_ascii=False, separators=(",", ":")) + "\n")
+            return True
         except OSError:
-            pass
+            return False
+
+    def emit_completion_event(
+        self,
+        video_id: str,
+        title: str,
+        channel: str,
+        type_name: str,
+        thumbnail_path: str,
+    ) -> None:
+        if not self.system_notifications_enabled:
+            return
+        temporary_file = None
+        try:
+            created_at = time.time()
+            event_id = hashlib.sha256(
+                f"{video_id}:{type_name}:{created_at}:{os.getpid()}".encode("utf-8")
+            ).hexdigest()[:24]
+            event = {
+                "version": 1,
+                "event": "video-downloaded",
+                "event_id": event_id,
+                "created_at": created_at,
+                "video_id": str(video_id or "unknown")[:32],
+                "title": fix_mojibake(str(title or "").strip())[:180],
+                "channel": fix_mojibake(str(channel or "").strip())[:120],
+                "type": str(type_name or "videos")[:16],
+                "thumbnail_path": str(thumbnail_path or "")[:1024],
+            }
+            self.completion_event_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+            if os.name != "nt":
+                metadata = self.completion_event_dir.lstat()
+                if not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != os.getuid():
+                    raise OSError("небезопасный каталог системных уведомлений")
+                self.completion_event_dir.chmod(0o700)
+            target = self.completion_event_dir / f"{event_id}.json"
+            temporary_file = self.completion_event_dir / f".{event_id}.{time.time_ns()}.tmp"
+            descriptor = os.open(temporary_file, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as handle:
+                json.dump(event, handle, ensure_ascii=False, separators=(",", ":"))
+                handle.write("\n")
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary_file, target)
+            temporary_file = None
+            if os.name != "nt":
+                target.chmod(0o600)
+        except Exception as exc:
+            self.log(f"   ⚠️ Системное уведомление не подготовлено: {exc}")
+        finally:
+            if temporary_file is not None:
+                with contextlib.suppress(OSError):
+                    temporary_file.unlink()
 
     def send_telegram_message(self, message: str) -> bool:
         if not self.bot_token or not self.channel_id:
@@ -811,6 +895,7 @@ class Downloader:
         item_completed: Callable[[list[str]], None] | None = None,
         *,
         report_failure: bool = True,
+        http_403_refresh_retries: int = HTTP_403_URL_REFRESH_RETRIES,
     ) -> list[str]:
         lines: list[str] = []
         item_lines: list[str] = []
@@ -875,22 +960,89 @@ class Downloader:
                     if playlist_item_started:
                         item_lines.append(message)
                 else:
-                    if report_failure or not SUBTITLE_DOWNLOAD_ERROR_RE.search(line):
+                    if (
+                        not VIDEO_DATA_HTTP_403_RE.search(line)
+                        and (report_failure or not SUBTITLE_DOWNLOAD_ERROR_RE.search(line))
+                    ):
                         self.log(line)
                     lines.append(line)
                     if playlist_item_started:
                         item_lines.append(line)
         return_code = proc.wait()
         self.last_yt_dlp_return_code = return_code
+        if (
+            return_code != 0
+            and http_403_refresh_retries > 0
+            and any(VIDEO_DATA_HTTP_403_RE.search(line) for line in lines)
+        ):
+            if item_completed is not None:
+                finish_item(item_lines if playlist_item_started else lines)
+            attempt = HTTP_403_URL_REFRESH_RETRIES - http_403_refresh_retries + 1
+            retry_command = self.command_with_youtube_player_client(
+                command,
+                YOUTUBE_403_FALLBACK_CLIENT,
+            )
+            if retry_command != command:
+                self.log(
+                    "   ⚠️ YouTube отклонил медиапоток (HTTP 403); "
+                    f"продолжаем через резервный клиент ({attempt}/{HTTP_403_URL_REFRESH_RETRIES})"
+                )
+            else:
+                self.log(
+                    "   ⚠️ Резервная медиассылка YouTube устарела; "
+                    f"получаем новую и продолжаем файл ({attempt}/{HTTP_403_URL_REFRESH_RETRIES})"
+                )
+            time.sleep(2)
+            retry_lines = self.run_yt_dlp(
+                retry_command,
+                type_name,
+                item_completed=item_completed,
+                report_failure=report_failure,
+                http_403_refresh_retries=http_403_refresh_retries - 1,
+            )
+            return [*lines, *retry_lines]
         if return_code != 0:
             if self.output_is_members_only_only(lines):
                 self.log("   🔒 Закрытое для участников видео пропущено без ошибки")
             elif report_failure:
                 self.failed_count += 1
-                self.log(f"   ❌ yt-dlp завершился с кодом {return_code}")
+                if any(VIDEO_DATA_HTTP_403_RE.search(line) for line in lines):
+                    self.log("   ❌ YouTube отклонил медиапоток после повторных попыток (HTTP 403)")
+                else:
+                    self.log(f"   ❌ yt-dlp завершился с кодом {return_code}")
         if item_completed is not None:
             finish_item(item_lines if playlist_item_started else lines)
         return lines
+
+    @staticmethod
+    def command_with_youtube_player_client(command: list[str], client: str) -> list[str]:
+        updated = list(command)
+        for index in range(len(updated) - 1):
+            if updated[index] != "--extractor-args":
+                continue
+            value = updated[index + 1]
+            if not value.startswith("youtube:"):
+                continue
+            settings = value.removeprefix("youtube:").split(";")
+            for setting_index, setting in enumerate(settings):
+                if not setting.startswith("player_client="):
+                    continue
+                clients = [item.strip() for item in setting.partition("=")[2].split(",") if item.strip()]
+                if client in clients:
+                    return updated
+                settings[setting_index] = f"player_client={','.join([client, *clients])}"
+                updated[index + 1] = f"youtube:{';'.join(settings)}"
+                return updated
+            settings.append(f"player_client={client}")
+            updated[index + 1] = f"youtube:{';'.join(settings)}"
+            return updated
+
+        insert_at = max(0, len(updated) - 1)
+        updated[insert_at:insert_at] = [
+            "--extractor-args",
+            f"youtube:player_client={client}",
+        ]
+        return updated
 
     @staticmethod
     def failed_subtitle_languages(lines: list[str]) -> set[str]:
@@ -1161,18 +1313,43 @@ class Downloader:
                     self.log("   📁 Telegram не помешает сохранению файла")
                     self.failed_count += 1
 
+            final_path = None
             try:
                 self.final_dir.mkdir(parents=True, exist_ok=True)
                 final_path = self.unique_final_path(self.variant_final_basename(source_basename))
                 shutil.move(str(file_path), str(final_path))
-                self.ensure_video_in_archive(video_id)
-                self.append_archive_details(video_id, video_url, title, uploader, channel_link, status_type, final_path)
-                self.downloaded_counts[status_type] = self.downloaded_counts.get(status_type, 0) + 1
-                self.log(f"   ⚓ Видео перемещено: {final_path}")
             except Exception as exc:
                 self.log(f"   ❌ Видео не перемещено: {exc}")
                 self.failed_count += 1
                 self.remove_video_from_archive(video_id)
+
+            archive_recorded = False
+            if final_path is not None:
+                self.ensure_video_in_archive(video_id)
+                archive_recorded = self.append_archive_details(
+                    video_id,
+                    video_url,
+                    title,
+                    uploader,
+                    channel_link,
+                    status_type,
+                    final_path,
+                )
+                if not archive_recorded:
+                    self.log(f"   ⚠️ Файл сохранён, но подробный архив не обновлён: {final_path}")
+                    self.failed_count += 1
+                    self.remove_video_from_archive(video_id)
+
+            if archive_recorded:
+                self.downloaded_counts[status_type] = self.downloaded_counts.get(status_type, 0) + 1
+                self.log(f"   ⚓ Видео перемещено: {final_path}")
+                self.emit_completion_event(
+                    video_id,
+                    title,
+                    uploader,
+                    status_type,
+                    self.video_thumbnail,
+                )
 
             self.set_type_status(status_type, "done")
             self.state = "searching"
@@ -1486,6 +1663,9 @@ class Downloader:
             return self.rotate_logs(1)
         self.log(f"=== Жатва началась {_dt.datetime.now():%Y-%m-%d %H:%M:%S} ===")
         self.log("🧩 Движок: Python")
+        yt_dlp_version = self.command_version(yt_dlp_command())
+        deno_version = self.command_version([str(self.deno_path)]) if self.deno_path else "не найден"
+        self.log(f"🧰 yt-dlp: {yt_dlp_version}; Deno: {deno_version}")
         self.state = "searching"
         self.write_status()
 

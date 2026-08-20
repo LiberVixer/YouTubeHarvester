@@ -6,10 +6,13 @@ import os
 import re
 import shlex
 import shutil
+import stat
 import sys
 import tempfile
 import urllib.parse
 from pathlib import Path
+
+from yth_updater import managed_yt_dlp_path
 
 
 MOJIBAKE_HINTS = (
@@ -136,6 +139,9 @@ def yt_dlp_command(allow_missing: bool = True) -> list[str]:
             return parts
         except ValueError:
             return [configured]
+    managed = managed_yt_dlp_path()
+    if managed.is_file():
+        return [str(managed)]
     found = shutil.which("yt-dlp")
     if found:
         return [found]
@@ -296,16 +302,47 @@ def archive_entry_matches_variant(
 
 
 class SingleInstanceLock:
-    def __init__(self, name: str) -> None:
-        lock_dir = Path(os.environ.get("YTD_LOCK_DIR") or tempfile.gettempdir())
-        if os.name == "nt":
-            lock_dir = Path(os.environ.get("TEMP", str(lock_dir)))
+    def __init__(self, name: str, lock_dir: str | Path | None = None) -> None:
+        configured = os.environ.get("YTD_LOCK_DIR", "").strip()
+        if lock_dir is not None:
+            lock_dir = Path(lock_dir)
+        elif configured:
+            lock_dir = Path(configured)
+        elif os.name == "nt":
+            lock_dir = Path(os.environ.get("TEMP", tempfile.gettempdir()))
+        else:
+            runtime_dir = os.environ.get("XDG_RUNTIME_DIR", "").strip()
+            lock_dir = (
+                Path(runtime_dir) / "yt-harvester"
+                if runtime_dir
+                else Path(tempfile.gettempdir()) / f"yt-harvester-{os.getuid()}"
+            )
         self.path = lock_dir / name
         self.handle = None
 
     def acquire(self) -> bool:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.handle = self.path.open("a+")
+        self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        if os.name != "nt":
+            with contextlib.suppress(OSError):
+                if self.path.parent.resolve() != Path(tempfile.gettempdir()).resolve():
+                    self.path.parent.chmod(0o700)
+        if os.name == "nt":
+            self.handle = self.path.open("a+")
+        else:
+            flags = os.O_RDWR | os.O_CREAT
+            if hasattr(os, "O_NOFOLLOW"):
+                flags |= os.O_NOFOLLOW
+            try:
+                descriptor = os.open(self.path, flags, 0o600)
+            except OSError:
+                return False
+            metadata = os.fstat(descriptor)
+            if not stat.S_ISREG(metadata.st_mode) or metadata.st_uid != os.getuid():
+                os.close(descriptor)
+                return False
+            self.handle = os.fdopen(descriptor, "a+")
+            with contextlib.suppress(OSError):
+                os.fchmod(self.handle.fileno(), 0o600)
         try:
             if os.name == "nt":
                 import msvcrt

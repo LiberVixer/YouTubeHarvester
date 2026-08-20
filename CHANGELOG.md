@@ -4,6 +4,7 @@
   <a href="CHANGELOG.md">🇺🇸 🇬🇧 English</a> ·
   <a href="CHANGELOG.ru.md">🇷🇺 Русский</a> ·
   <a href="CHANGELOG.uk.md">🇺🇦 Українська</a> ·
+  <a href="CHANGELOG.be.md">🇧🇾 Беларуская</a> ·
   <a href="CHANGELOG.fr.md">🇫🇷 Français</a> ·
   <a href="CHANGELOG.es.md">🇪🇸 Español</a> ·
   <a href="CHANGELOG.hi.md">🇮🇳 हिन्दी</a> ·
@@ -13,6 +14,37 @@
 </p>
 
 All notable changes to **YouTube Harvester** are documented here.
+
+## [1.1.3] - 2026-08-20
+
+### Added
+
+- A built-in application updater downloads the matching installer, portable
+  archive, Linux package, or source archive from official GitHub Releases.
+- Update downloads support resume and are verified against published SHA-256
+  checksums and GitHub asset digests before they can be opened.
+- Complete Belarusian interface, usage rules, README, changelog, desktop
+  metadata, and localized screenshots.
+- Secure single-instance integration actions and native completion
+  notifications for desktop integrations such as FriendsHub.
+
+### Changed
+
+- Bundled `yt-dlp` was updated to `2026.08.19`; Windows build dependencies and
+  GitHub Actions were refreshed to their current stable versions.
+- The `yt-dlp` updater now installs a verified managed executable atomically
+  and can be run directly from Settings.
+- YouTube media HTTP 403 failures refresh the media URL and retry through a
+  fallback player client before reporting a final error.
+
+### Fixed
+
+- Tray, taskbar, and combined display modes are applied consistently to the
+  main and Quick Download windows.
+- Archive records are committed only after the completed file reaches its
+  final destination, avoiding false successful entries.
+- Runtime locks, launcher requests, and completion-event files use private
+  per-user locations and reject unsafe files on Linux.
 
 ## [1.1.2] - 2026-08-01
 

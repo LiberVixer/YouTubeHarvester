@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.2
+# YouTube Harvester 1.1.3
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="Logotipo de YouTube Harvester" width="128">
@@ -8,6 +8,7 @@
   <a href="README.md">🇺🇸 🇬🇧 English</a> ·
   <a href="README.ru.md">🇷🇺 Русский</a> ·
   <a href="README.uk.md">🇺🇦 Українська</a> ·
+  <a href="README.be.md">🇧🇾 Беларуская</a> ·
   <a href="README.fr.md">🇫🇷 Français</a> ·
   <a href="README.es.md">🇪🇸 Español</a> ·
   <a href="README.hi.md">🇮🇳 हिन्दी</a> ·
@@ -27,6 +28,12 @@
 > pistas, el fallo de un subtítulo ya no cancela la descarga y se ha añadido la
 > localización japonesa completa.
 
+> **UPD 3:** La versión 1.1.3 añade la actualización verificada de la
+> aplicación desde las versiones oficiales de GitHub, localización y
+> documentación completas en bielorruso, y actualiza el descargador integrado
+> a `yt-dlp 2026.08.19` con una recuperación más fiable ante errores HTTP 403
+> temporales de YouTube.
+
 ![Descripción general de YouTube Harvester](docs/screenshots/es/overview.png)
 
 ## Descripción
@@ -36,7 +43,7 @@ vídeos, Shorts y emisiones con `yt-dlp`. También admite enlaces individuales,
 mantiene un archivo local, muestra informes y puede enviar notificaciones o
 archivos a Telegram.
 
-La versión `1.1.2` usa el motor Python tanto en Linux como en Windows. El antiguo
+La versión `1.1.3` usa el motor Python tanto en Linux como en Windows. El antiguo
 motor Bash permanece en el código fuente únicamente como código heredado y
 desactivado.
 
@@ -61,14 +68,16 @@ desactivado.
 - Archivo detallado con tipo, canal, título, fecha, enlace de YouTube, variantes
   de calidad y pistas, archivo local, carpeta y eliminación de registros.
 - Registros con filtros Todos, Importante y Errores.
-- Comprobación de versión de `yt-dlp` y diagnóstico de sistema, X11/Wayland,
+- Actualización verificada de la aplicación desde versiones oficiales de
+  GitHub para instalaciones, versiones portátiles y paquetes Linux.
+- Comprobación y actualización segura de `yt-dlp` desde la interfaz, con diagnóstico de sistema, X11/Wayland,
   bandeja, atajo, herramientas, rutas, caché, escritura y espacio libre.
 - Temas oscuro, claro y del sistema.
 - Inicio solo en bandeja, solo en barra de tareas o en ambos lugares.
 - Parada segura, limpieza temporal protegida, nombres compatibles con Windows y
   UTF-8 correcto en registros y archivos.
-- Inglés por defecto, además de ruso, ucraniano, francés, español, hindi, chino,
-  japonés y árabe.
+- Inglés por defecto, además de ruso, ucraniano, bielorruso, francés, español,
+  hindi, chino, japonés y árabe.
 
 ## Capturas de pantalla
 
@@ -85,12 +94,12 @@ desactivado.
 Los paquetes se publican en
 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases).
 
-Linux: `YouTubeHarvester_1.1.2_linux_all.deb`,
-`YouTubeHarvester_1.1.2_source.tar.gz` y `SHA256SUMS-linux.txt`.
+Linux: `YouTubeHarvester_1.1.3_linux_all.deb`,
+`YouTubeHarvester_1.1.3_source.tar.gz` y `SHA256SUMS-linux.txt`.
 
-Windows: `YouTubeHarvester_1.1.2_windows_setup.exe`,
-`YouTubeHarvester_1.1.2_windows_x64.msi`,
-`YouTubeHarvester_1.1.2_windows_portable.zip` y `SHA256SUMS-windows.txt`.
+Windows: `YouTubeHarvester_1.1.3_windows_setup.exe`,
+`YouTubeHarvester_1.1.3_windows_x64.msi`,
+`YouTubeHarvester_1.1.3_windows_portable.zip` y `SHA256SUMS-windows.txt`.
 
 Las compilaciones para Windows incluyen `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` y
 `deno.exe`.
@@ -98,7 +107,7 @@ Las compilaciones para Windows incluyen `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` y
 ## Instalación en Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.2_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.3_linux_all.deb
 yt-harvester
 ```
 
@@ -144,13 +153,15 @@ cuando la conexión a Internet no sea estable.
 ```bash
 yt-harvester
 yt-harvester --quick-download
+yt-harvester --show-main
 yt-harvester --start-tray
 yt-harvester --start-window
 yt-harvester --start-both
 ```
 
 `--quick-download` abre la descarga rápida y entrega la petición a la instancia
-que ya esté ejecutándose. Las demás opciones seleccionan bandeja, barra de
+que ya esté ejecutándose. `--show-main` muestra su ventana principal. Las demás
+opciones seleccionan bandeja, barra de
 tareas o ambas. Opciones internas: `--run-yt-dlp ...` y
 `--run-script <script.py> ...`.
 
@@ -190,12 +201,12 @@ localmente.
 ## Compilación
 
 ```bash
-packaging/build_release.sh 1.1.2 1.1.2
+packaging/build_release.sh 1.1.3 1.1.3
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.2 -MsiVersion 1.1.2
+  -Version 1.1.3 -MsiVersion 1.1.3
 ```
 
 ## Uso responsable

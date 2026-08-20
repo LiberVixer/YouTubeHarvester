@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.2
+# YouTube Harvester 1.1.3
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="YouTube Harvester logo" width="128">
@@ -8,6 +8,7 @@
   <a href="README.md">🇺🇸 🇬🇧 English</a> ·
   <a href="README.ru.md">🇷🇺 Русский</a> ·
   <a href="README.uk.md">🇺🇦 Українська</a> ·
+  <a href="README.be.md">🇧🇾 Беларуская</a> ·
   <a href="README.fr.md">🇫🇷 Français</a> ·
   <a href="README.es.md">🇪🇸 Español</a> ·
   <a href="README.hi.md">🇮🇳 हिन्दी</a> ·
@@ -27,6 +28,11 @@
 > subtitle failures no longer cancel the download, and Japanese localization
 > has been added.
 
+> **UPD 3:** Version 1.1.3 adds a verified application updater for GitHub
+> Releases, complete Belarusian localization and documentation, and refreshes
+> the bundled downloader to `yt-dlp 2026.08.19` with stronger recovery from
+> temporary YouTube HTTP 403 failures.
+
 ![YouTube Harvester overview](docs/screenshots/en/overview.png)
 
 ## What It Does
@@ -36,7 +42,7 @@ Videos, Shorts, and live streams through `yt-dlp`. It also accepts individual
 video links, keeps a searchable local archive, reports what was downloaded,
 and can send notifications or files to Telegram.
 
-Version `1.1.2` uses the Python downloader on both Linux and Windows. The old
+Version `1.1.3` uses the Python downloader on both Linux and Windows. The old
 Bash engine remains in the source tree only as disabled legacy code.
 
 ## Main Features
@@ -62,14 +68,16 @@ Bash engine remains in the source tree only as disabled legacy code.
 - Download archive with type, channel, title, date, YouTube link, local file,
   quality/track variants, containing folder, and record deletion.
 - Log viewer with All, Important, and Errors filters.
-- Built-in `yt-dlp` version check and a diagnostics report for the OS, display
+- Verified application updates from official GitHub Releases for installed,
+  portable, and Linux package builds.
+- Built-in safe `yt-dlp` check and updater, plus a diagnostics report for the OS, display
   session, tray, hotkey, tools, paths, cache, write access, and free disk space.
 - Dark, light, and system themes.
 - Startup modes: system tray only, taskbar only, or tray and taskbar together.
 - Safe stop, guarded temporary-file cleanup, Windows-safe filenames, and UTF-8
   handling for Windows logs and archive data.
-- English by default, with Russian, Ukrainian, French, Spanish, Hindi, Chinese,
-  Japanese, and Arabic interfaces.
+- English by default, with Russian, Ukrainian, Belarusian, French, Spanish,
+  Hindi, Chinese, Japanese, and Arabic interfaces.
 
 ## Screenshots
 
@@ -88,15 +96,15 @@ Ready-to-use packages are published on
 
 Linux:
 
-- `YouTubeHarvester_1.1.2_linux_all.deb`
-- `YouTubeHarvester_1.1.2_source.tar.gz`
+- `YouTubeHarvester_1.1.3_linux_all.deb`
+- `YouTubeHarvester_1.1.3_source.tar.gz`
 - `SHA256SUMS-linux.txt`
 
 Windows:
 
-- `YouTubeHarvester_1.1.2_windows_setup.exe` — standard installer.
-- `YouTubeHarvester_1.1.2_windows_x64.msi` — x64 MSI package.
-- `YouTubeHarvester_1.1.2_windows_portable.zip` — portable build.
+- `YouTubeHarvester_1.1.3_windows_setup.exe` — standard installer.
+- `YouTubeHarvester_1.1.3_windows_x64.msi` — x64 MSI package.
+- `YouTubeHarvester_1.1.3_windows_portable.zip` — portable build.
 - `SHA256SUMS-windows.txt`
 
 The Windows packages bundle `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe`, and
@@ -105,7 +113,7 @@ The Windows packages bundle `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe`, and
 ## Install on Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.2_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.3_linux_all.deb
 ```
 
 Start it from the application menu or run:
@@ -163,6 +171,7 @@ build machine has no reliable Internet access.
 ```bash
 yt-harvester
 yt-harvester --quick-download
+yt-harvester --show-main
 yt-harvester --start-tray
 yt-harvester --start-window
 yt-harvester --start-both
@@ -170,6 +179,7 @@ yt-harvester --start-both
 
 - `--quick-download` opens Quick Download. If another instance is already
   running, the request is handed to that instance.
+- `--show-main` opens or raises the main window of the running instance.
 - `--start-tray` starts in the system tray without a taskbar window.
 - `--start-window` starts as a normal taskbar window.
 - `--start-both` enables both tray and taskbar presence.
@@ -232,14 +242,14 @@ local video.
 Linux artifacts:
 
 ```bash
-packaging/build_release.sh 1.1.2 1.1.2
+packaging/build_release.sh 1.1.3 1.1.3
 ```
 
 Windows artifacts, from Windows:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.2 -MsiVersion 1.1.2
+  -Version 1.1.3 -MsiVersion 1.1.3
 ```
 
 GitHub Actions builds Linux and Windows artifacts for tags matching `v*`.

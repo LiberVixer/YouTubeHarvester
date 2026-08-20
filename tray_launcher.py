@@ -27,6 +27,7 @@ import html
 import tempfile
 import platform
 import zipfile
+import stat
 from PyQt5.QtWidgets import (
     QApplication,
     QSystemTrayIcon,
@@ -51,6 +52,7 @@ from PyQt5.QtWidgets import (
     QInputDialog,
     QFileDialog,
     QProgressBar,
+    QProgressDialog,
     QTableWidget,
     QTableWidgetItem,
     QHeaderView,
@@ -60,6 +62,7 @@ from PyQt5.QtWidgets import (
     QKeySequenceEdit,
     QSizePolicy,
     QStackedWidget,
+    QStyle,
 )
 from PyQt5.QtGui import QIcon, QPixmap, QPainter, QColor, QBrush, QFont, QPen, QDesktopServices, QTextCursor, QPalette, QKeySequence, QPainterPath, QStandardItem, QStandardItemModel
 from PyQt5.QtCore import Qt, QTimer, QTime, QDate, QUrl, QPoint, QSize, QLocale, pyqtSignal, QObject, QEvent, QAbstractNativeEventFilter
@@ -83,6 +86,8 @@ from yth_common import (
     yt_dlp_command as common_yt_dlp_command,
 )
 from i18n_locales import LOCALE_TRANSLATIONS
+from yth_app_updater import download_app_release, latest_app_release
+from yth_updater import latest_yt_dlp_release, managed_yt_dlp_path, update_yt_dlp
 
 
 class ClickableLabel(QLabel):
@@ -705,8 +710,10 @@ PAID_CONTENT_EMOJIS = {
 }
 
 APP_NAME = "YouTube Harvester"
-APP_VERSION = "1.1.2"
+APP_VERSION = "1.1.3"
 APP_TITLE = f"{APP_NAME} {APP_VERSION}"
+APP_DESKTOP_FILE_NAME = "yt-harvester"
+APP_X11_CLASS = "YouTubeHarvester"
 USAGE_RULES_VERSION = "2026-06-13"
 DEFAULT_QUICK_DOWNLOAD_HOTKEY = "Ctrl+Shift+Alt+Y"
 QUICK_AUDIO_PLAYER_CLIENT = "tv_downgraded"
@@ -714,6 +721,8 @@ SUBTITLE_ICON = "🔤"
 MIN_FREE_SPACE_MB = 1024
 CACHE_PREVIEW_MAX_AGE_DAYS = 7
 CACHE_CHANNEL_MAX_AGE_DAYS = 90
+LAUNCHER_REQUEST_TTL_SECONDS = 30
+COMPLETION_EVENT_TTL_SECONDS = 300
 
 RESOLUTION_OPTIONS = (
     ("480p", "480"),
@@ -736,6 +745,7 @@ LANGUAGE_OPTIONS = (
     ("English", "en"),
     ("Русский", "ru"),
     ("Українська", "uk"),
+    ("Беларуская", "be"),
     ("Français", "fr"),
     ("Español", "es"),
     ("हिन्दी", "hi"),
@@ -880,9 +890,10 @@ I18N_EN = {
     "settings.quick_download": "📋 Quick download:",
     "settings.watch_clipboard": "Watch clipboard",
     "settings.watch_clipboard_tip": "Open quick download when a YouTube link appears in the clipboard",
+    "settings.display_mode": "Show application",
     "settings.autostart": "🚀 Autostart",
     "settings.autostart_tip": "Start {app} when you sign in",
-    "settings.startup_mode_tip": "How to show the app on autostart",
+    "settings.startup_mode_tip": "Where the application is always shown",
     "settings.misc": "⚙ Misc",
     "settings.cleanup_temp": "🧹 Temp",
     "settings.cleanup_temp_tip": "Clean the temp folder after successful processing",
@@ -891,7 +902,9 @@ I18N_EN = {
     "settings.logs_count": "📝 Logs",
     "settings.logs_count_tip": "How many archived logs to keep",
     "settings.rules_tip": "Open usage rules and external component info",
-    "settings.ytdlp_tip": "Check installed and latest yt-dlp version",
+    "settings.app_update_tip": "Check for a YouTube Harvester update on GitHub",
+    "settings.app_update_checking": "Checking for an application update...",
+    "settings.ytdlp_tip": "Check and update yt-dlp",
     "settings.ytdlp_checking": "Checking yt-dlp version...",
     "settings.hotkey_tip": "Quick download hotkey: {hotkey}",
     "settings.diagnostics_tip": "Diagnostics",
@@ -1025,6 +1038,34 @@ I18N_EN = {
     "yt_dlp.frozen_update": "In Windows/PyInstaller builds, yt-dlp is updated together with a new app version.",
     "yt_dlp.source_update": "For source installs, update yt-dlp in Python or through your system package manager.",
     "yt_dlp.current_ok": "yt-dlp looks up to date.",
+    "yt_dlp.command": "Used command: {value}",
+    "yt_dlp.update_available": "It can be installed safely for the current user without administrator rights.",
+    "yt_dlp.update_button": "Update",
+    "yt_dlp.busy": "Stop the current download before updating yt-dlp.",
+    "yt_dlp.updating": "Updating yt-dlp...",
+    "yt_dlp.downloading": "Downloading yt-dlp... {percent}%",
+    "yt_dlp.verifying": "Verifying the download and version...",
+    "yt_dlp.installing": "Installing the update...",
+    "yt_dlp.updated": "yt-dlp {version} is installed and will be used immediately.\n\n{path}",
+    "yt_dlp.update_failed": "Could not update yt-dlp. The previous version was not changed.\n\n{error}",
+    "app_update.current": "Current version: {value}",
+    "app_update.latest": "Latest version: {value}",
+    "app_update.package": "Package: {value}",
+    "app_update.new_available": "A new YouTube Harvester version is available.",
+    "app_update.current_ok": "YouTube Harvester is up to date.",
+    "app_update.download_button": "Download update",
+    "app_update.busy": "Stop the current download before updating the application.",
+    "app_update.updating": "Downloading the application update...",
+    "app_update.downloading": "Downloading the update... {percent}%",
+    "app_update.verifying": "Verifying package SHA-256...",
+    "app_update.ready": "The verified update is ready:\n\n{path}",
+    "app_update.ready_installer": "The verified update is ready. Launch the installer and close YouTube Harvester?\n\n{path}",
+    "app_update.ready_package": "The verified Linux package is ready. Open it in the system installer and close YouTube Harvester?\n\n{path}",
+    "app_update.ready_folder": "The verified update was downloaded. Its folder will be opened; portable and source installations are replaced manually.\n\n{path}",
+    "app_update.launch": "Open update",
+    "app_update.later": "Later",
+    "app_update.failed": "Could not prepare the application update. No installed files were changed.\n\n{error}",
+    "app_update.open_failed": "Could not open the downloaded update:\n{path}",
     "time.none": "none",
     "time.just_now": "just now",
     "time.day": "d",
@@ -1074,6 +1115,9 @@ I18N_EN = {
 }
 
 I18N_EN.update({
+    "settings.system_notifications": "System notifications",
+    "settings.system_notifications_tip": "Show a system notification after a video is saved and added to the archive",
+    "notification.channel": "Channel: {channel}",
     "placeholder.youtube_url": "YouTube URL",
     "placeholder.video_url": "https://www.youtube.com/watch?v=...",
     "generic.script_not_found": "Script not found:\n{path}",
@@ -1168,7 +1212,7 @@ I18N = {
         "download.current": "Скачивается видео: {title}", "download.waiting": "Ожидаем скачивания",
         "preview.loading": "Загрузка данных...", "preview.thumbnail": "Обложка", "preview.quick_wait": "Ожидаю ссылку YouTube", "preview.queue_wait": "Введите адрес YouTube-видео", "preview.error": "Ошибка", "preview.need_youtube": "Нужна корректная ссылка YouTube", "preview.reading": "Читаю название и обложку...", "preview.ready_queue": "Готово к добавлению в очередь", "preview.channel": "Канал: {uploader}", "preview.no_title": "Без названия", "preview.failed": "Не удалось прочитать видео", "preview.failed_detail": "{message}\nМожно добавить ссылку в очередь без предпросмотра.", "preview.clipboard_error": "В буфере обмена нет корректной ссылки YouTube", "preview.in_archive": "Видео уже есть в архиве", "preview.in_queue": "Видео уже есть в очереди", "preview.added": "Добавлено в очередь", "preview.added_front": "Поставлено первым в очередь",
         "quick.title": "Быстрое скачивание", "quick.resolution_tip": "Разрешение для немедленного скачивания", "quick.download_now": "Скачать немедленно", "quick.close_tip": "Закрыть окно быстрого скачивания", "quick.queue_easter": "В очередь, сукины дети", "quick.already_running": "Скачивание уже идёт. Ссылка добавится в очередь обычной кнопкой.", "quick.accept_rules_first": "Сначала нужно принять правила использования",
-        "settings.download": "Загрузка", "settings.downloads": "📁 Загрузки", "settings.temp": "⌛ Врем.", "settings.downloads_tip": "Куда складывать готовые скачанные видео", "settings.temp_tip": "Где хранить временные файлы и недокачанные части", "settings.choose": "Выбрать: {label}", "settings.limits": "🔢 Лимиты", "settings.limits_tip": "Сколько последних элементов проверять на каждом канале", "settings.videos_tip": "Сколько последних обычных видео проверять на каждом канале", "settings.shorts_tip": "Сколько последних Shorts проверять на каждом канале", "settings.streams_tip": "Сколько последних трансляций проверять на каждом канале", "settings.resolution": "📺 Разрешение", "settings.resolution_tip": "Максимальное качество для yt-dlp; по умолчанию 1080p", "settings.behavior": "Поведение", "settings.quick_download": "📋 Быстрое скачивание:", "settings.watch_clipboard": "Следить за буфером", "settings.watch_clipboard_tip": "Открывать окно быстрого скачивания, когда в буфере появляется ссылка YouTube", "settings.autostart": "🚀 Автозагрузка", "settings.autostart_tip": "Запускать {app} при входе в систему", "settings.startup_mode_tip": "Как показывать программу при автозагрузке", "settings.misc": "⚙ Прочее", "settings.cleanup_temp": "🧹 Врем.", "settings.cleanup_temp_tip": "Очищать временную папку после успешной обработки", "settings.retry_queue": "🔁 Очередь", "settings.retry_queue_tip": "Возвращать неудачные ссылки обратно в очередь для повтора", "settings.logs_count": "📝 Логов", "settings.logs_count_tip": "Сколько архивных логов хранить", "settings.rules_tip": "Открыть правила использования и сведения о внешних компонентах", "settings.ytdlp_tip": "Проверить установленную и последнюю версию yt-dlp", "settings.ytdlp_checking": "Проверяю версию yt-dlp...", "settings.hotkey_tip": "Горячая клавиша быстрого скачивания: {hotkey}", "settings.diagnostics_tip": "Диагностика", "settings.saved": "Настройки сохранены", "settings.select_folder": "Выбрать папку", "settings.theme_system": "Как в системе: {mode}", "settings.theme_dark_mode": "темный", "settings.theme_light_mode": "светлый", "settings.theme_to_light": "Включить дневной режим", "settings.theme_to_system": "Включить режим как в системе", "settings.theme_toggle": "Ночной / дневной режим",
+        "settings.download": "Загрузка", "settings.downloads": "📁 Загрузки", "settings.temp": "⌛ Врем.", "settings.downloads_tip": "Куда складывать готовые скачанные видео", "settings.temp_tip": "Где хранить временные файлы и недокачанные части", "settings.choose": "Выбрать: {label}", "settings.limits": "🔢 Лимиты", "settings.limits_tip": "Сколько последних элементов проверять на каждом канале", "settings.videos_tip": "Сколько последних обычных видео проверять на каждом канале", "settings.shorts_tip": "Сколько последних Shorts проверять на каждом канале", "settings.streams_tip": "Сколько последних трансляций проверять на каждом канале", "settings.resolution": "📺 Разрешение", "settings.resolution_tip": "Максимальное качество для yt-dlp; по умолчанию 1080p", "settings.behavior": "Поведение", "settings.quick_download": "📋 Быстрое скачивание:", "settings.watch_clipboard": "Следить за буфером", "settings.watch_clipboard_tip": "Открывать окно быстрого скачивания, когда в буфере появляется ссылка YouTube", "settings.display_mode": "Показывать программу", "settings.autostart": "🚀 Автозагрузка", "settings.autostart_tip": "Запускать {app} при входе в систему", "settings.startup_mode_tip": "Где всегда показывать программу", "settings.misc": "⚙ Прочее", "settings.cleanup_temp": "🧹 Врем.", "settings.cleanup_temp_tip": "Очищать временную папку после успешной обработки", "settings.retry_queue": "🔁 Очередь", "settings.retry_queue_tip": "Возвращать неудачные ссылки обратно в очередь для повтора", "settings.logs_count": "📝 Логов", "settings.logs_count_tip": "Сколько архивных логов хранить", "settings.rules_tip": "Открыть правила использования и сведения о внешних компонентах", "settings.ytdlp_tip": "Проверить установленную и последнюю версию yt-dlp", "settings.ytdlp_checking": "Проверяю версию yt-dlp...", "settings.hotkey_tip": "Горячая клавиша быстрого скачивания: {hotkey}", "settings.diagnostics_tip": "Диагностика", "settings.saved": "Настройки сохранены", "settings.select_folder": "Выбрать папку", "settings.theme_system": "Как в системе: {mode}", "settings.theme_dark_mode": "темный", "settings.theme_light_mode": "светлый", "settings.theme_to_light": "Включить дневной режим", "settings.theme_to_system": "Включить режим как в системе", "settings.theme_toggle": "Ночной / дневной режим",
         "startup.tray": "Системный трей", "startup.taskbar": "Панель задач", "startup.both": "Трей и панель задач", "resolution.best": "Лучшее",
         "telegram.enabled": "🔔 Уведомления включены", "telegram.disabled": "🔕 Уведомления выключены", "telegram.enabled_tip": "Telegram-уведомления включены. Нажмите, чтобы выключить.", "telegram.disabled_tip": "Telegram-уведомления выключены. Нажмите, чтобы включить.", "telegram.secret_tip": "{label}: значение скрыто, нажмите глаз для просмотра", "telegram.eye_tip": "Показать или скрыть значение поля", "telegram.save_tip": "Сохранить все настройки, включая Telegram и папки", "telegram.open_env_tip": "Открыть файл Telegram-настроек",
         "logs.title": "Логи", "logs.filter_tip": "Фильтр строк выбранного лога", "logs.all": "Всё", "logs.important": "Важное", "logs.errors": "Ошибки", "logs.refresh_tip": "Обновить список доступных логов", "logs.reload_tip": "Заново прочитать выбранный лог",
@@ -1231,6 +1275,8 @@ def normalize_language(value) -> str:
         return "ru"
     if text.startswith("uk"):
         return "uk"
+    if text.startswith("be"):
+        return "be"
     return text if text in VALID_LANGUAGES else "en"
 
 
@@ -1524,32 +1570,155 @@ def script_check_icon():
     return QIcon(pixmap)
 
 
-def default_quick_request_file() -> Path:
-    configured = os.environ.get("YTD_QUICK_REQUEST_FILE", "").strip()
+def default_launcher_request_file(filename: str, override_env: str) -> Path:
+    configured = os.environ.get(override_env, "").strip()
     if configured:
         return Path(configured)
     settings_file = os.environ.get("YTD_SETTINGS_FILE", "").strip()
     if settings_file:
-        return Path(settings_file).parent / "quick_download.request"
+        return Path(settings_file).parent / "requests" / filename
     config_dir = os.environ.get("YTD_CONFIG_DIR", "").strip()
     if config_dir:
-        return Path(config_dir) / "quick_download.request"
+        return Path(config_dir) / "requests" / filename
     if os.name == "nt":
         base = os.environ.get("APPDATA")
         root = Path(base) if base else Path.home() / "AppData" / "Roaming"
-        return root / "YouTubeHarvester" / "quick_download.request"
-    return Path.home() / ".config" / "YTD" / "quick_download.request"
+        return root / "YouTubeHarvester" / "requests" / filename
+    return Path.home() / ".config" / "YTD" / "requests" / filename
+
+
+def default_quick_request_file() -> Path:
+    return default_launcher_request_file("quick_download.request", "YTD_QUICK_REQUEST_FILE")
+
+
+def default_show_main_request_file() -> Path:
+    return default_launcher_request_file("show_main.request", "YTD_SHOW_MAIN_REQUEST_FILE")
+
+
+def default_completion_event_dir() -> Path:
+    configured = os.environ.get("YTD_COMPLETION_EVENT_DIR", "").strip()
+    if configured:
+        return Path(configured)
+    settings_file = os.environ.get("YTD_SETTINGS_FILE", "").strip()
+    if settings_file:
+        return Path(settings_file).parent / "completion-events"
+    config_dir = os.environ.get("YTD_CONFIG_DIR", "").strip()
+    if config_dir:
+        return Path(config_dir) / "completion-events"
+    if os.name == "nt":
+        base = os.environ.get("APPDATA")
+        root = Path(base) if base else Path.home() / "AppData" / "Roaming"
+        return root / "YouTubeHarvester" / "completion-events"
+    return Path.home() / ".config" / "YTD" / "completion-events"
+
+
+def write_launcher_request(request_file: Path, action: str) -> int:
+    temporary_file = None
+    try:
+        request_file = Path(request_file)
+        request_file.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        if os.name != "nt" and request_file.parent.name == "requests":
+            request_file.parent.chmod(0o700)
+        payload = {
+            "version": 1,
+            "action": action,
+            "created_at": time.time(),
+            "pid": os.getpid(),
+        }
+        temporary_file = request_file.with_name(
+            f".{request_file.name}.{os.getpid()}.{time.time_ns()}.tmp"
+        )
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+        descriptor = os.open(temporary_file, flags, 0o600)
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as handle:
+            json.dump(payload, handle, ensure_ascii=True, separators=(",", ":"))
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary_file, request_file)
+        temporary_file = None
+        if os.name != "nt":
+            request_file.chmod(0o600)
+        return 0
+    except Exception as exc:
+        print(f"Cannot request {action}: {exc}", file=sys.stderr)
+        return 1
+    finally:
+        if temporary_file is not None:
+            with contextlib.suppress(OSError):
+                temporary_file.unlink()
+
+
+def consume_launcher_request(request_file: Path, expected_action: str) -> bool:
+    request_file = Path(request_file)
+    try:
+        metadata = request_file.lstat()
+        if not stat.S_ISREG(metadata.st_mode) or metadata.st_size > 4096:
+            return False
+        if os.name != "nt" and metadata.st_uid != os.getuid():
+            return False
+        raw = request_file.read_text(encoding="utf-8", errors="strict").strip()
+        if raw.isdigit():
+            action = expected_action
+            created_at = float(raw)
+        else:
+            payload = json.loads(raw)
+            if not isinstance(payload, dict) or payload.get("version") != 1:
+                return False
+            action = str(payload.get("action") or "")
+            created_at = float(payload.get("created_at") or 0)
+        age = time.time() - created_at
+        return action == expected_action and -5 <= age <= LAUNCHER_REQUEST_TTL_SECONDS
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return False
+    finally:
+        with contextlib.suppress(OSError):
+            request_file.unlink()
+
+
+def consume_completion_event(event_file: Path, *, remove: bool = True) -> dict | None:
+    event_file = Path(event_file)
+    try:
+        metadata = event_file.lstat()
+        if not stat.S_ISREG(metadata.st_mode) or not 0 < metadata.st_size <= 8192:
+            return None
+        if os.name != "nt" and metadata.st_uid != os.getuid():
+            return None
+        payload = json.loads(event_file.read_text(encoding="utf-8", errors="strict"))
+        if not isinstance(payload, dict) or payload.get("version") != 1:
+            return None
+        if payload.get("event") != "video-downloaded":
+            return None
+        event_id = str(payload.get("event_id") or "")
+        if not re.fullmatch(r"[0-9a-f]{24}", event_id):
+            return None
+        age = time.time() - float(payload.get("created_at") or 0)
+        if not -5 <= age <= COMPLETION_EVENT_TTL_SECONDS:
+            return None
+        title = normalize_text_value(payload.get("title"))
+        channel = normalize_text_value(payload.get("channel"))
+        if not isinstance(title, str) or not isinstance(channel, str):
+            return None
+        title = title.strip()[:180]
+        if not title:
+            return None
+        payload["title"] = title
+        payload["channel"] = channel.strip()[:120]
+        return payload
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return None
+    finally:
+        if remove:
+            with contextlib.suppress(OSError):
+                event_file.unlink()
 
 
 def write_quick_download_request() -> int:
-    try:
-        request_file = default_quick_request_file()
-        request_file.parent.mkdir(parents=True, exist_ok=True)
-        request_file.write_text(str(int(time.time())) + "\n", encoding="utf-8")
-        return 0
-    except Exception as exc:
-        print(f"Cannot request quick download window: {exc}", file=sys.stderr)
-        return 1
+    return write_launcher_request(default_quick_request_file(), "quick-download")
+
+
+def write_show_main_request() -> int:
+    return write_launcher_request(default_show_main_request_file(), "show-main")
 
 
 class WindowsGlobalHotkeyFilter(QAbstractNativeEventFilter):
@@ -1861,6 +2030,11 @@ USAGE_RULES_HTML = {
 <p><b>Важливо:</b> програма не пов'язана з YouTube, Google, Telegram або yt-dlp. Це локальна оболонка, що запускає зовнішні інструменти на вашому комп'ютері.</p>
 <h3>Що варто розуміти</h3><ul><li>Завантажуйте лише матеріали, на які маєте права, дозвіл автора або законні підстави для особистого використання.</li><li>Дотримуйтеся правил YouTube, авторського права та законів своєї країни.</li><li>Не використовуйте програму для обходу обмежень доступу, масового копіювання, піратства, продажу чи публічної трансляції чужого контенту.</li><li>Telegram-сповіщення можуть надсилати назви, посилання та файли. Бережіть BOT_TOKEN і CHANNEL_ID.</li><li>Ви самостійно відповідаєте за канали, чергу, файли та їх використання.</li></ul>
 <h3>Зовнішні компоненти</h3><ul><li><b>yt-dlp</b> читає сторінки та завантажує медіа.</li><li><b>PyQt5/Qt</b> забезпечує графічний інтерфейс.</li><li><b>curl</b> використовується для Telegram через SOCKS-проксі.</li><li><b>pynput</b> використовується для глобальної гарячої клавіші у Linux/X11.</li><li><b>Bash-рушій</b> залишено як застарілий код, але вимкнено в інтерфейсі.</li></ul><p>Кожен компонент має власну ліцензію та документацію. Посилання є в README.</p>""",
+    "be": f"""
+<h2>{APP_NAME}: правілы выкарыстання</h2>
+<p><b>Важна:</b> праграма не звязана з YouTube, Google, Telegram або yt-dlp. Гэта лакальная абалонка, якая запускае знешнія інструменты на вашым камп'ютары.</p>
+<h3>Што трэба разумець</h3><ul><li>Спампоўвайце толькі матэрыялы, на якія ў вас ёсць правы, дазвол аўтара або законныя падставы для асабістага выкарыстання.</li><li>Выконвайце правілы YouTube, аўтарскае права і законы сваёй краіны.</li><li>Не выкарыстоўвайце праграму для абыходу абмежаванняў доступу, масавага капіравання, пірацкага распаўсюджвання, продажу або публічнай рэтрансляцыі чужога кантэнту.</li><li>Апавяшчэнні Telegram могуць адпраўляць назвы, спасылкі і файлы. Захоўвайце BOT_TOKEN і CHANNEL_ID у сакрэце.</li><li>Вы самі адказваеце за выбраныя каналы, чаргу, спампаваныя файлы і іх далейшае выкарыстанне.</li></ul>
+<h3>Знешнія кампаненты</h3><ul><li><b>yt-dlp</b> чытае старонкі і спампоўвае медыя.</li><li><b>PyQt5/Qt</b> забяспечвае графічны інтэрфейс.</li><li><b>curl</b> выкарыстоўваецца для Telegram праз SOCKS-проксі.</li><li><b>pynput</b> выкарыстоўваецца для глабальнай гарачай клавішы ў Linux/X11.</li><li><b>Bash-рухавік</b> пакінуты як састарэлы код, але адключаны ў інтэрфейсе.</li></ul><p>Кожны кампанент мае ўласную ліцэнзію і дакументацыю. Спасылкі прыведзены ў README.</p>""",
     "fr": f"""
 <h2>{APP_NAME} : règles d'utilisation</h2>
 <p><b>Important :</b> cette application n'est affiliée ni à YouTube, ni à Google, Telegram ou yt-dlp. C'est une interface locale qui lance des outils externes sur votre ordinateur.</p>
@@ -1953,6 +2127,9 @@ class UsageRulesDialog(QDialog):
 class TrayLauncher:
     def __init__(self):
         self.app = QApplication(sys.argv)
+        self.app.setApplicationName(APP_X11_CLASS)
+        self.app.setApplicationDisplayName(APP_NAME)
+        self.app.setDesktopFileName(APP_DESKTOP_FILE_NAME)
         self.app.setQuitOnLastWindowClosed(False)
 
         self.is_windows = os.name == "nt"
@@ -1962,6 +2139,7 @@ class TrayLauncher:
         self.data_dir = Path(os.environ.get("YTD_DATA_DIR", self.default_data_dir()))
         self.config_dir = Path(os.environ.get("YTD_CONFIG_DIR", self.default_config_dir()))
         self.cache_dir = Path(os.environ.get("YTD_CACHE_DIR", self.default_cache_dir()))
+        self.managed_yt_dlp_path = managed_yt_dlp_path()
 
         self.script_path = Path(os.environ.get("YTD_SCRIPT_PATH", self.app_dir / "run_download.sh"))
         self.python_downloader_path = Path(os.environ.get("YTD_PYTHON_DOWNLOADER_PATH", self.app_dir / "scripts" / "downloader.py"))
@@ -1977,6 +2155,8 @@ class TrayLauncher:
         self.status_file = Path(os.environ.get("YTD_STATUS_FILE", self.data_dir / "status.json"))
         self.stop_file = Path(os.environ.get("YTD_STOP_FILE", self.data_dir / "stop_requested"))
         self.quick_request_file = default_quick_request_file()
+        self.show_main_request_file = default_show_main_request_file()
+        self.completion_event_dir = default_completion_event_dir()
         self.last_download_file = Path(os.environ.get("YTD_LAST_DOWNLOAD_FILE", self.data_dir / "last_download_at.txt"))
         self.overview_logo_path = Path(os.environ.get("YTD_OVERVIEW_LOGO", self.app_dir / "assets" / "overview-logo.png"))
         self.video_placeholder_path = Path(os.environ.get("YTD_VIDEO_PLACEHOLDER", self.app_dir / "assets" / "video-placeholder.png"))
@@ -2066,8 +2246,6 @@ class TrayLauncher:
         self.tray = QSystemTrayIcon(self.app)
         self.create_menu()
         self.update_icon()
-        if self.tray_available:
-            self.tray.show()
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.check_process_status)
@@ -2279,14 +2457,22 @@ class TrayLauncher:
         self.main_window.open_quick_download_window(initial_url)
 
     def hide_windows_from_taskbar(self):
-        return self.tray_available and self.startup_display_mode == "tray"
+        return self.effective_display_mode() == "tray"
+
+    def effective_display_mode(self, mode: str | None = None) -> str:
+        requested = str(mode or self.startup_display_mode or "tray").strip()
+        if requested not in VALID_STARTUP_DISPLAY_MODES:
+            requested = "tray"
+        if not self.tray_available and requested in {"tray", "both"}:
+            return "taskbar"
+        return requested
 
     def apply_taskbar_mode_to_window(self, window):
         if window is None:
             return
         base_type = getattr(window, "_yth_base_window_type", None)
         if base_type is None:
-            base_type = Qt.Dialog if isinstance(window, QDialog) else Qt.Window
+            base_type = Qt.Window
             window._yth_base_window_type = base_type
 
         target_type = Qt.Tool if self.hide_windows_from_taskbar() else base_type
@@ -2314,6 +2500,18 @@ class TrayLauncher:
             windows.append(self.main_window.quick_download_dialog)
         for window in windows:
             self.apply_taskbar_mode_to_window(window)
+
+    def apply_display_mode(self, mode: str | None = None) -> str:
+        if mode in VALID_STARTUP_DISPLAY_MODES:
+            self.startup_display_mode = mode
+        effective_mode = self.effective_display_mode()
+        if self.tray_available and effective_mode in {"tray", "both"}:
+            self.tray.show()
+        else:
+            self.tray.hide()
+        self.app.setQuitOnLastWindowClosed(effective_mode == "taskbar")
+        self.refresh_window_taskbar_mode()
+        return effective_mode
 
     def extract_youtube_url_from_text(self, text: str):
         for match in re.finditer(r"https?://(?:www\.|m\.)?(?:youtube\.com|youtu\.be)/[^\s<>'\"]+", str(text or "")):
@@ -2664,6 +2862,7 @@ class TrayLauncher:
         if self.usage_rules_accepted():
             return True
         dialog = UsageRulesDialog(required=True, parent=parent, language=getattr(self, "language", "en"))
+        self.apply_taskbar_mode_to_window(dialog)
         if dialog.exec_() == QDialog.Accepted:
             self.app_settings["usage_rules_accepted_version"] = USAGE_RULES_VERSION
             self.save_app_settings()
@@ -2783,6 +2982,8 @@ class TrayLauncher:
     def yt_dlp_command(self):
         if os.environ.get("YTD_YT_DLP_COMMAND_JSON") or os.environ.get("YTD_YT_DLP_COMMAND"):
             return common_yt_dlp_command()
+        if self.managed_yt_dlp_path.is_file():
+            return [str(self.managed_yt_dlp_path)]
         if getattr(sys, "frozen", False):
             return [sys.executable, "--run-yt-dlp"]
         return common_yt_dlp_command()
@@ -2864,6 +3065,11 @@ class TrayLauncher:
         self.cleanup_temp = self._setting_bool(settings, "cleanup_temp", True)
         self.retry_failed_queue = self._setting_bool(settings, "retry_failed_queue", True)
         self.clipboard_watch_enabled = self._setting_bool(settings, "clipboard_watch_enabled", False)
+        self.system_notifications_enabled = self._setting_bool(
+            settings,
+            "system_notifications_enabled",
+            False,
+        )
         startup_mode = str(settings.get("startup_display_mode") or os.environ.get("YTD_STARTUP_DISPLAY_MODE") or "tray").strip()
         self.startup_display_mode = startup_mode if startup_mode in VALID_STARTUP_DISPLAY_MODES else "tray"
         self.quick_download_hotkey = str(
@@ -2906,7 +3112,7 @@ class TrayLauncher:
             not getattr(sys, "frozen", False)
             and not os.environ.get("YTD_YT_DLP_COMMAND")
             and not os.environ.get("YTD_YT_DLP_COMMAND_JSON")
-            and not self.command_exists("yt-dlp")
+            and not common_yt_dlp_command(allow_missing=False)
         ):
             self.show_notification("❌", self.tr("notify.ytdlp_missing"), self.tr("notify.ytdlp_install"))
             return False
@@ -2946,6 +3152,8 @@ class TrayLauncher:
             "YTD_QUICK_DOWNLOAD_RESOLUTION": str(self.quick_download_resolution),
             "YTD_STARTUP_DISPLAY_MODE": str(self.startup_display_mode),
             "YTD_CLIPBOARD_WATCH_ENABLED": "1" if self.clipboard_watch_enabled else "0",
+            "YTD_COMPLETION_EVENT_DIR": str(self.completion_event_dir),
+            "YTD_SYSTEM_NOTIFICATIONS_ENABLED": "1" if self.system_notifications_enabled else "0",
             "YTD_YT_DLP_COMMAND": subprocess.list2cmdline(yt_dlp_command),
             "YTD_YT_DLP_COMMAND_JSON": json.dumps(yt_dlp_command, ensure_ascii=False),
         })
@@ -3131,19 +3339,23 @@ class TrayLauncher:
         self.tray.setToolTip(tooltip)
 
     def check_process_status(self):
-        self.check_quick_download_request()
+        self.check_launcher_requests()
+        self.check_completion_events()
         self.update_icon()
         if self.main_window is not None and self.main_window.isVisible():
             self.main_window.refresh_overview()
 
-    def check_quick_download_request(self):
-        try:
-            if not self.quick_request_file.exists():
-                return
-            self.quick_request_file.unlink(missing_ok=True)
-        except Exception:
-            return
-        self.open_quick_download_window()
+    def check_launcher_requests(self):
+        if self.quick_request_file.exists() and consume_launcher_request(
+            self.quick_request_file,
+            "quick-download",
+        ):
+            self.open_quick_download_window()
+        if self.show_main_request_file.exists() and consume_launcher_request(
+            self.show_main_request_file,
+            "show-main",
+        ):
+            self.open_main_window(0)
 
     def startup_mode_arg(self, mode: str | None = None):
         value = mode or self.startup_display_mode
@@ -3162,32 +3374,112 @@ class TrayLauncher:
         elif "--start-tray" in args:
             mode = "tray"
         else:
-            if not self.tray_available:
-                self.tray.hide()
-                self.app.setQuitOnLastWindowClosed(True)
-                QTimer.singleShot(0, lambda: self.open_main_window(0))
-            return
+            mode = self.startup_display_mode
 
-        if not self.tray_available and mode in {"tray", "both"}:
-            mode = "taskbar"
-
-        if mode == "taskbar":
-            self.tray.hide()
-            self.app.setQuitOnLastWindowClosed(True)
+        effective_mode = self.apply_display_mode(mode)
+        if "--show-main" in args or effective_mode in {"taskbar", "both"}:
             QTimer.singleShot(0, lambda: self.open_main_window(0))
-        elif mode == "both":
-            self.tray.show()
-            self.app.setQuitOnLastWindowClosed(False)
-            QTimer.singleShot(0, lambda: self.open_main_window(0))
-        else:
-            self.tray.show()
-            self.app.setQuitOnLastWindowClosed(False)
 
-    def show_notification(self, icon: str, title: str, message: str):
+    def show_notification(self, icon: str, title: str, message: str) -> bool:
         if not self.tray_available:
-            return
-        with contextlib.suppress(Exception):
+            return False
+        try:
             self.tray.showMessage(f"{icon} {title}", message, QSystemTrayIcon.Information, 5000)
+            return True
+        except Exception:
+            return False
+
+    def notification_image_path(self, value) -> Path | None:
+        text = normalize_text_value(value)
+        if not isinstance(text, str) or not text.strip():
+            return None
+        try:
+            candidate = Path(text.strip()).resolve(strict=True)
+            roots = (self.temp_dir.resolve(), self.cache_dir.resolve())
+            if not any(candidate == root or root in candidate.parents for root in roots):
+                return None
+            if candidate.suffix.lower() not in {".jpg", ".jpeg", ".png", ".webp"}:
+                return None
+            if not candidate.is_file() or candidate.stat().st_size > 10 * 1024 * 1024:
+                return None
+            return candidate
+        except OSError:
+            return None
+
+    def send_freedesktop_completion_notification(self, event: dict) -> bool:
+        if not sys.platform.startswith("linux"):
+            return False
+        try:
+            import dbus
+
+            image_path = self.notification_image_path(event.get("thumbnail_path"))
+            app_icon = str(image_path or self.app_icon_path) if (image_path or self.app_icon_path.exists()) else APP_DESKTOP_FILE_NAME
+            channel = str(event.get("channel") or "").strip()
+            body = html.escape(self.tr("notification.channel", channel=channel)) if channel else ""
+            hints = {
+                "category": dbus.String("transfer.complete"),
+                "desktop-entry": dbus.String(APP_DESKTOP_FILE_NAME),
+                "x-friendshub-event": dbus.String("video-downloaded"),
+                "x-friendshub-event-id": dbus.String(str(event.get("event_id") or "")),
+                "x-friendshub-channel": dbus.String(channel),
+            }
+            if image_path is not None:
+                hints["image-path"] = dbus.String(str(image_path))
+            service = dbus.SessionBus().get_object(
+                "org.freedesktop.Notifications",
+                "/org/freedesktop/Notifications",
+            )
+            notifications = dbus.Interface(service, "org.freedesktop.Notifications")
+            notifications.Notify(
+                APP_NAME,
+                dbus.UInt32(0),
+                app_icon,
+                str(event.get("title") or "")[:180],
+                body,
+                dbus.Array([], signature="s"),
+                dbus.Dictionary(hints, signature="sv"),
+                8000,
+            )
+            return True
+        except Exception:
+            return False
+
+    def show_completion_notification(self, event: dict) -> bool:
+        if self.send_freedesktop_completion_notification(event):
+            return True
+        title = str(event.get("title") or "")[:180]
+        channel = str(event.get("channel") or "")[:120]
+        return self.show_notification(
+            "✅",
+            title,
+            self.tr("notification.channel", channel=channel) if channel else "",
+        )
+
+    def check_completion_events(self) -> None:
+        try:
+            if not self.completion_event_dir.exists():
+                if self.system_notifications_enabled:
+                    self.completion_event_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+                return
+            if os.name != "nt":
+                metadata = self.completion_event_dir.lstat()
+                if not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != os.getuid():
+                    return
+                self.completion_event_dir.chmod(0o700)
+            event_files = sorted(
+                self.completion_event_dir.glob("*.json"),
+                key=lambda path: path.name,
+            )[:20]
+            for event_file in event_files:
+                event = consume_completion_event(event_file, remove=False)
+                delivered = False
+                if event is not None and self.system_notifications_enabled:
+                    delivered = self.show_completion_notification(event)
+                if event is None or not self.system_notifications_enabled or delivered:
+                    with contextlib.suppress(OSError):
+                        event_file.unlink()
+        except OSError:
+            return
 
     # ------------------ Планировщик ------------------
     def open_schedule_window(self):
@@ -4280,7 +4572,12 @@ class MainWindow(QMainWindow):
     channel_marked_archived = pyqtSignal(dict)
     channel_mark_archive_failed = pyqtSignal(str)
     channel_sections_checked = pyqtSignal(dict)
+    app_version_checked = pyqtSignal(dict)
+    app_update_progress = pyqtSignal(int, str)
+    app_update_finished = pyqtSignal(dict)
     yt_dlp_version_checked = pyqtSignal(dict)
+    yt_dlp_update_progress = pyqtSignal(int, str)
+    yt_dlp_update_finished = pyqtSignal(dict)
 
     def __init__(self, launcher: TrayLauncher):
         super().__init__()
@@ -4318,6 +4615,8 @@ class MainWindow(QMainWindow):
         self.diagnostics_tab = None
         self.diagnostics_text = None
         self.diagnostics_revealed = False
+        self.app_update_dialog = None
+        self.ytdlp_update_dialog = None
         self.overview_logo_clicks = 0
         self.overview_easter_game = None
         self.overview_easter_unlocked = False
@@ -4353,7 +4652,12 @@ class MainWindow(QMainWindow):
         self.channel_marked_archived.connect(self.on_channel_marked_archived)
         self.channel_mark_archive_failed.connect(self.on_channel_mark_archive_failed)
         self.channel_sections_checked.connect(self.on_channel_sections_checked)
+        self.app_version_checked.connect(self.on_app_version_checked)
+        self.app_update_progress.connect(self.on_app_update_progress)
+        self.app_update_finished.connect(self.on_app_update_finished)
         self.yt_dlp_version_checked.connect(self.on_yt_dlp_version_checked)
+        self.yt_dlp_update_progress.connect(self.on_yt_dlp_update_progress)
+        self.yt_dlp_update_finished.connect(self.on_yt_dlp_update_finished)
 
         self.log_timer = QTimer(self)
         self.log_timer.timeout.connect(self.refresh_log_view)
@@ -4374,6 +4678,16 @@ class MainWindow(QMainWindow):
 
     def tr(self, key: str, **values) -> str:
         return ui_text(getattr(self, "language", "en"), key, **values)
+
+    def set_limit_label_text(self, label: QLabel, text: str) -> None:
+        font = QFont(self.font())
+        font.setPointSize(getattr(self, "limit_label_point_size", max(8, font.pointSize() - 2)))
+        label.setText(text)
+        label.setFont(font)
+        available_width = max(1, label.width() - 2)
+        while font.pointSize() > 7 and label.fontMetrics().horizontalAdvance(text) > available_width:
+            font.setPointSize(font.pointSize() - 1)
+            label.setFont(font)
 
     def _set_i18n(self, widget, key: str, prop: str = "text", **values):
         self.i18n_entries.append((widget, key, prop, dict(values)))
@@ -4530,7 +4844,7 @@ class MainWindow(QMainWindow):
                 getattr(self, "limit_labels", []),
                 ("🎬 " + self.tr("overview.video"), "  ⚡ " + self.tr("overview.shorts"), "  🔴 " + self.tr("overview.stream")),
             ):
-                label.setText(text)
+                self.set_limit_label_text(label, text)
                 label.setToolTip(spin.toolTip())
             self.resolution_combo.setToolTip(self.tr("settings.resolution_tip"))
             self.settings_resolution_label.setText(self.tr("settings.resolution"))
@@ -4539,9 +4853,12 @@ class MainWindow(QMainWindow):
             self.clipboard_label.setText(self.tr("settings.quick_download"))
             self.clipboard_watch_check.setText(self.tr("settings.watch_clipboard"))
             self.clipboard_watch_check.setToolTip(self.tr("settings.watch_clipboard_tip"))
+            self.display_mode_label.setText(self.tr("settings.display_mode"))
             self.autostart_check.setText(self.tr("settings.autostart"))
             self.autostart_check.setToolTip(self.tr("settings.autostart_tip", app=APP_NAME))
             self.startup_mode_combo.setToolTip(self.tr("settings.startup_mode_tip"))
+            self.system_notifications_check.setText(self.tr("settings.system_notifications"))
+            self.system_notifications_check.setToolTip(self.tr("settings.system_notifications_tip"))
             self.options_label.setText(self.tr("settings.misc"))
             self.cleanup_temp_check.setText(self.tr("settings.cleanup_temp"))
             self.cleanup_temp_check.setToolTip(self.tr("settings.cleanup_temp_tip"))
@@ -4550,6 +4867,7 @@ class MainWindow(QMainWindow):
             self.log_keep_label.setText(self.tr("settings.logs_count"))
             self.log_keep_spin.setToolTip(self.tr("settings.logs_count_tip"))
             self.rules_button.setToolTip(self.tr("settings.rules_tip"))
+            self.app_version_button.setToolTip(self.tr("settings.app_update_tip"))
             self.ytdlp_version_button.setToolTip(self.tr("settings.ytdlp_tip"))
             self.diagnostics_secret_button.setToolTip(self.tr("settings.diagnostics_tip"))
             self.settings_save_button.setText(self.tr("button.save_settings"))
@@ -5079,6 +5397,7 @@ class MainWindow(QMainWindow):
         limits_row.setSpacing(0)
         limits_font = QFont(self.font())
         limits_font.setPointSize(max(8, limits_font.pointSize() - 2))
+        self.limit_label_point_size = limits_font.pointSize()
         limits_title = QLabel(self.tr("settings.limits"))
         limits_title.setFixedWidth(96)
         limits_title.setFont(limits_font)
@@ -5098,7 +5417,7 @@ class MainWindow(QMainWindow):
             label = QLabel(label_text)
             label.setFixedSize(92, 18)
             label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-            label.setFont(limits_font)
+            self.set_limit_label_text(label, label_text)
             label.setToolTip(spin.toolTip())
             if not hasattr(self, "limit_labels"):
                 self.limit_labels = []
@@ -5164,17 +5483,34 @@ class MainWindow(QMainWindow):
         clipboard_row.addWidget(self.clipboard_watch_check, 1)
         behavior_layout.addLayout(clipboard_row)
 
-        startup_row = QHBoxLayout()
-        startup_row.setSpacing(8)
-        self.autostart_check = QCheckBox(self.tr("settings.autostart"))
-        self.autostart_check.setToolTip(self.tr("settings.autostart_tip", app=APP_NAME))
+        display_mode_row = QHBoxLayout()
+        display_mode_row.setSpacing(8)
+        self.display_mode_label = QLabel(self.tr("settings.display_mode"))
+        self.display_mode_label.setFixedWidth(210)
         self.startup_mode_combo = QComboBox()
         self.startup_mode_combo.setToolTip(self.tr("settings.startup_mode_tip"))
         for label, value in localized_startup_display_modes(self.language):
             self.startup_mode_combo.addItem(label, value)
-        startup_row.addWidget(self.autostart_check)
-        startup_row.addWidget(self.startup_mode_combo, 1)
-        behavior_layout.addLayout(startup_row)
+        self.startup_mode_combo.currentIndexChanged.connect(self.on_display_mode_changed)
+        display_mode_row.addWidget(self.display_mode_label)
+        display_mode_row.addWidget(self.startup_mode_combo, 1)
+        behavior_layout.addLayout(display_mode_row)
+
+        autostart_row = QHBoxLayout()
+        autostart_row.setSpacing(8)
+        autostart_row.addSpacing(218)
+        self.autostart_check = QCheckBox(self.tr("settings.autostart"))
+        self.autostart_check.setToolTip(self.tr("settings.autostart_tip", app=APP_NAME))
+        autostart_row.addWidget(self.autostart_check, 1)
+        behavior_layout.addLayout(autostart_row)
+
+        notifications_row = QHBoxLayout()
+        notifications_row.setSpacing(8)
+        notifications_row.addSpacing(218)
+        self.system_notifications_check = QCheckBox(self.tr("settings.system_notifications"))
+        self.system_notifications_check.setToolTip(self.tr("settings.system_notifications_tip"))
+        notifications_row.addWidget(self.system_notifications_check, 1)
+        behavior_layout.addLayout(notifications_row)
 
         options_row = QHBoxLayout()
         options_row.setSpacing(6)
@@ -5207,6 +5543,13 @@ class MainWindow(QMainWindow):
         rules_btn.clicked.connect(self.open_usage_rules)
         self.rules_button = rules_btn
         options_row.addWidget(rules_btn)
+        self.app_version_button = QPushButton()
+        self.app_version_button.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
+        self.app_version_button.setIconSize(QSize(20, 20))
+        self.app_version_button.setFixedSize(34, 28)
+        self.app_version_button.setToolTip(self.tr("settings.app_update_tip"))
+        self.app_version_button.clicked.connect(self.check_app_version)
+        options_row.addWidget(self.app_version_button)
         self.ytdlp_version_button = QPushButton()
         self.ytdlp_version_button.setIcon(script_check_icon())
         self.ytdlp_version_button.setIconSize(QSize(22, 22))
@@ -5412,6 +5755,18 @@ class MainWindow(QMainWindow):
         self.update_telegram_enabled_button()
         self.save_settings_from_ui(show_message=False)
 
+    def on_display_mode_changed(self, *_args):
+        mode = self.startup_mode_combo.currentData()
+        if mode not in VALID_STARTUP_DISPLAY_MODES:
+            return
+        self.ui_settings["startup_display_mode"] = mode
+        self.save_ui_settings()
+        self.launcher.app_settings = dict(self.ui_settings)
+        self.launcher.apply_runtime_settings(self.launcher.app_settings)
+        self.launcher.apply_display_mode(mode)
+        if self.autostart_check.isChecked():
+            self.set_autostart_enabled(True)
+
     def update_quick_hotkey_button(self):
         hotkey = self.launcher.quick_download_hotkey or DEFAULT_QUICK_DOWNLOAD_HOTKEY
         self.quick_hotkey_button.setToolTip(self.tr("settings.hotkey_tip", hotkey=hotkey))
@@ -5474,6 +5829,146 @@ class MainWindow(QMainWindow):
             self.launcher.app_settings = dict(self.ui_settings)
             self.launcher.apply_runtime_settings(self.launcher.app_settings)
 
+    def check_app_version(self):
+        self.app_version_button.setEnabled(False)
+        self.app_version_button.setToolTip(self.tr("settings.app_update_checking"))
+        thread = threading.Thread(target=self._app_version_worker, daemon=True)
+        thread.start()
+
+    def _app_version_worker(self):
+        try:
+            release = latest_app_release(
+                current_version=APP_VERSION,
+                user_agent=f"{APP_NAME}/{APP_VERSION}",
+            )
+            result = {"ok": True, "release": release}
+        except Exception as exc:
+            result = {"ok": False, "error": str(exc)}
+        self.app_version_checked.emit(result)
+
+    def on_app_version_checked(self, result: dict):
+        self.app_version_button.setEnabled(True)
+        self.app_version_button.setToolTip(self.tr("settings.app_update_tip"))
+        if not result.get("ok"):
+            QMessageBox.warning(
+                self,
+                APP_NAME,
+                self.tr("app_update.failed", error=str(result.get("error") or "")),
+            )
+            return
+
+        release = dict(result.get("release") or {})
+        latest = str(release.get("version") or "")
+        lines = [
+            self.tr("app_update.current", value=APP_VERSION),
+            self.tr("app_update.latest", value=latest),
+            self.tr("app_update.package", value=str(release.get("asset_name") or "")),
+            "",
+            self.tr(
+                "app_update.new_available"
+                if release.get("update_available")
+                else "app_update.current_ok"
+            ),
+        ]
+        message_box = QMessageBox(QMessageBox.Information, APP_NAME, "\n".join(lines), parent=self)
+        message_box.setStandardButtons(QMessageBox.Close)
+        download_button = None
+        if release.get("update_available"):
+            download_button = message_box.addButton(
+                self.tr("app_update.download_button"),
+                QMessageBox.AcceptRole,
+            )
+        message_box.exec_()
+        if download_button is not None and message_box.clickedButton() is download_button:
+            self.start_app_update(release)
+
+    def start_app_update(self, release: dict):
+        if self.launcher.is_running:
+            QMessageBox.warning(self, APP_NAME, self.tr("app_update.busy"))
+            return
+        self.app_version_button.setEnabled(False)
+        self.app_version_button.setToolTip(self.tr("app_update.updating"))
+        self.app_update_dialog = QProgressDialog(self.tr("app_update.updating"), "", 0, 100, self)
+        self.app_update_dialog.setWindowTitle(APP_NAME)
+        self.app_update_dialog.setWindowModality(Qt.WindowModal)
+        self.app_update_dialog.setCancelButton(None)
+        self.app_update_dialog.setAutoClose(False)
+        self.app_update_dialog.setMinimumDuration(0)
+        self.app_update_dialog.setValue(0)
+        self.app_update_dialog.show()
+        thread = threading.Thread(target=self._app_update_worker, args=(release,), daemon=True)
+        thread.start()
+
+    def _app_update_worker(self, release: dict):
+        try:
+            result = download_app_release(
+                release,
+                user_agent=f"{APP_NAME}/{APP_VERSION}",
+                progress=lambda percent, stage: self.app_update_progress.emit(percent, stage),
+            )
+            result["ok"] = True
+        except Exception as exc:
+            result = {"ok": False, "error": str(exc)}
+        self.app_update_finished.emit(result)
+
+    def on_app_update_progress(self, percent: int, stage: str):
+        dialog = self.app_update_dialog
+        if dialog is None:
+            return
+        if stage == "download":
+            label = self.tr("app_update.downloading", percent=percent)
+        elif stage == "verify":
+            label = self.tr("app_update.verifying")
+        else:
+            label = self.tr("app_update.updating")
+        dialog.setLabelText(label)
+        dialog.setValue(max(0, min(100, int(percent))))
+
+    def on_app_update_finished(self, result: dict):
+        if self.app_update_dialog is not None:
+            self.app_update_dialog.close()
+            self.app_update_dialog.deleteLater()
+            self.app_update_dialog = None
+        self.app_version_button.setEnabled(True)
+        self.app_version_button.setToolTip(self.tr("settings.app_update_tip"))
+        if not result.get("ok"):
+            QMessageBox.warning(
+                self,
+                APP_NAME,
+                self.tr("app_update.failed", error=str(result.get("error") or "")),
+            )
+            return
+
+        path = str(result.get("path") or "")
+        action = str(result.get("action") or "folder")
+        if action == "installer":
+            message_key = "app_update.ready_installer"
+        elif action == "package":
+            message_key = "app_update.ready_package"
+        else:
+            message_key = "app_update.ready_folder"
+        message_box = QMessageBox(QMessageBox.Information, APP_NAME, self.tr(message_key, path=path), parent=self)
+        open_button = message_box.addButton(self.tr("app_update.launch"), QMessageBox.AcceptRole)
+        message_box.addButton(self.tr("app_update.later"), QMessageBox.RejectRole)
+        message_box.exec_()
+        if message_box.clickedButton() is open_button:
+            self.open_downloaded_app_update(result)
+
+    def open_downloaded_app_update(self, result: dict):
+        path = Path(str(result.get("path") or ""))
+        action = str(result.get("action") or "folder")
+        target = path if action in {"installer", "package"} else path.parent
+        opened = path.is_file() and QDesktopServices.openUrl(QUrl.fromLocalFile(str(target)))
+        if not opened:
+            QMessageBox.warning(
+                self,
+                APP_NAME,
+                self.tr("app_update.open_failed", path=str(path)),
+            )
+            return
+        if action in {"installer", "package"}:
+            QTimer.singleShot(700, self.launcher.app.quit)
+
     def check_yt_dlp_version(self):
         if hasattr(self, "ytdlp_version_button"):
             self.ytdlp_version_button.setEnabled(False)
@@ -5509,13 +6004,9 @@ class MainWindow(QMainWindow):
             info["error"] = str(exc)
 
         try:
-            request = urllib.request.Request(
-                "https://pypi.org/pypi/yt-dlp/json",
-                headers={"User-Agent": f"{APP_NAME}/{APP_VERSION}"},
-            )
-            with urllib.request.urlopen(request, timeout=8) as response:
-                payload = json.loads(response.read().decode("utf-8", errors="replace"))
-            info["latest"] = str((payload.get("info") or {}).get("version") or "").strip()
+            release = latest_yt_dlp_release(user_agent=f"{APP_NAME}/{APP_VERSION}")
+            info["latest"] = str(release.get("version") or "").strip()
+            info["release"] = release
         except Exception as exc:
             if info["error"]:
                 info["error"] += f"\nPyPI: {exc}"
@@ -5540,22 +6031,98 @@ class MainWindow(QMainWindow):
         lines = [
             self.tr("yt_dlp.current", value=current or self.tr("yt_dlp.unknown_current")),
             self.tr("yt_dlp.latest", value=latest or self.tr("yt_dlp.unknown_latest")),
+            self.tr("yt_dlp.command", value=str(info.get("command") or "")),
         ]
         current_key = self.yt_dlp_version_key(current)
         latest_key = self.yt_dlp_version_key(latest)
         if current_key and latest_key:
             if latest_key > current_key:
                 lines.append(self.tr("yt_dlp.new_available"))
-                if info.get("frozen"):
-                    lines.append(self.tr("yt_dlp.frozen_update"))
-                else:
-                    lines.append(self.tr("yt_dlp.source_update"))
+                lines.append(self.tr("yt_dlp.update_available"))
             else:
                 lines.append(self.tr("yt_dlp.current_ok"))
         if error:
             lines.append("")
             lines.append(error[:600])
-        QMessageBox.information(self, "yt-dlp", "\n".join(lines))
+        message_box = QMessageBox(QMessageBox.Information, "yt-dlp", "\n".join(lines), parent=self)
+        message_box.setStandardButtons(QMessageBox.Close)
+        update_button = None
+        if latest and info.get("release") and (not current_key or latest_key > current_key):
+            update_button = message_box.addButton(self.tr("yt_dlp.update_button"), QMessageBox.AcceptRole)
+        message_box.exec_()
+        if update_button is not None and message_box.clickedButton() is update_button:
+            self.start_yt_dlp_update(dict(info["release"]))
+        if self.diagnostics_tab is not None:
+            self.refresh_diagnostics()
+
+    def start_yt_dlp_update(self, release: dict):
+        if self.launcher.is_running:
+            QMessageBox.warning(self, "yt-dlp", self.tr("yt_dlp.busy"))
+            return
+        if hasattr(self, "ytdlp_version_button"):
+            self.ytdlp_version_button.setEnabled(False)
+            self.ytdlp_version_button.setToolTip(self.tr("yt_dlp.updating"))
+        self.ytdlp_update_dialog = QProgressDialog(self.tr("yt_dlp.updating"), "", 0, 100, self)
+        self.ytdlp_update_dialog.setWindowTitle("yt-dlp")
+        self.ytdlp_update_dialog.setWindowModality(Qt.WindowModal)
+        self.ytdlp_update_dialog.setCancelButton(None)
+        self.ytdlp_update_dialog.setAutoClose(False)
+        self.ytdlp_update_dialog.setMinimumDuration(0)
+        self.ytdlp_update_dialog.setValue(0)
+        self.ytdlp_update_dialog.show()
+        thread = threading.Thread(target=self._yt_dlp_update_worker, args=(release,), daemon=True)
+        thread.start()
+
+    def _yt_dlp_update_worker(self, release: dict):
+        try:
+            result = update_yt_dlp(
+                user_agent=f"{APP_NAME}/{APP_VERSION}",
+                target=self.launcher.managed_yt_dlp_path,
+                release=release,
+                progress=lambda percent, stage: self.yt_dlp_update_progress.emit(percent, stage),
+            )
+            result["ok"] = True
+        except Exception as exc:
+            result = {"ok": False, "error": str(exc)}
+        self.yt_dlp_update_finished.emit(result)
+
+    def on_yt_dlp_update_progress(self, percent: int, stage: str):
+        dialog = self.ytdlp_update_dialog
+        if dialog is None:
+            return
+        if stage == "download":
+            label = self.tr("yt_dlp.downloading", percent=percent)
+        elif stage == "verify":
+            label = self.tr("yt_dlp.verifying")
+        else:
+            label = self.tr("yt_dlp.installing")
+        dialog.setLabelText(label)
+        dialog.setValue(max(0, min(100, int(percent))))
+
+    def on_yt_dlp_update_finished(self, result: dict):
+        if self.ytdlp_update_dialog is not None:
+            self.ytdlp_update_dialog.close()
+            self.ytdlp_update_dialog.deleteLater()
+            self.ytdlp_update_dialog = None
+        if hasattr(self, "ytdlp_version_button"):
+            self.ytdlp_version_button.setEnabled(True)
+            self.ytdlp_version_button.setToolTip(self.tr("settings.ytdlp_tip"))
+        if result.get("ok"):
+            QMessageBox.information(
+                self,
+                "yt-dlp",
+                self.tr(
+                    "yt_dlp.updated",
+                    version=str(result.get("version") or ""),
+                    path=str(result.get("path") or self.launcher.managed_yt_dlp_path),
+                ),
+            )
+        else:
+            QMessageBox.warning(
+                self,
+                "yt-dlp",
+                self.tr("yt_dlp.update_failed", error=str(result.get("error") or "")),
+            )
         if self.diagnostics_tab is not None:
             self.refresh_diagnostics()
 
@@ -5780,6 +6347,7 @@ class MainWindow(QMainWindow):
         self.cleanup_temp_check.setChecked(self.launcher.cleanup_temp)
         self.retry_queue_check.setChecked(self.launcher.retry_failed_queue)
         self.clipboard_watch_check.setChecked(self.launcher.clipboard_watch_enabled)
+        self.system_notifications_check.setChecked(self.launcher.system_notifications_enabled)
         if hasattr(self, "language_combo"):
             language_index = self.language_combo.findData(self.language)
             self.language_combo.blockSignals(True)
@@ -5816,6 +6384,7 @@ class MainWindow(QMainWindow):
             "cleanup_temp": self.cleanup_temp_check.isChecked(),
             "retry_failed_queue": self.retry_queue_check.isChecked(),
             "clipboard_watch_enabled": self.clipboard_watch_check.isChecked(),
+            "system_notifications_enabled": self.system_notifications_check.isChecked(),
             "language": self.language_combo.currentData() if hasattr(self, "language_combo") else self.language,
             "startup_display_mode": self.startup_mode_combo.currentData() or "tray",
             "telegram_enabled": self.telegram_enabled_button.isChecked(),
@@ -5828,7 +6397,7 @@ class MainWindow(QMainWindow):
         self.launcher.apply_runtime_settings(self.launcher.app_settings)
         self.launcher.refresh_global_hotkey()
         self.launcher.refresh_clipboard_watch_timer()
-        self.launcher.refresh_window_taskbar_mode()
+        self.launcher.apply_display_mode()
         self.launcher.temp_dir.mkdir(parents=True, exist_ok=True)
         self.launcher.final_dir.mkdir(parents=True, exist_ok=True)
         self.write_env_values({
@@ -9303,19 +9872,42 @@ def run_yt_dlp_helper(args: list[str]) -> int:
 
 
 def run_launcher(args: list[str], *, open_quick: bool = False) -> int:
+    def forward_to_running_instance() -> int:
+        if open_quick:
+            return write_quick_download_request()
+        if {"--show-main", "--start-window", "--start-both"} & set(args or []):
+            return write_show_main_request()
+        return 0
+
+    legacy_lock = None
+    if os.name != "nt" and not os.environ.get("YTD_LOCK_DIR", "").strip():
+        legacy_lock = SingleInstanceLock(
+            "yt_harvester_launcher.lock",
+            Path(tempfile.gettempdir()),
+        )
+        if not legacy_lock.acquire():
+            return forward_to_running_instance()
+
     lock = SingleInstanceLock("yt_harvester_launcher.lock")
     if not lock.acquire():
-        return write_quick_download_request() if open_quick else 0
+        if legacy_lock is not None:
+            legacy_lock.release()
+        return forward_to_running_instance()
     try:
         launcher = TrayLauncher()
         launcher.app.aboutToQuit.connect(lock.release)
+        if legacy_lock is not None:
+            launcher.app.aboutToQuit.connect(legacy_lock.release)
         if open_quick:
+            launcher.apply_display_mode()
             QTimer.singleShot(250, launcher.open_quick_download_window)
         else:
             launcher.handle_startup_mode(args)
         return int(launcher.run() or 0)
     finally:
         lock.release()
+        if legacy_lock is not None:
+            legacy_lock.release()
 
 
 if __name__ == "__main__":

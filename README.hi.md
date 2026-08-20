@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.2
+# YouTube Harvester 1.1.3
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="YouTube Harvester लोगो" width="128">
@@ -8,6 +8,7 @@
   <a href="README.md">🇺🇸 🇬🇧 English</a> ·
   <a href="README.ru.md">🇷🇺 Русский</a> ·
   <a href="README.uk.md">🇺🇦 Українська</a> ·
+  <a href="README.be.md">🇧🇾 Беларуская</a> ·
   <a href="README.fr.md">🇫🇷 Français</a> ·
   <a href="README.es.md">🇪🇸 Español</a> ·
   <a href="README.hi.md">🇮🇳 हिन्दी</a> ·
@@ -25,6 +26,11 @@
 > सकता है। संग्रह गुणवत्ता और ट्रैक के अनुसार संस्करण अलग रखता है, किसी एक
 > उपशीर्षक की विफलता डाउनलोड नहीं रोकती, और पूर्ण जापानी स्थानीयकरण जोड़ा गया है।
 
+> **UPD 3:** संस्करण 1.1.3 में आधिकारिक GitHub Releases से सत्यापित ऐप अपडेट,
+> पूर्ण बेलारूसी स्थानीयकरण और दस्तावेज़ जोड़े गए हैं। अंतर्निहित डाउनलोडर को
+> `yt-dlp 2026.08.19` में अपडेट किया गया है और अस्थायी YouTube HTTP 403 त्रुटियों
+> से पुनर्प्राप्ति अधिक विश्वसनीय बनाई गई है।
+
 ![YouTube Harvester अवलोकन](docs/screenshots/hi/overview.png)
 
 ## परिचय
@@ -34,7 +40,7 @@
 जोड़े जा सकते हैं, स्थानीय संग्रह रखा जा सकता है, रिपोर्ट देखी जा सकती है और
 Telegram पर सूचनाएँ या फ़ाइलें भेजी जा सकती हैं।
 
-संस्करण `1.1.2` Linux और Windows दोनों पर Python इंजन का उपयोग करता है। पुराना
+संस्करण `1.1.3` Linux और Windows दोनों पर Python इंजन का उपयोग करता है। पुराना
 Bash इंजन स्रोत में केवल निष्क्रिय विरासत कोड के रूप में रखा गया है।
 
 ## मुख्य सुविधाएँ
@@ -56,14 +62,16 @@ Bash इंजन स्रोत में केवल निष्क्र�
 - प्रकार, चैनल, शीर्षक, तारीख, YouTube लिंक, गुणवत्ता व ट्रैक संस्करण, स्थानीय
   फ़ाइल, फ़ोल्डर और रिकॉर्ड हटाने वाला विस्तृत संग्रह।
 - सभी, महत्वपूर्ण और त्रुटियाँ फ़िल्टर वाले लॉग।
-- `yt-dlp` संस्करण जाँच और OS, X11/Wayland, ट्रे, हॉटकी, टूल, पथ, कैश, लिखने
+- इंस्टॉल, पोर्टेबल और Linux पैकेज के लिए आधिकारिक GitHub Releases से सत्यापित
+  एप्लिकेशन अपडेट।
+- इंटरफ़ेस से सुरक्षित `yt-dlp` जाँच और अपडेट तथा OS, X11/Wayland, ट्रे, हॉटकी, टूल, पथ, कैश, लिखने
   की अनुमति तथा डिस्क स्थान की डायग्नोस्टिक्स।
 - डार्क, लाइट और सिस्टम थीम।
 - केवल सिस्टम ट्रे, केवल टास्कबार या दोनों में शुरुआत।
 - सुरक्षित रोक, संरक्षित अस्थायी सफ़ाई, Windows-सुरक्षित नाम और Windows लॉग व
   संग्रह में सही UTF-8।
-- डिफ़ॉल्ट अंग्रेज़ी; रूसी, यूक्रेनी, फ़्रेंच, स्पेनी, हिन्दी, चीनी, जापानी और
-  अरबी भी उपलब्ध।
+- डिफ़ॉल्ट अंग्रेज़ी; रूसी, यूक्रेनी, बेलारूसी, फ़्रेंच, स्पेनी, हिन्दी, चीनी,
+  जापानी और अरबी भी उपलब्ध।
 
 ## स्क्रीनशॉट
 
@@ -81,19 +89,19 @@ Bash इंजन स्रोत में केवल निष्क्र�
 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases) पर
 मिलते हैं।
 
-Linux: `YouTubeHarvester_1.1.2_linux_all.deb`,
-`YouTubeHarvester_1.1.2_source.tar.gz` और `SHA256SUMS-linux.txt`।
+Linux: `YouTubeHarvester_1.1.3_linux_all.deb`,
+`YouTubeHarvester_1.1.3_source.tar.gz` और `SHA256SUMS-linux.txt`।
 
-Windows: `YouTubeHarvester_1.1.2_windows_setup.exe`,
-`YouTubeHarvester_1.1.2_windows_x64.msi`,
-`YouTubeHarvester_1.1.2_windows_portable.zip` और `SHA256SUMS-windows.txt`।
+Windows: `YouTubeHarvester_1.1.3_windows_setup.exe`,
+`YouTubeHarvester_1.1.3_windows_x64.msi`,
+`YouTubeHarvester_1.1.3_windows_portable.zip` और `SHA256SUMS-windows.txt`।
 
 Windows पैकेज में `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` और `deno.exe` शामिल हैं।
 
 ## Linux में स्थापना
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.2_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.3_linux_all.deb
 yt-harvester
 ```
 
@@ -139,13 +147,15 @@ py -3 -m venv .venv
 ```bash
 yt-harvester
 yt-harvester --quick-download
+yt-harvester --show-main
 yt-harvester --start-tray
 yt-harvester --start-window
 yt-harvester --start-both
 ```
 
 `--quick-download` त्वरित विंडो खोलता है और अनुरोध पहले से चल रहे इंस्टेंस को
-देता है। अन्य विकल्प ट्रे, टास्कबार या दोनों चुनते हैं। आंतरिक विकल्प:
+देता है। `--show-main` उस इंस्टेंस की मुख्य विंडो दिखाता है। अन्य विकल्प ट्रे,
+टास्कबार या दोनों चुनते हैं। आंतरिक विकल्प:
 `--run-yt-dlp ...` और `--run-script <script.py> ...`।
 
 ## त्वरित डाउनलोड, X11 और Wayland
@@ -182,12 +192,12 @@ PROXY_URL=127.0.0.1:9050
 ## रिलीज़ बनाना
 
 ```bash
-packaging/build_release.sh 1.1.2 1.1.2
+packaging/build_release.sh 1.1.3 1.1.3
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.2 -MsiVersion 1.1.2
+  -Version 1.1.3 -MsiVersion 1.1.3
 ```
 
 ## ज़िम्मेदार उपयोग

@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.2
+# YouTube Harvester 1.1.3
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="YouTube Harvester 标志" width="128">
@@ -8,6 +8,7 @@
   <a href="README.md">🇺🇸 🇬🇧 English</a> ·
   <a href="README.ru.md">🇷🇺 Русский</a> ·
   <a href="README.uk.md">🇺🇦 Українська</a> ·
+  <a href="README.be.md">🇧🇾 Беларуская</a> ·
   <a href="README.fr.md">🇫🇷 Français</a> ·
   <a href="README.es.md">🇪🇸 Español</a> ·
   <a href="README.hi.md">🇮🇳 हिन्दी</a> ·
@@ -24,6 +25,10 @@
 > **UPD 2：** 快速下载现可把多条音轨和字幕轨嵌入同一个视频。档案会按画质与
 > 轨道组合区分版本，单条字幕下载失败不再取消整个任务，并新增了完整日语本地化。
 
+> **UPD 3：** 1.1.3 版新增了从 GitHub 官方 Release 获取并校验的应用更新、
+> 完整的白俄罗斯语界面和文档，并将内置下载器更新到 `yt-dlp 2026.08.19`，
+> 提升了从 YouTube 临时 HTTP 403 错误中恢复的可靠性。
+
 ![YouTube Harvester 概览](docs/screenshots/zh/overview.png)
 
 ## 软件简介
@@ -32,7 +37,7 @@
 普通视频、Shorts 和直播。它也能处理单独的视频链接、维护本地下载档案、显示
 下载报告，并向 Telegram 发送通知或文件。
 
-版本 `1.1.2` 在 Linux 和 Windows 上统一使用 Python 下载引擎。旧 Bash 引擎
+版本 `1.1.3` 在 Linux 和 Windows 上统一使用 Python 下载引擎。旧 Bash 引擎
 仅作为已禁用的历史代码保留在源码中。
 
 ## 主要功能
@@ -53,14 +58,15 @@
 - 详细下载档案包含类型、频道、标题、日期、YouTube 链接、画质与轨道版本、本地
   文件、所在文件夹和删除记录功能。
 - 日志支持“全部”“重要”和“错误”筛选。
-- 内置 `yt-dlp` 版本检查，并可诊断系统、X11/Wayland、托盘、快捷键、工具、
+- 安装版、便携版和 Linux 软件包均可从 GitHub 官方 Release 获取并校验应用更新。
+- 可在界面中安全检查并更新 `yt-dlp`，并可诊断系统、X11/Wayland、托盘、快捷键、工具、
   路径、缓存、写入权限和磁盘空间。
 - 深色、浅色和跟随系统三种主题。
 - 可选择仅系统托盘、仅任务栏或托盘与任务栏同时显示。
 - 安全停止、受保护的临时目录清理、Windows 安全文件名，以及 Windows 日志和
   档案的 UTF-8 处理。
-- 默认英语界面，同时支持俄语、乌克兰语、法语、西班牙语、印地语、中文、日语和
-  阿拉伯语。
+- 默认英语界面，同时支持俄语、乌克兰语、白俄罗斯语、法语、西班牙语、印地语、
+  中文、日语和阿拉伯语。
 
 ## 截图
 
@@ -77,19 +83,19 @@
 安装包发布在
 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases)。
 
-Linux：`YouTubeHarvester_1.1.2_linux_all.deb`、
-`YouTubeHarvester_1.1.2_source.tar.gz` 和 `SHA256SUMS-linux.txt`。
+Linux：`YouTubeHarvester_1.1.3_linux_all.deb`、
+`YouTubeHarvester_1.1.3_source.tar.gz` 和 `SHA256SUMS-linux.txt`。
 
-Windows：`YouTubeHarvester_1.1.2_windows_setup.exe`、
-`YouTubeHarvester_1.1.2_windows_x64.msi`、
-`YouTubeHarvester_1.1.2_windows_portable.zip` 和 `SHA256SUMS-windows.txt`。
+Windows：`YouTubeHarvester_1.1.3_windows_setup.exe`、
+`YouTubeHarvester_1.1.3_windows_x64.msi`、
+`YouTubeHarvester_1.1.3_windows_portable.zip` 和 `SHA256SUMS-windows.txt`。
 
 Windows 版本已经包含 `yt-dlp`、`ffmpeg.exe`、`ffprobe.exe` 和 `deno.exe`。
 
 ## Linux 安装
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.2_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.3_linux_all.deb
 yt-harvester
 ```
 
@@ -134,13 +140,14 @@ py -3 -m venv .venv
 ```bash
 yt-harvester
 yt-harvester --quick-download
+yt-harvester --show-main
 yt-harvester --start-tray
 yt-harvester --start-window
 yt-harvester --start-both
 ```
 
-`--quick-download` 打开快速下载，并将请求交给已经运行的实例。其他参数用于选择
-托盘、任务栏或两者同时显示。内部参数为 `--run-yt-dlp ...` 和
+`--quick-download` 打开快速下载，并将请求交给已经运行的实例。`--show-main`
+显示该实例的主窗口。其他参数用于选择托盘、任务栏或两者同时显示。内部参数为 `--run-yt-dlp ...` 和
 `--run-script <script.py> ...`。
 
 ## 快速下载、X11 与 Wayland
@@ -174,12 +181,12 @@ PROXY_URL=127.0.0.1:9050
 ## 构建发布版本
 
 ```bash
-packaging/build_release.sh 1.1.2 1.1.2
+packaging/build_release.sh 1.1.3 1.1.3
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.2 -MsiVersion 1.1.2
+  -Version 1.1.3 -MsiVersion 1.1.3
 ```
 
 ## 负责任地使用

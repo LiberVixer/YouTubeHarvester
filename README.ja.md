@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.2
+# YouTube Harvester 1.1.3
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="YouTube Harvester ロゴ" width="128">
@@ -8,6 +8,7 @@
   <a href="README.md">🇺🇸 🇬🇧 English</a> ·
   <a href="README.ru.md">🇷🇺 Русский</a> ·
   <a href="README.uk.md">🇺🇦 Українська</a> ·
+  <a href="README.be.md">🇧🇾 Беларуская</a> ·
   <a href="README.fr.md">🇫🇷 Français</a> ·
   <a href="README.es.md">🇪🇸 Español</a> ·
   <a href="README.hi.md">🇮🇳 हिन्दी</a> ·
@@ -27,6 +28,11 @@
 > 別の版として管理し、一部の字幕取得に失敗してもダウンロードを継続します。
 > 日本語インターフェースも追加されました。
 
+> **UPD 3:** バージョン 1.1.3 では、GitHub の公式 Release から取得して
+> 検証するアプリ更新、完全なベラルーシ語 UI とドキュメントを追加しました。
+> 内蔵ダウンローダーは `yt-dlp 2026.08.19` に更新され、YouTube の一時的な
+> HTTP 403 エラーからの復旧も強化されています。
+
 ![YouTube Harvester 概要](docs/screenshots/ja/overview.png)
 
 ## 概要
@@ -36,7 +42,7 @@
 対応し、ローカルアーカイブ、ダウンロードレポート、Telegram への通知やファイル
 送信を利用できます。
 
-バージョン `1.1.2` は Linux と Windows の両方で Python ダウンローダーを
+バージョン `1.1.3` は Linux と Windows の両方で Python ダウンローダーを
 使用します。旧 Bash エンジンは、無効化されたレガシーコードとしてのみソースに
 残されています。
 
@@ -61,14 +67,16 @@
 - 種別、チャンネル、タイトル、日時、YouTube リンク、ローカルファイル、保存先、
   レコード削除を備えたダウンロードアーカイブ。
 - 「すべて」「重要」「エラー」で絞り込めるログビューアー。
-- `yt-dlp` のバージョン確認と、OS、X11/Wayland、トレイ、ホットキー、ツール、
+- インストール版、ポータブル版、Linux パッケージで利用できる、GitHub 公式
+  Release からの検証済みアプリ更新。
+- 画面からの安全な `yt-dlp` 確認・更新と、OS、X11/Wayland、トレイ、ホットキー、ツール、
   パス、キャッシュ、書き込み権限、空き容量の診断。
 - ダーク、ライト、システムテーマ。
 - システムトレイのみ、タスクバーのみ、トレイとタスクバーの両方という起動方式。
 - 安全な停止、保護された一時ファイル削除、Windows 対応ファイル名、Windows の
   ログとアーカイブでの UTF-8 処理。
-- 英語を既定とし、ロシア語、ウクライナ語、フランス語、スペイン語、ヒンディー語、
-  中国語、日本語、アラビア語に対応。
+- 英語を既定とし、ロシア語、ウクライナ語、ベラルーシ語、フランス語、
+  スペイン語、ヒンディー語、中国語、日本語、アラビア語に対応。
 
 ## スクリーンショット
 
@@ -88,15 +96,15 @@
 
 Linux:
 
-- `YouTubeHarvester_1.1.2_linux_all.deb`
-- `YouTubeHarvester_1.1.2_source.tar.gz`
+- `YouTubeHarvester_1.1.3_linux_all.deb`
+- `YouTubeHarvester_1.1.3_source.tar.gz`
 - `SHA256SUMS-linux.txt`
 
 Windows:
 
-- `YouTubeHarvester_1.1.2_windows_setup.exe` - 通常のインストーラー。
-- `YouTubeHarvester_1.1.2_windows_x64.msi` - x64 MSI パッケージ。
-- `YouTubeHarvester_1.1.2_windows_portable.zip` - ポータブル版。
+- `YouTubeHarvester_1.1.3_windows_setup.exe` - 通常のインストーラー。
+- `YouTubeHarvester_1.1.3_windows_x64.msi` - x64 MSI パッケージ。
+- `YouTubeHarvester_1.1.3_windows_portable.zip` - ポータブル版。
 - `SHA256SUMS-windows.txt`
 
 Windows パッケージには `yt-dlp`、`ffmpeg.exe`、`ffprobe.exe`、`deno.exe` が
@@ -105,7 +113,7 @@ Windows パッケージには `yt-dlp`、`ffmpeg.exe`、`ffprobe.exe`、`deno.ex
 ## Linux へのインストール
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.2_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.3_linux_all.deb
 ```
 
 アプリケーションメニューから起動するか、次を実行します。
@@ -163,6 +171,7 @@ py -3 -m venv .venv
 ```bash
 yt-harvester
 yt-harvester --quick-download
+yt-harvester --show-main
 yt-harvester --start-tray
 yt-harvester --start-window
 yt-harvester --start-both
@@ -170,6 +179,7 @@ yt-harvester --start-both
 
 - `--quick-download`: クイックダウンロードを開きます。すでに別のインスタンスが
   起動している場合は、そちらへ要求を渡します。
+- `--show-main`: 実行中のインスタンスのメインウィンドウを表示します。
 - `--start-tray`: タスクバーにウィンドウを出さず、システムトレイで起動します。
 - `--start-window`: 通常のタスクバーウィンドウとして起動します。
 - `--start-both`: トレイとタスクバーの両方を有効にします。
@@ -229,14 +239,14 @@ PROXY_URL=127.0.0.1:9050
 Linux 用成果物:
 
 ```bash
-packaging/build_release.sh 1.1.2 1.1.2
+packaging/build_release.sh 1.1.3 1.1.3
 ```
 
 Windows 上で Windows 用成果物を作成:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.2 -MsiVersion 1.1.2
+  -Version 1.1.3 -MsiVersion 1.1.3
 ```
 
 GitHub Actions は `v*` に一致するタグから Linux と Windows の成果物を作成します。

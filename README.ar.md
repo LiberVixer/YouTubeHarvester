@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.2
+# YouTube Harvester 1.1.3
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="شعار YouTube Harvester" width="128">
@@ -8,6 +8,7 @@
   <a href="README.md">🇺🇸 🇬🇧 English</a> ·
   <a href="README.ru.md">🇷🇺 Русский</a> ·
   <a href="README.uk.md">🇺🇦 Українська</a> ·
+  <a href="README.be.md">🇧🇾 Беларуская</a> ·
   <a href="README.fr.md">🇫🇷 Français</a> ·
   <a href="README.es.md">🇪🇸 Español</a> ·
   <a href="README.hi.md">🇮🇳 हिन्दी</a> ·
@@ -25,6 +26,10 @@
 > ويميّز الأرشيف النسخ حسب الجودة والمسارات، ولا يؤدي فشل مسار ترجمة واحد إلى
 > إلغاء التنزيل، كما أضيفت ترجمة يابانية كاملة للواجهة.
 
+> **UPD 3:** يضيف الإصدار 1.1.3 تحديثًا موثوقًا للتطبيق من إصدارات GitHub
+> الرسمية، وترجمة ووثائق بيلاروسية كاملة، ويحدّث أداة التنزيل المدمجة إلى
+> `yt-dlp 2026.08.19` مع استرداد أفضل من أخطاء YouTube المؤقتة HTTP 403.
+
 ![نظرة عامة على YouTube Harvester](docs/screenshots/ar/overview.png)
 
 ## نبذة عن البرنامج
@@ -34,7 +39,7 @@
 والاحتفاظ بأرشيف محلي، وعرض تقارير التنزيل، وإرسال الإشعارات أو الملفات إلى
 Telegram.
 
-يستخدم الإصدار `1.1.2` محرك Python على Linux وWindows. بقي محرك Bash القديم في
+يستخدم الإصدار `1.1.3` محرك Python على Linux وWindows. بقي محرك Bash القديم في
 المصدر فقط كشيفرة قديمة معطلة.
 
 ## الميزات الرئيسية
@@ -56,14 +61,15 @@ Telegram.
 - أرشيف مفصل يضم النوع والقناة والعنوان والتاريخ ورابط YouTube ونسخ الجودة
   والمسارات والملف المحلي والمجلد وحذف السجل.
 - سجلات بمرشحات الكل والمهم والأخطاء.
-- فحص إصدار `yt-dlp` وتشخيص النظام وX11/Wayland وعلبة النظام والاختصار والأدوات
+- تحديث موثوق للتطبيق من إصدارات GitHub الرسمية للنسخ المثبتة والمحمولة وحزم Linux.
+- فحص `yt-dlp` وتحديثه بأمان من الواجهة، مع تشخيص النظام وX11/Wayland وعلبة النظام والاختصار والأدوات
   والمسارات والذاكرة المؤقتة وإذن الكتابة ومساحة القرص.
 - سمات داكنة وفاتحة ومطابقة للنظام.
 - بدء التشغيل في علبة النظام فقط، أو شريط المهام فقط، أو كليهما.
 - إيقاف آمن وتنظيف محمي للملفات المؤقتة وأسماء آمنة لـWindows ومعالجة UTF-8
   الصحيحة في سجلات وأرشيف Windows.
-- الإنجليزية افتراضيًا، مع الروسية والأوكرانية والفرنسية والإسبانية والهندية
-  والصينية واليابانية والعربية.
+- الإنجليزية افتراضيًا، مع الروسية والأوكرانية والبيلاروسية والفرنسية
+  والإسبانية والهندية والصينية واليابانية والعربية.
 
 ## لقطات الشاشة
 
@@ -80,19 +86,19 @@ Telegram.
 تُنشر الحزم في
 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases).
 
-Linux: `YouTubeHarvester_1.1.2_linux_all.deb` و
-`YouTubeHarvester_1.1.2_source.tar.gz` و`SHA256SUMS-linux.txt`.
+Linux: `YouTubeHarvester_1.1.3_linux_all.deb` و
+`YouTubeHarvester_1.1.3_source.tar.gz` و`SHA256SUMS-linux.txt`.
 
-Windows: `YouTubeHarvester_1.1.2_windows_setup.exe` و
-`YouTubeHarvester_1.1.2_windows_x64.msi` و
-`YouTubeHarvester_1.1.2_windows_portable.zip` و`SHA256SUMS-windows.txt`.
+Windows: `YouTubeHarvester_1.1.3_windows_setup.exe` و
+`YouTubeHarvester_1.1.3_windows_x64.msi` و
+`YouTubeHarvester_1.1.3_windows_portable.zip` و`SHA256SUMS-windows.txt`.
 
 تتضمن حزم Windows الأدوات `yt-dlp` و`ffmpeg.exe` و`ffprobe.exe` و`deno.exe`.
 
 ## التثبيت على Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.2_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.3_linux_all.deb
 yt-harvester
 ```
 
@@ -138,13 +144,15 @@ py -3 -m venv .venv
 ```bash
 yt-harvester
 yt-harvester --quick-download
+yt-harvester --show-main
 yt-harvester --start-tray
 yt-harvester --start-window
 yt-harvester --start-both
 ```
 
 يفتح `--quick-download` نافذة التنزيل السريع ويمرر الطلب إلى النسخة العاملة.
-تحدد الخيارات الأخرى علبة النظام أو شريط المهام أو كليهما. الخيارات الداخلية:
+يعرض `--show-main` النافذة الرئيسية لتلك النسخة. تحدد الخيارات الأخرى علبة
+النظام أو شريط المهام أو كليهما. الخيارات الداخلية:
 `--run-yt-dlp ...` و`--run-script <script.py> ...`.
 
 ## التنزيل السريع وX11 وWayland
@@ -179,12 +187,12 @@ PROXY_URL=127.0.0.1:9050
 ## بناء الإصدار
 
 ```bash
-packaging/build_release.sh 1.1.2 1.1.2
+packaging/build_release.sh 1.1.3 1.1.3
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.2 -MsiVersion 1.1.2
+  -Version 1.1.3 -MsiVersion 1.1.3
 ```
 
 ## الاستخدام المسؤول

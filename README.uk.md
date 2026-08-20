@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.2
+# YouTube Harvester 1.1.3
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="Логотип YouTube Harvester" width="128">
@@ -8,6 +8,7 @@
   <a href="README.md">🇺🇸 🇬🇧 English</a> ·
   <a href="README.ru.md">🇷🇺 Русский</a> ·
   <a href="README.uk.md">🇺🇦 Українська</a> ·
+  <a href="README.be.md">🇧🇾 Беларуская</a> ·
   <a href="README.fr.md">🇫🇷 Français</a> ·
   <a href="README.es.md">🇪🇸 Español</a> ·
   <a href="README.hi.md">🇮🇳 हिन्दी</a> ·
@@ -27,6 +28,11 @@
 > помилки окремих субтитрів не скасовують завантаження, додано повну японську
 > локалізацію.
 
+> **UPD 3:** Версія 1.1.3 додає перевірене оновлення програми з офіційних
+> релізів GitHub, повну білоруську локалізацію та документацію, а вбудований
+> завантажувач оновлено до `yt-dlp 2026.08.19` із надійнішим відновленням після
+> тимчасових помилок YouTube HTTP 403.
+
 ![Огляд YouTube Harvester](docs/screenshots/uk/overview.png)
 
 ## Що робить програма
@@ -36,7 +42,7 @@
 посилання, вести локальний архів, переглядати звіти та надсилати сповіщення або
 файли до Telegram.
 
-Версія `1.1.2` використовує Python-рушій у Linux і Windows. Старий Bash-рушій
+Версія `1.1.3` використовує Python-рушій у Linux і Windows. Старий Bash-рушій
 залишено у вихідному коді лише як вимкнений застарілий компонент.
 
 ## Основні можливості
@@ -61,14 +67,16 @@
 - Докладний архів із типом, каналом, назвою, датою, посиланням YouTube,
   варіантами якості й доріжок, локальним файлом, папкою та видаленням записів.
 - Журнали з фільтрами «Усе», «Важливе» та «Помилки».
-- Перевірка версії `yt-dlp` і діагностика ОС, X11/Wayland, трея, гарячої
+- Перевірене оновлення самої програми з офіційних релізів GitHub для
+  встановленої, портативної та Linux-версії.
+- Безпечна перевірка й оновлення `yt-dlp` з інтерфейсу, діагностика ОС, X11/Wayland, трея, гарячої
   клавіші, інструментів, шляхів, кешу, доступу до запису та вільного місця.
 - Темна, світла й системна теми.
 - Запуск лише в системному треї, лише на панелі завдань або в обох місцях.
 - М'яка зупинка, захищене очищення тимчасових файлів, безпечні імена Windows і
   коректний UTF-8 у журналах та архіві.
-- Англійська мова типово; також доступні російська, українська, французька,
-  іспанська, гінді, китайська, японська та арабська.
+- Англійська мова типово; також доступні російська, українська, білоруська,
+  французька, іспанська, гінді, китайська, японська та арабська.
 
 ## Знімки екрана
 
@@ -85,19 +93,19 @@
 Файли публікуються в
 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases).
 
-Linux: `YouTubeHarvester_1.1.2_linux_all.deb`,
-`YouTubeHarvester_1.1.2_source.tar.gz` і `SHA256SUMS-linux.txt`.
+Linux: `YouTubeHarvester_1.1.3_linux_all.deb`,
+`YouTubeHarvester_1.1.3_source.tar.gz` і `SHA256SUMS-linux.txt`.
 
-Windows: `YouTubeHarvester_1.1.2_windows_setup.exe`,
-`YouTubeHarvester_1.1.2_windows_x64.msi`,
-`YouTubeHarvester_1.1.2_windows_portable.zip` і `SHA256SUMS-windows.txt`.
+Windows: `YouTubeHarvester_1.1.3_windows_setup.exe`,
+`YouTubeHarvester_1.1.3_windows_x64.msi`,
+`YouTubeHarvester_1.1.3_windows_portable.zip` і `SHA256SUMS-windows.txt`.
 
 Windows-збірки вже містять `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` і `deno.exe`.
 
 ## Встановлення в Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.2_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.1.3_linux_all.deb
 yt-harvester
 ```
 
@@ -144,13 +152,15 @@ py -3 -m venv .venv
 ```bash
 yt-harvester
 yt-harvester --quick-download
+yt-harvester --show-main
 yt-harvester --start-tray
 yt-harvester --start-window
 yt-harvester --start-both
 ```
 
 `--quick-download` відкриває швидке завантаження й передає запит уже запущеному
-екземпляру. Інші параметри вибирають трей, панель завдань або обидва режими.
+екземпляру. `--show-main` показує його головне вікно. Інші параметри вибирають
+трей, панель завдань або обидва режими.
 Службові параметри збірки: `--run-yt-dlp ...` і
 `--run-script <script.py> ...`.
 
@@ -186,12 +196,12 @@ PROXY_URL=127.0.0.1:9050
 ## Збирання релізу
 
 ```bash
-packaging/build_release.sh 1.1.2 1.1.2
+packaging/build_release.sh 1.1.3 1.1.3
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.2 -MsiVersion 1.1.2
+  -Version 1.1.3 -MsiVersion 1.1.3
 ```
 
 ## Відповідальне використання
