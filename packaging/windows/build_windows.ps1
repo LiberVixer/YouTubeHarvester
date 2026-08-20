@@ -69,7 +69,12 @@ function Get-RemoteSha256 {
     param([string]$Url)
 
     $response = Invoke-WebRequestWithRetry $Url
-    $match = [regex]::Match([string]$response.Content, "(?i)\b[0-9a-f]{64}\b")
+    $content = if ($response.Content -is [byte[]]) {
+        [System.Text.Encoding]::UTF8.GetString([byte[]]$response.Content)
+    } else {
+        [string]$response.Content
+    }
+    $match = [regex]::Match($content, "(?i)\b[0-9a-f]{64}\b")
     if (-not $match.Success) {
         throw "Could not read SHA-256 from: $Url"
     }
