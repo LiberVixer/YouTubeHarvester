@@ -22,6 +22,7 @@ import ast
 import math
 import random
 from pathlib import Path
+import urllib.parse
 import urllib.request
 import html
 import tempfile
@@ -76,11 +77,19 @@ import glob
 from yth_common import (
     SingleInstanceLock,
     archive_entry_file_exists,
+    archive_entry_media_id,
     archive_entry_matches_variant,
+    archive_entry_source,
+    archive_entry_source_url,
+    extract_media_id,
     extract_video_id,
     fix_mojibake,
+    looks_like_supported_media_url,
     looks_like_youtube_url,
+    media_key,
     media_resolution_from_path,
+    media_source_from_url,
+    normalize_media_source,
     normalize_text_value,
     read_text_for_display,
     yt_dlp_command as common_yt_dlp_command,
@@ -710,7 +719,7 @@ PAID_CONTENT_EMOJIS = {
 }
 
 APP_NAME = "YouTube Harvester"
-APP_VERSION = "1.1.3"
+APP_VERSION = "1.2.0-beta"
 APP_TITLE = f"{APP_NAME} {APP_VERSION}"
 APP_DESKTOP_FILE_NAME = "yt-harvester"
 APP_X11_CLASS = "YouTubeHarvester"
@@ -723,6 +732,72 @@ CACHE_PREVIEW_MAX_AGE_DAYS = 7
 CACHE_CHANNEL_MAX_AGE_DAYS = 90
 LAUNCHER_REQUEST_TTL_SECONDS = 30
 COMPLETION_EVENT_TTL_SECONDS = 300
+PREVIEW_IMAGE_MAX_BYTES = 12 * 1024 * 1024
+PREVIEW_IMAGE_TIMEOUT_SECONDS = 15
+
+
+def download_preview_image(
+    url: str,
+    target: str | Path,
+    *,
+    max_bytes: int = PREVIEW_IMAGE_MAX_BYTES,
+    timeout: int = PREVIEW_IMAGE_TIMEOUT_SECONDS,
+) -> str:
+    """Download a bounded HTTP(S) image to the cache using an atomic replace."""
+    parsed = urllib.parse.urlsplit(str(url or "").strip())
+    if parsed.scheme.lower() not in {"http", "https"} or not parsed.hostname:
+        raise ValueError("preview URL must use HTTP or HTTPS")
+    if parsed.username is not None or parsed.password is not None:
+        raise ValueError("preview URL must not contain credentials")
+    if max_bytes <= 0:
+        raise ValueError("preview size limit must be positive")
+
+    target_path = Path(target)
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    request = urllib.request.Request(
+        parsed.geturl(),
+        headers={"User-Agent": f"{APP_NAME}/{APP_VERSION} preview"},
+    )
+    temporary_path = None
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:  # nosec B310
+            final_url = urllib.parse.urlsplit(response.geturl())
+            if final_url.scheme.lower() not in {"http", "https"} or not final_url.hostname:
+                raise ValueError("preview redirect left HTTP(S)")
+            declared_size = response.headers.get("Content-Length")
+            if declared_size:
+                try:
+                    parsed_size = int(declared_size)
+                except ValueError:
+                    parsed_size = None
+                if parsed_size is not None and parsed_size > max_bytes:
+                    raise ValueError("preview image is too large")
+
+            with tempfile.NamedTemporaryFile(
+                mode="wb",
+                prefix=f".{target_path.name}.",
+                suffix=".part",
+                dir=target_path.parent,
+                delete=False,
+            ) as output:
+                temporary_path = Path(output.name)
+                downloaded = 0
+                while True:
+                    chunk = response.read(min(256 * 1024, max_bytes - downloaded + 1))
+                    if not chunk:
+                        break
+                    output.write(chunk)
+                    downloaded += len(chunk)
+                    if downloaded > max_bytes:
+                        raise ValueError("preview image is too large")
+        if not temporary_path or temporary_path.stat().st_size == 0:
+            raise ValueError("preview image is empty")
+        os.replace(temporary_path, target_path)
+        return str(target_path)
+    except Exception:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
+        raise
 
 RESOLUTION_OPTIONS = (
     ("480p", "480"),
@@ -803,8 +878,8 @@ I18N_EN = {
     "overview.run": "Run queue and channel check",
     "overview.stop_requested": "Stop already requested; the script will finish at a safe step",
     "overview.stop_soft": "Soft-stop after the current safe step",
-    "overview.add_queue_tip": "Add this YouTube video to the download queue",
-    "overview.download_tip": "Download this YouTube video now",
+    "overview.add_queue_tip": "Add this video to the download queue",
+    "overview.download_tip": "Download this video now",
     "overview.logo_tip": "YouTube Harvester logo",
     "overview.video_placeholder_tip": "Current video image or placeholder",
     "overview.channel": "Channel",
@@ -842,17 +917,17 @@ I18N_EN = {
     "download.waiting": "Waiting for download",
     "preview.loading": "Loading data...",
     "preview.thumbnail": "Thumbnail",
-    "preview.quick_wait": "Waiting for a YouTube link",
-    "preview.queue_wait": "Enter a YouTube video URL",
+    "preview.quick_wait": "Waiting for a YouTube, Rutube or VK link",
+    "preview.queue_wait": "Enter a YouTube, Rutube or VK video URL",
     "preview.error": "Error",
-    "preview.need_youtube": "A valid YouTube link is required",
+    "preview.need_youtube": "A valid YouTube, Rutube or VK video link is required",
     "preview.reading": "Reading title and thumbnail...",
     "preview.ready_queue": "Ready to add to queue",
     "preview.channel": "Channel: {uploader}",
     "preview.no_title": "Untitled",
     "preview.failed": "Could not read video",
     "preview.failed_detail": "{message}\nYou can add the link to the queue without preview.",
-    "preview.clipboard_error": "Clipboard does not contain a valid YouTube link",
+    "preview.clipboard_error": "Clipboard does not contain a valid YouTube, Rutube or VK video link",
     "preview.in_archive": "Video is already in archive",
     "preview.variant_in_archive": "This video with the selected quality, audio and subtitles is already in archive",
     "preview.in_queue": "Video is already in queue",
@@ -889,7 +964,7 @@ I18N_EN = {
     "settings.behavior": "Behavior",
     "settings.quick_download": "📋 Quick download:",
     "settings.watch_clipboard": "Watch clipboard",
-    "settings.watch_clipboard_tip": "Open quick download when a YouTube link appears in the clipboard",
+    "settings.watch_clipboard_tip": "Open quick download when a YouTube, Rutube or VK video link appears in the clipboard",
     "settings.display_mode": "Show application",
     "settings.autostart": "🚀 Autostart",
     "settings.autostart_tip": "Start {app} when you sign in",
@@ -974,7 +1049,9 @@ I18N_EN = {
     "archive.date": "Date",
     "archive.quality": "Quality",
     "archive.refresh_tip": "Reload archive and check files",
-    "archive.youtube_tip": "Open selected video on YouTube",
+    "archive.youtube_tip": "Open the selected video at its source",
+    "archive.source": "Source",
+    "archive.source_tip": "Open the selected video at its source",
     "archive.file": "🎬 File",
     "archive.file_tip": "Open selected video from disk",
     "archive.folder": "📁 Folder",
@@ -984,7 +1061,8 @@ I18N_EN = {
     "archive.file_exists": "File exists on disk",
     "archive.file_missing": "File not found on disk",
     "archive.select_entry": "Select a table entry",
-    "archive.no_youtube": "This entry has no YouTube link",
+    "archive.no_youtube": "This entry has no source link",
+    "archive.no_source": "This entry has no source link",
     "archive.no_channel": "This entry has no channel link",
     "archive.no_path": "This entry has no file path",
     "archive.not_found": "File not found on disk",
@@ -1118,8 +1196,8 @@ I18N_EN.update({
     "settings.system_notifications": "System notifications",
     "settings.system_notifications_tip": "Show a system notification after a video is saved and added to the archive",
     "notification.channel": "Channel: {channel}",
-    "placeholder.youtube_url": "YouTube URL",
-    "placeholder.video_url": "https://www.youtube.com/watch?v=...",
+    "placeholder.youtube_url": "Video URL (YouTube / Rutube / VK)",
+    "placeholder.video_url": "YouTube / Rutube / VK URL",
     "generic.script_not_found": "Script not found:\n{path}",
     "archive.migration_not_found": "Migration script not found:\n{path}",
     "archive.migration_run_failed": "Could not run migration:\n{error}",
@@ -2513,14 +2591,18 @@ class TrayLauncher:
         self.refresh_window_taskbar_mode()
         return effective_mode
 
-    def extract_youtube_url_from_text(self, text: str):
-        for match in re.finditer(r"https?://(?:www\.|m\.)?(?:youtube\.com|youtu\.be)/[^\s<>'\"]+", str(text or "")):
+    def extract_media_url_from_text(self, text: str):
+        for match in re.finditer(r"https?://[^\s<>'\"]+", str(text or "")):
             candidate = match.group(0).rstrip(").,;]")
             if candidate.startswith("http://"):
                 candidate = "https://" + candidate[7:]
-            if candidate.startswith(("https://www.youtube.com/", "https://youtube.com/", "https://m.youtube.com/", "https://youtu.be/")):
+            if looks_like_supported_media_url(candidate):
                 return candidate
         return ""
+
+    def extract_youtube_url_from_text(self, text: str):
+        candidate = self.extract_media_url_from_text(text)
+        return candidate if media_source_from_url(candidate) == "youtube" else ""
 
     def on_clipboard_changed(self):
         if not getattr(self, "clipboard_watch_enabled", False):
@@ -2572,7 +2654,7 @@ class TrayLauncher:
         if not getattr(self, "clipboard_watch_enabled", False):
             return
         text = self.clipboard_text()
-        url = self.extract_youtube_url_from_text(text)
+        url = self.extract_media_url_from_text(text)
         if not url:
             self.clipboard_last_url = ""
             return
@@ -3537,6 +3619,10 @@ class ArchiveWindow(QMainWindow):
         "streams": "●",
         "queue": "📥",
     }
+    SOURCE_SYMBOLS = {
+        "vk": ("Ⓥ", "VK"),
+        "rutube": ("Ⓡ", "Rutube"),
+    }
 
     def __init__(self, launcher: TrayLauncher, parent=None):
         super().__init__(parent)
@@ -3561,9 +3647,9 @@ class ArchiveWindow(QMainWindow):
         self.refresh_button = QPushButton("🔄 " + self.tr("button.refresh"))
         self.refresh_button.setToolTip(self.tr("archive.refresh_tip"))
         self.refresh_button.clicked.connect(self.refresh)
-        self.youtube_button = QPushButton("▶ YouTube")
-        self.youtube_button.setToolTip(self.tr("archive.youtube_tip"))
-        self.youtube_button.clicked.connect(self.open_selected_youtube)
+        self.youtube_button = QPushButton("🌐 " + self.tr("archive.source"))
+        self.youtube_button.setToolTip(self.tr("archive.source_tip"))
+        self.youtube_button.clicked.connect(self.open_selected_source)
         self.file_button = QPushButton(self.tr("archive.file"))
         self.file_button.setToolTip(self.tr("archive.file_tip"))
         self.file_button.clicked.connect(self.open_selected_file)
@@ -3600,11 +3686,12 @@ class ArchiveWindow(QMainWindow):
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(2, QHeaderView.Interactive)
         header.setSectionResizeMode(3, QHeaderView.Stretch)
         header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(5, QHeaderView.Interactive)
         header.setSectionResizeMode(6, QHeaderView.ResizeToContents)
+        header.sectionResized.connect(self.limit_archive_column_width)
         layout.addWidget(self.table, 1)
 
         self.setCentralWidget(central)
@@ -3618,8 +3705,9 @@ class ArchiveWindow(QMainWindow):
         if hasattr(self, "archive_title_label"):
             self.archive_title_label.setText(self.tr("archive.heading"))
             self.refresh_button.setText("🔄 " + self.tr("button.refresh"))
+            self.youtube_button.setText("🌐 " + self.tr("archive.source"))
             self.refresh_button.setToolTip(self.tr("archive.refresh_tip"))
-            self.youtube_button.setToolTip(self.tr("archive.youtube_tip"))
+            self.youtube_button.setToolTip(self.tr("archive.source_tip"))
             self.file_button.setText(self.tr("archive.file"))
             self.file_button.setToolTip(self.tr("archive.file_tip"))
             self.folder_button.setText(self.tr("archive.folder"))
@@ -3688,7 +3776,19 @@ class ArchiveWindow(QMainWindow):
         self.table.setSortingEnabled(False)
         for entry in entries:
             self.add_entry_row(entry)
+        self.fit_bounded_archive_columns()
         self.table.setSortingEnabled(False)
+
+    def fit_bounded_archive_columns(self):
+        for column, maximum in ((2, 160), (5, 155)):
+            self.table.resizeColumnToContents(column)
+            if self.table.columnWidth(column) > maximum:
+                self.table.setColumnWidth(column, maximum)
+
+    def limit_archive_column_width(self, logical_index: int, _old_size: int, new_size: int):
+        maximum = {2: 160, 5: 155}.get(logical_index)
+        if maximum is not None and new_size > maximum:
+            self.table.horizontalHeader().resizeSection(logical_index, maximum)
 
     def read_entries(self):
         path = self.launcher.archive_details_file
@@ -3736,8 +3836,10 @@ class ArchiveWindow(QMainWindow):
         self.table.setItem(row, 0, status_item)
 
         type_name = str(entry.get("type") or "").strip()
-        type_emoji = self.TYPE_EMOJIS.get(type_name, type_name)
-        video_id = str(entry.get("video_id") or "").strip()
+        source = archive_entry_source(entry)
+        source_symbol, source_name = self.SOURCE_SYMBOLS.get(source, ("", ""))
+        type_emoji = source_symbol or self.TYPE_EMOJIS.get(type_name, type_name)
+        video_id = archive_entry_media_id(entry)
         resolution = str(entry.get("resolution") or media_resolution_from_path(entry.get("filename") or entry.get("file_path"))).strip()
         quality_text = f"{resolution}p" if resolution.isdigit() else (resolution or "-")
         quality_tooltip = self.quality_tooltip(entry)
@@ -3753,7 +3855,8 @@ class ArchiveWindow(QMainWindow):
             display_value = value.strip() or "-"
             item = QTableWidgetItem(display_value)
             if col == 1:
-                item.setToolTip(self.type_label(type_name))
+                type_tooltip = self.type_label(type_name)
+                item.setToolTip(f"{source_name}\n{type_tooltip}" if source_name else type_tooltip)
             elif col == 4:
                 item.setToolTip(quality_tooltip)
             else:
@@ -3828,7 +3931,8 @@ class ArchiveWindow(QMainWindow):
         if not entry:
             return
 
-        video_id = str(entry.get("video_id") or "").strip()
+        source = archive_entry_source(entry)
+        video_id = archive_entry_media_id(entry)
         title = str(entry.get("title") or video_id or self.tr("archive.selected_entry")).strip()
         answer = QMessageBox.question(
             self,
@@ -3841,7 +3945,11 @@ class ArchiveWindow(QMainWindow):
             return
 
         details_removed = self.remove_from_details_archive(entry)
-        service_removed = 0 if self.details_archive_contains_video(video_id) else self.remove_from_service_archive(video_id)
+        service_removed = (
+            0
+            if self.details_archive_contains_video(source, video_id)
+            else self.remove_from_service_archive(source, video_id)
+        )
         self.refresh()
         parent = self.parent()
         if parent is not None and hasattr(parent, "refresh_overview"):
@@ -3876,21 +3984,27 @@ class ArchiveWindow(QMainWindow):
         path.write_text("\n".join(kept_lines).rstrip() + ("\n" if kept_lines else ""), encoding="utf-8")
         return removed
 
-    def details_archive_contains_video(self, video_id: str) -> bool:
-        if not video_id or not self.launcher.archive_details_file.exists():
+    def details_archive_contains_video(self, source: str, video_id: str) -> bool:
+        source = normalize_media_source(source)
+        if not source or not video_id or not self.launcher.archive_details_file.exists():
             return False
         for raw_line in read_text_for_display(self.launcher.archive_details_file).splitlines():
             try:
                 entry = json.loads(raw_line)
             except json.JSONDecodeError:
                 continue
-            if isinstance(entry, dict) and str(entry.get("video_id") or "").strip() == video_id:
+            if (
+                isinstance(entry, dict)
+                and archive_entry_source(entry) == source
+                and archive_entry_media_id(entry) == video_id
+            ):
                 return True
         return False
 
-    def remove_from_service_archive(self, video_id: str) -> int:
+    def remove_from_service_archive(self, source: str, video_id: str) -> int:
+        source = normalize_media_source(source)
         video_id = str(video_id or "").strip()
-        if not video_id or video_id == "unknown":
+        if not source or not video_id or video_id == "unknown":
             return 0
 
         path = self.launcher.archive_file
@@ -3900,7 +4014,8 @@ class ArchiveWindow(QMainWindow):
         removed = 0
         kept_lines = []
         for raw_line in read_text_for_display(path).splitlines():
-            if video_id in raw_line.split():
+            parts = raw_line.split()
+            if len(parts) >= 2 and normalize_media_source(parts[0]) == source and parts[1] == video_id:
                 removed += 1
             else:
                 kept_lines.append(raw_line)
@@ -3938,19 +4053,15 @@ class ArchiveWindow(QMainWindow):
         if existing_path is not None:
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(existing_path)))
             return
-        self.open_selected_youtube()
+        self.open_selected_source()
 
-    def open_selected_youtube(self):
+    def open_selected_source(self):
         entry = self.selected_entry()
         if not entry:
             return
-        url = str(entry.get("youtube_url") or "").strip()
+        url = archive_entry_source_url(entry)
         if not url:
-            video_id = str(entry.get("video_id") or "").strip()
-            if video_id and video_id != "unknown":
-                url = f"https://www.youtube.com/watch?v={video_id}"
-        if not url:
-            QMessageBox.information(self, self.tr("archive.title"), self.tr("archive.no_youtube"))
+            QMessageBox.information(self, self.tr("archive.title"), self.tr("archive.no_source"))
             return
         QDesktopServices.openUrl(QUrl(url))
 
@@ -4494,7 +4605,7 @@ class QuickDownloadDialog(QDialog):
         self._position_ready = False
         self.position_save_timer.stop()
         clipboard_text = (initial_url or self.launcher.clipboard_text()).strip()
-        clipboard_url = self.launcher.extract_youtube_url_from_text(clipboard_text) or clipboard_text
+        clipboard_url = self.launcher.extract_media_url_from_text(clipboard_text) or clipboard_text
         self.main_window.current_previews["quick"] = {}
         self.thumbnail_label.setPixmap(QPixmap())
         self.thumbnail_label.setText(self.main_window.tr("preview.thumbnail"))
@@ -4503,7 +4614,7 @@ class QuickDownloadDialog(QDialog):
         self.video_status_label.setText("")
         self.reset_media_options()
         self.select_resolution(self.launcher.quick_download_resolution)
-        if self.main_window._looks_like_youtube_url(clipboard_url):
+        if self.main_window._looks_like_media_url(clipboard_url):
             self.url_input.setText(clipboard_url)
             self.url_input.selectAll()
             self.main_window.schedule_video_preview("quick")
@@ -4521,7 +4632,7 @@ class QuickDownloadDialog(QDialog):
         self.activateWindow()
 
     def on_url_changed(self):
-        valid = self.main_window._looks_like_youtube_url(self.url_input.text().strip())
+        valid = self.main_window._looks_like_media_url(self.url_input.text().strip())
         self.update_actions(valid)
         self.main_window.schedule_video_preview("quick")
 
@@ -4628,8 +4739,8 @@ class MainWindow(QMainWindow):
 
         self.theme_corner = QWidget()
         self.theme_corner.setObjectName("themeCorner")
-        self.theme_corner.setFixedSize(32, 32)
-        theme_corner_layout = QVBoxLayout(self.theme_corner)
+        self.theme_corner.setFixedSize(64, 32)
+        theme_corner_layout = QHBoxLayout(self.theme_corner)
         theme_corner_layout.setContentsMargins(0, 1, 0, 0)
         theme_corner_layout.setSpacing(0)
         self.theme_button = QPushButton()
@@ -4638,6 +4749,12 @@ class MainWindow(QMainWindow):
         self._set_i18n(self.theme_button, "settings.theme_toggle", "toolTip")
         self.theme_button.clicked.connect(self.toggle_theme)
         theme_corner_layout.addWidget(self.theme_button)
+        self.close_button = QPushButton("✕")
+        self.close_button.setObjectName("closeButton")
+        self.close_button.setFixedSize(32, 32)
+        self._set_i18n(self.close_button, "dialog.close", "toolTip")
+        self.close_button.clicked.connect(self.close)
+        theme_corner_layout.addWidget(self.close_button)
         self.tabs.setCornerWidget(self.theme_corner, Qt.TopRightCorner)
 
         self._build_overview_tab()
@@ -6650,6 +6767,9 @@ class MainWindow(QMainWindow):
         else:
             self.theme_button.setText("☾")
             self.theme_button.setToolTip(self.tr("settings.theme_to_system"))
+        self.theme_button.setProperty("systemTheme", self.theme == "system")
+        self.theme_button.style().unpolish(self.theme_button)
+        self.theme_button.style().polish(self.theme_button)
 
         if effective_theme == "light":
             self.setStyleSheet("""
@@ -6758,19 +6878,28 @@ class MainWindow(QMainWindow):
                     margin: 0;
                     padding: 0;
                 }
-                QPushButton#themeButton {
+                QPushButton#themeButton, QPushButton#closeButton {
                     background: #eef2f6;
                     color: #17202a;
                     border: 1px solid #c7d0d9;
-                    border-right: none;
                     padding: 0;
                     margin: 0;
                     font-size: 22px;
                     font-weight: bold;
                     text-align: center;
                 }
+                QPushButton#themeButton {
+                    border-right: none;
+                }
+                QPushButton#themeButton[systemTheme="true"] {
+                    padding-bottom: 4px;
+                }
                 QPushButton#themeButton:hover {
                     background: #dfe8f1;
+                }
+                QPushButton#closeButton:hover {
+                    background: #e54b4b;
+                    color: #ffffff;
                 }
                 QLabel#overviewMetric {
                     font-family: "Noto Sans", "DejaVu Sans", "Noto Color Emoji", sans-serif;
@@ -7097,19 +7226,28 @@ class MainWindow(QMainWindow):
                     margin: 0;
                     padding: 0;
                 }
-                QPushButton#themeButton {
+                QPushButton#themeButton, QPushButton#closeButton {
                     background: #232a32;
                     color: #f0f4f8;
                     border: 1px solid #303844;
-                    border-right: none;
                     padding: 0;
                     margin: 0;
                     font-size: 22px;
                     font-weight: bold;
                     text-align: center;
                 }
+                QPushButton#themeButton {
+                    border-right: none;
+                }
+                QPushButton#themeButton[systemTheme="true"] {
+                    padding-bottom: 4px;
+                }
                 QPushButton#themeButton:hover {
                     background: #2d3540;
+                }
+                QPushButton#closeButton:hover {
+                    background: #c93b3b;
+                    color: #ffffff;
                 }
                 QLabel#overviewMetric {
                     font-family: "Noto Sans", "DejaVu Sans", "Noto Color Emoji", sans-serif;
@@ -7400,6 +7538,8 @@ class MainWindow(QMainWindow):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.DEVNULL,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=2,
                 check=False,
             )
@@ -7446,10 +7586,10 @@ class MainWindow(QMainWindow):
         widgets = self._preview_widgets("quick")
         preview = self.current_previews.get("quick", {})
         url = (preview.get("url") or widgets["input"].text()).strip()
-        if not self._looks_like_youtube_url(url):
+        if not self._looks_like_media_url(url):
             QMessageBox.warning(self, self.tr("quick.title"), self.tr("preview.need_youtube"))
             return False
-        video_id = (preview.get("video_id") or self.youtube_video_id_from_url(url)).strip()
+        source, video_id = self.media_identity(url, preview)
         telegram_notify = False
         resolution = self.launcher.quick_download_resolution
         audio_tracks = []
@@ -7469,6 +7609,7 @@ class MainWindow(QMainWindow):
             widgets["status"].setText(message)
             return False
         if video_id and self.archive_contains_variant(
+            source,
             video_id,
             resolution=resolution,
             audio_tracks=audio_tracks,
@@ -7491,15 +7632,15 @@ class MainWindow(QMainWindow):
         widgets = self._preview_widgets("overview")
         preview = self.current_previews.get("overview", {})
         url = (preview.get("url") or widgets["input"].text()).strip()
-        if not self._looks_like_youtube_url(url):
+        if not self._looks_like_media_url(url):
             QMessageBox.warning(self, self.tr("button.download"), self.tr("preview.need_youtube"))
             return False
 
         if self.launcher.is_running:
             return self.add_video_to_queue("overview", front=True)
 
-        video_id = (preview.get("video_id") or self.youtube_video_id_from_url(url)).strip()
-        if video_id and self.archive_contains_variant(video_id, resolution=self.launcher.max_resolution):
+        source, video_id = self.media_identity(url, preview)
+        if video_id and self.archive_contains_variant(source, video_id, resolution=self.launcher.max_resolution):
             QMessageBox.information(self, self.tr("button.download"), self.tr("preview.variant_in_archive"))
             widgets["status"].setText(self.tr("preview.variant_in_archive"))
             return False
@@ -8035,8 +8176,10 @@ class MainWindow(QMainWindow):
                 entry_day = downloaded_at[:10]
             if entry_day != today:
                 continue
-            video_id = str(entry.get("video_id") or "").strip()
-            unique_key = video_id or str(entry.get("file_path") or entry.get("youtube_url") or line)
+            video_id = archive_entry_media_id(entry)
+            unique_key = media_key(archive_entry_source(entry), video_id) or str(
+                entry.get("file_path") or entry.get("source_url") or entry.get("youtube_url") or line
+            )
             if unique_key in seen:
                 continue
             seen.add(unique_key)
@@ -9094,7 +9237,7 @@ class MainWindow(QMainWindow):
             elif thumbnail_url:
                 image_path = str(cache.with_suffix(".jpg"))
                 try:
-                    urllib.request.urlretrieve(thumbnail_url, image_path)
+                    download_preview_image(thumbnail_url, image_path)
                 except Exception:
                     image_path = ""
 
@@ -9255,7 +9398,7 @@ class MainWindow(QMainWindow):
         widgets["thumbnail"].setPixmap(QPixmap())
         widgets["thumbnail"].setText(self.tr("preview.thumbnail"))
         text = widgets["input"].text().strip()
-        valid = self._looks_like_youtube_url(text)
+        valid = self._looks_like_media_url(text)
         widgets["button"].setEnabled(valid)
         download_button = widgets.get("download_button")
         if download_button is not None:
@@ -9268,7 +9411,7 @@ class MainWindow(QMainWindow):
             self.preview_request_id += 1
             widgets["title"].setText(self.tr("preview.quick_wait") if context == "quick" else self.tr("preview.queue_wait"))
             return
-        if not self._looks_like_youtube_url(text):
+        if not self._looks_like_media_url(text):
             self.preview_timer.stop()
             self.preview_request_id += 1
             widgets["title"].setText(self.tr("preview.error") if context == "quick" else self.tr("preview.need_youtube"))
@@ -9283,7 +9426,7 @@ class MainWindow(QMainWindow):
         context = self.pending_preview_context
         widgets = self._preview_widgets(context)
         url = widgets["input"].text().strip()
-        if not self._looks_like_youtube_url(url):
+        if not self._looks_like_media_url(url):
             widgets["title"].setText(self.tr("preview.need_youtube"))
             widgets["status"].setText("")
             return
@@ -9298,8 +9441,9 @@ class MainWindow(QMainWindow):
 
     def _metadata_worker(self, request_id: int, context: str, url: str):
         try:
+            source_hint = media_source_from_url(url)
             attempts = [("", [])]
-            if context == "quick":
+            if context == "quick" and source_hint == "youtube":
                 attempts.insert(0, (
                     QUICK_AUDIO_PLAYER_CLIENT,
                     ["--extractor-args", f"youtube:player_client={QUICK_AUDIO_PLAYER_CLIENT}"],
@@ -9347,19 +9491,21 @@ class MainWindow(QMainWindow):
                 preview_dir.mkdir(parents=True, exist_ok=True)
                 thumbnail_path = str(preview_dir / f"ytd_preview_{request_id}.jpg")
                 try:
-                    urllib.request.urlretrieve(thumbnail_url, thumbnail_path)
+                    download_preview_image(thumbnail_url, thumbnail_path)
                 except Exception:
                     fallback_path = Path(tempfile.gettempdir()) / f"ytd_preview_{request_id}.jpg"
                     try:
-                        urllib.request.urlretrieve(thumbnail_url, str(fallback_path))
+                        download_preview_image(thumbnail_url, fallback_path)
                         thumbnail_path = str(fallback_path)
                     except Exception:
                         thumbnail_path = ""
 
+            extractor = str(data.get("extractor_key") or data.get("extractor") or "").strip()
+            source = normalize_media_source(extractor, data.get("webpage_url") or url) or source_hint
             channel_url = data.get("channel_url") or data.get("uploader_url") or ""
-            if not channel_url and data.get("channel_id"):
+            if source == "youtube" and not channel_url and data.get("channel_id"):
                 channel_url = f"https://www.youtube.com/channel/{data.get('channel_id')}"
-            if not channel_url and data.get("uploader_id"):
+            if source == "youtube" and not channel_url and data.get("uploader_id"):
                 uploader_id = str(data.get("uploader_id")).strip()
                 if uploader_id.startswith("@"):
                     channel_url = f"https://www.youtube.com/{uploader_id}"
@@ -9373,7 +9519,7 @@ class MainWindow(QMainWindow):
                 preview_dir.mkdir(parents=True, exist_ok=True)
                 channel_thumbnail_path = str(preview_dir / f"ytd_channel_{request_id}.jpg")
                 try:
-                    urllib.request.urlretrieve(channel_thumbnail_url, channel_thumbnail_path)
+                    download_preview_image(channel_thumbnail_url, channel_thumbnail_path)
                 except Exception:
                     channel_thumbnail_path = ""
 
@@ -9385,7 +9531,10 @@ class MainWindow(QMainWindow):
                 "request_id": request_id,
                 "context": context,
                 "url": data.get("webpage_url") or url,
-                "video_id": data.get("id") or self.youtube_video_id_from_url(url),
+                "source": source,
+                "extractor": extractor,
+                "media_id": str(data.get("id") or extract_media_id(url, source)).strip(),
+                "video_id": str(data.get("id") or extract_media_id(url, source)).strip(),
                 "title": data.get("title") or self.tr("preview.no_title"),
                 "uploader": data.get("uploader") or "",
                 "thumbnail_path": thumbnail_path,
@@ -9394,7 +9543,7 @@ class MainWindow(QMainWindow):
                 "audio_tracks": audio_tracks,
                 "subtitle_tracks": subtitle_track_options(data),
             })
-            if context == "quick" and not channel_thumbnail_path and channel_url:
+            if context == "quick" and source == "youtube" and not channel_thumbnail_path and channel_url:
                 loaded_path = self.fetch_quick_channel_logo(channel_url, request_id)
                 if loaded_path:
                     self.quick_channel_logo_loaded.emit({
@@ -9441,7 +9590,7 @@ class MainWindow(QMainWindow):
             cache.parent.mkdir(parents=True, exist_ok=True)
             cache.with_suffix(".json").write_text(json.dumps({"title": title}, ensure_ascii=False), encoding="utf-8")
             image_path = str(cached_image)
-            urllib.request.urlretrieve(thumbnail_url, image_path)
+            download_preview_image(thumbnail_url, image_path)
             return image_path
         except Exception:
             return ""
@@ -9452,9 +9601,13 @@ class MainWindow(QMainWindow):
         context = info.get("context") or self.preview_request_context
         widgets = self._preview_widgets(context)
         current_url = widgets["input"].text().strip()
-        current_id = self.youtube_video_id_from_url(current_url)
-        info_id = str(info.get("video_id") or self.youtube_video_id_from_url(info.get("url") or "")).strip()
-        if not current_url or (current_id and info_id and current_id != info_id):
+        current_source, current_id = self.media_identity(current_url)
+        info_source, info_id = self.media_identity(info.get("url") or current_url, info)
+        if not current_url or (
+            current_id
+            and info_id
+            and media_key(current_source, current_id) != media_key(info_source, info_id)
+        ):
             return
         self.current_previews[context] = info
         if context == "queue":
@@ -9494,12 +9647,12 @@ class MainWindow(QMainWindow):
         self.current_previews[context] = {}
         if context == "queue":
             self.current_preview = {}
-        widgets["button"].setEnabled(self._looks_like_youtube_url(widgets["input"].text().strip()))
+        widgets["button"].setEnabled(self._looks_like_media_url(widgets["input"].text().strip()))
         download_button = widgets.get("download_button")
         if download_button is not None:
             download_button.setEnabled(widgets["button"].isEnabled())
         if context == "quick" and self.quick_download_dialog is not None:
-            self.quick_download_dialog.update_actions(self._looks_like_youtube_url(widgets["input"].text().strip()))
+            self.quick_download_dialog.update_actions(self._looks_like_media_url(widgets["input"].text().strip()))
             self.quick_download_dialog.set_channel_logo("")
             self.quick_download_dialog.reset_media_options()
         widgets["title"].setText(self.tr("preview.failed"))
@@ -9509,28 +9662,36 @@ class MainWindow(QMainWindow):
         widgets = self._preview_widgets(context)
         preview = self.current_previews.get(context, {})
         url = (preview.get("url") or widgets["input"].text()).strip()
-        if not self._looks_like_youtube_url(url):
+        if not self._looks_like_media_url(url):
             if not quiet:
                 QMessageBox.warning(self, self.tr("tab.queue"), self.tr("preview.need_youtube"))
             return False
 
-        video_id = (preview.get("video_id") or self.youtube_video_id_from_url(url)).strip()
-        if video_id and self.archive_contains_video(video_id):
+        source, video_id = self.media_identity(url, preview)
+        if video_id and self.archive_contains_video(source, video_id):
             if not quiet:
                 QMessageBox.information(self, self.tr("tab.queue"), self.tr("preview.in_archive"))
             widgets["status"].setText(self.tr("preview.in_archive"))
             return False
 
         queued = self._read_queue()
-        queued_ids = {self.youtube_video_id_from_url(item) for item in queued}
-        if url in queued or (video_id and video_id in queued_ids):
+        queued_keys = {
+            media_key(media_source_from_url(item), extract_media_id(item))
+            for item in queued
+        }
+        current_key = media_key(source, video_id)
+        if url in queued or (current_key and current_key in queued_keys):
             if not front:
                 if not quiet:
                     QMessageBox.information(self, self.tr("tab.queue"), self.tr("preview.in_queue"))
                 return False
             queued = [
                 item for item in queued
-                if item != url and (not video_id or self.youtube_video_id_from_url(item) != video_id)
+                if item != url
+                and (
+                    not current_key
+                    or media_key(media_source_from_url(item), extract_media_id(item)) != current_key
+                )
             ]
 
         try:
@@ -9682,6 +9843,9 @@ class MainWindow(QMainWindow):
     def _looks_like_youtube_url(self, url: str):
         return looks_like_youtube_url(url)
 
+    def _looks_like_media_url(self, url: str):
+        return looks_like_supported_media_url(url)
+
     def _looks_like_youtube_channel_url(self, url: str):
         if not url.startswith(("https://www.youtube.com/", "https://youtube.com/")):
             return False
@@ -9690,22 +9854,39 @@ class MainWindow(QMainWindow):
     def youtube_video_id_from_url(self, url: str):
         return extract_video_id(url)
 
-    def archive_contains_video(self, video_id: str):
+    def media_identity(self, url: str, info: dict | None = None) -> tuple[str, str]:
+        info = info or {}
+        source = normalize_media_source(info.get("source") or info.get("extractor"), url)
+        media_id = str(info.get("media_id") or info.get("video_id") or "").strip()
+        if not media_id:
+            media_id = extract_media_id(url, source)
+        return source, media_id
+
+    def archive_contains_video(self, source: str, video_id: str):
+        source = normalize_media_source(source)
         video_id = str(video_id or "").strip()
-        if not video_id:
+        if not source or not video_id:
             return False
         try:
             if self.launcher.archive_file.exists():
                 for line in read_text_for_display(self.launcher.archive_file).splitlines():
-                    if video_id in line.split():
+                    parts = line.split()
+                    if len(parts) >= 2 and normalize_media_source(parts[0]) == source and parts[1] == video_id:
                         return True
         except Exception:
             pass
         try:
             if self.launcher.archive_details_file.exists():
-                needle = f'"video_id":"{video_id}"'
                 for line in read_text_for_display(self.launcher.archive_details_file).splitlines():
-                    if needle in line.replace(" ", ""):
+                    try:
+                        entry = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    if (
+                        isinstance(entry, dict)
+                        and archive_entry_source(entry) == source
+                        and archive_entry_media_id(entry) == video_id
+                    ):
                         return True
         except Exception:
             pass
@@ -9713,14 +9894,16 @@ class MainWindow(QMainWindow):
 
     def archive_contains_variant(
         self,
+        source: str,
         video_id: str,
         *,
         resolution: str,
         audio_tracks: list[dict] | None = None,
         subtitle_selections: list[str] | None = None,
     ) -> bool:
+        source = normalize_media_source(source)
         video_id = str(video_id or "").strip()
-        if not video_id or not self.launcher.archive_details_file.exists():
+        if not source or not video_id or not self.launcher.archive_details_file.exists():
             return False
         audio_tracks = audio_tracks or []
         subtitle_selections = subtitle_selections or []
@@ -9729,7 +9912,11 @@ class MainWindow(QMainWindow):
                 entry = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            if not isinstance(entry, dict) or str(entry.get("video_id") or "").strip() != video_id:
+            if (
+                not isinstance(entry, dict)
+                or archive_entry_source(entry) != source
+                or archive_entry_media_id(entry) != video_id
+            ):
                 continue
             if archive_entry_file_exists(entry) and archive_entry_matches_variant(
                 entry,

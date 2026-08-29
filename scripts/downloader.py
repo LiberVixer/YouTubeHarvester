@@ -30,10 +30,15 @@ if str(ROOT_DIR) not in sys.path:
 from yth_common import (  # noqa: E402
     SingleInstanceLock,
     archive_entry_file_exists,
+    archive_entry_media_id,
     archive_entry_matches_variant,
-    extract_video_id,
+    archive_entry_source,
+    canonical_media_url,
+    extract_media_id,
     fix_mojibake,
     media_resolution_from_path,
+    media_source_from_url,
+    normalize_media_source,
     positive_int,
     read_env_file,
     safe_print,
@@ -61,7 +66,7 @@ ISO_639_2_CODES = {
 }
 
 MEDIA_FILE_RE = re.compile(
-    r"^(?P<base>.*) \[(?P<video_id>[A-Za-z0-9_-]{11})\] "
+    r"^(?P<base>.*?) \[(?:(?P<source>[A-Za-z0-9_.:-]+)\] \[)?(?P<video_id>[^]]+)\] "
     r"\[(?P<type>videos|shorts|streams|queue)\] \[[^]]+\]\.mp4$"
 )
 
@@ -531,17 +536,23 @@ class Downloader:
             return False
         return not (isinstance(value, str) and value.strip().lower() in {"0", "false", "no", "off"})
 
-    def archive_has_video(self, video_id: str) -> bool:
-        if not video_id:
+    def archive_has_video(self, source: str, video_id: str) -> bool:
+        source = normalize_media_source(source)
+        video_id = str(video_id or "").strip()
+        if not source or not video_id:
             return False
         try:
-            if self.archive_file.exists() and video_id in self.archive_file.read_text(encoding="utf-8", errors="ignore"):
-                return True
+            if self.archive_file.exists():
+                for line in self.archive_file.read_text(encoding="utf-8", errors="ignore").splitlines():
+                    parts = line.split()
+                    if len(parts) >= 2 and normalize_media_source(parts[0]) == source and parts[1] == video_id:
+                        return True
         except OSError:
             pass
-        return self.archive_details_has_video(video_id)
+        return self.archive_details_has_video(source, video_id)
 
-    def archive_detail_entries(self, video_id: str = "") -> list[dict]:
+    def archive_detail_entries(self, source: str = "", video_id: str = "") -> list[dict]:
+        source = normalize_media_source(source)
         entries: list[dict] = []
         try:
             lines = self.archive_details_file.read_text(encoding="utf-8", errors="ignore").splitlines()
@@ -554,17 +565,20 @@ class Downloader:
                 continue
             if not isinstance(entry, dict):
                 continue
-            if video_id and str(entry.get("video_id") or "").strip() != video_id:
+            if source and archive_entry_source(entry) != source:
+                continue
+            if video_id and archive_entry_media_id(entry) != video_id:
                 continue
             entries.append(entry)
         return entries
 
-    def archive_details_has_video(self, video_id: str) -> bool:
-        if not video_id:
+    def archive_details_has_video(self, source: str, video_id: str) -> bool:
+        source = normalize_media_source(source)
+        if not source or not video_id:
             return False
-        return bool(self.archive_detail_entries(video_id))
+        return bool(self.archive_detail_entries(source, video_id))
 
-    def archive_details_has_variant(self, video_id: str) -> bool:
+    def archive_details_has_variant(self, source: str, video_id: str) -> bool:
         return any(
             archive_entry_file_exists(entry)
             and archive_entry_matches_variant(
@@ -574,37 +588,60 @@ class Downloader:
                 audio_languages=[str(track.get("language") or "") for track in self.audio_tracks],
                 subtitle_selections=self.subtitle_selections,
             )
-            for entry in self.archive_detail_entries(video_id)
+            for entry in self.archive_detail_entries(source, video_id)
         )
 
-    def ensure_video_in_archive(self, video_id: str) -> None:
-        if not video_id or video_id == "unknown":
+    def ensure_video_in_archive(self, source: str, video_id: str) -> None:
+        source = normalize_media_source(source)
+        if not source or not video_id or video_id == "unknown":
             return
         try:
             lines = self.archive_file.read_text(encoding="utf-8", errors="ignore").splitlines() if self.archive_file.exists() else []
-            if any(video_id in line.split() for line in lines):
+            if any(
+                len(parts := line.split()) >= 2
+                and normalize_media_source(parts[0]) == source
+                and parts[1] == video_id
+                for line in lines
+            ):
                 return
             self.archive_file.parent.mkdir(parents=True, exist_ok=True)
             with self.archive_file.open("a", encoding="utf-8") as archive:
-                archive.write(f"youtube {video_id}\n")
+                archive.write(f"{source} {video_id}\n")
         except OSError:
             pass
 
-    def remove_video_from_archive(self, video_id: str) -> None:
-        if not video_id or not self.archive_file.exists():
+    def remove_video_from_archive(self, source: str, video_id: str) -> None:
+        source = normalize_media_source(source)
+        if not source or not video_id or not self.archive_file.exists():
             return
-        if self.archive_details_has_video(video_id):
+        if self.archive_details_has_video(source, video_id):
             self.log(f"   ↩️ ID оставлен в архиве: сохранены другие варианты {video_id}")
             return
         try:
             lines = self.archive_file.read_text(encoding="utf-8", errors="ignore").splitlines()
-            kept = [line for line in lines if video_id not in line.split()]
+            kept = []
+            for line in lines:
+                parts = line.split()
+                if len(parts) >= 2 and normalize_media_source(parts[0]) == source and parts[1] == video_id:
+                    continue
+                kept.append(line)
             self.archive_file.write_text("\n".join(kept) + ("\n" if kept else ""), encoding="utf-8")
             self.log(f"   ↩️ Убран из архива для повтора: {video_id}")
         except OSError:
             pass
 
-    def append_archive_details(self, video_id: str, url: str, title: str, channel: str, channel_url: str, type_name: str, file_path: Path) -> bool:
+    def append_archive_details(
+        self,
+        source: str,
+        video_id: str,
+        url: str,
+        title: str,
+        channel: str,
+        channel_url: str,
+        type_name: str,
+        file_path: Path,
+    ) -> bool:
+        source = normalize_media_source(source, url)
         if video_id != "unknown":
             existing_lines: list[str] = []
             kept_lines: list[str] = []
@@ -621,7 +658,8 @@ class Downloader:
                     continue
                 matches = (
                     isinstance(existing, dict)
-                    and str(existing.get("video_id") or "").strip() == video_id
+                    and archive_entry_source(existing) == source
+                    and archive_entry_media_id(existing) == video_id
                     and archive_entry_matches_variant(
                         existing,
                         resolution=self.max_resolution,
@@ -647,8 +685,12 @@ class Downloader:
                 except OSError:
                     pass
         entry = {
+            "source": source,
+            "extractor": source,
+            "media_id": video_id,
             "video_id": video_id,
-            "youtube_url": url,
+            "source_url": url,
+            "youtube_url": url if source == "youtube" else "",
             "title": fix_mojibake(title),
             "channel_name": fix_mojibake(channel),
             "channel_url": channel_url,
@@ -675,6 +717,7 @@ class Downloader:
 
     def emit_completion_event(
         self,
+        source: str,
         video_id: str,
         title: str,
         channel: str,
@@ -694,6 +737,7 @@ class Downloader:
                 "event": "video-downloaded",
                 "event_id": event_id,
                 "created_at": created_at,
+                "source": normalize_media_source(source),
                 "video_id": str(video_id or "unknown")[:32],
                 "title": fix_mojibake(str(title or "").strip())[:180],
                 "channel": fix_mojibake(str(channel or "").strip())[:120],
@@ -801,7 +845,12 @@ class Downloader:
     def status_title_from_path(self, path: Path) -> str:
         basename = path.name.removesuffix(".part")
         basename = re.sub(r"\.f[0-9]+(\.[^.]+)$", r"\1", basename)
-        title = re.sub(r" \[[A-Za-z0-9_-]{11}\] \[(videos|shorts|streams|queue)\] \[[^]]+\]\.[^.]+$", "", basename)
+        title = re.sub(
+            r" \[(?:[A-Za-z0-9_.:-]+\] \[)?[^]]+\] "
+            r"\[(?:videos|shorts|streams|queue)\] \[[^]]+\]\.[^.]+$",
+            "",
+            basename,
+        )
         if " - " in title:
             title = title.rsplit(" - ", 1)[0]
         return title[:180]
@@ -941,8 +990,17 @@ class Downloader:
                         proc.wait(timeout=5)
             raise KeyboardInterrupt
 
-        assert proc.stdout is not None
-        for raw_line in proc.stdout:
+        output = proc.stdout
+        if output is None:
+            with contextlib.suppress(OSError):
+                proc.terminate()
+            self.last_yt_dlp_return_code = proc.wait()
+            if report_failure:
+                self.log("❌ Не удалось открыть поток вывода yt-dlp")
+                self.failed_count += 1
+            return lines
+
+        for raw_line in output:
             line = fix_mojibake(raw_line.rstrip("\n"))
             if item_completed is not None and PLAYLIST_ITEM_RE.match(line):
                 if playlist_item_started:
@@ -970,8 +1028,10 @@ class Downloader:
                         item_lines.append(line)
         return_code = proc.wait()
         self.last_yt_dlp_return_code = return_code
+        command_source = media_source_from_url(command[-1] if command else "")
         if (
             return_code != 0
+            and command_source == "youtube"
             and http_403_refresh_retries > 0
             and any(VIDEO_DATA_HTTP_403_RE.search(line) for line in lines)
         ):
@@ -1007,7 +1067,10 @@ class Downloader:
             elif report_failure:
                 self.failed_count += 1
                 if any(VIDEO_DATA_HTTP_403_RE.search(line) for line in lines):
-                    self.log("   ❌ YouTube отклонил медиапоток после повторных попыток (HTTP 403)")
+                    if command_source == "youtube":
+                        self.log("   ❌ YouTube отклонил медиапоток после повторных попыток (HTTP 403)")
+                    else:
+                        self.log("   ❌ Сервис отклонил медиапоток (HTTP 403)")
                 else:
                     self.log(f"   ❌ yt-dlp завершился с кодом {return_code}")
         if item_completed is not None:
@@ -1115,7 +1178,7 @@ class Downloader:
                 return collected_lines
 
             unavailable = ", ".join(sorted(failed_languages))
-            reason = "HTTP 429" if any("HTTP Error 429" in line for line in attempt_lines) else "ошибка YouTube"
+            reason = "HTTP 429" if any("HTTP Error 429" in line for line in attempt_lines) else "ошибка сервиса"
             self.log(f"   ⚠️ Субтитры {unavailable} недоступны ({reason}); повторяем без них")
             active_selections = remaining
             self.subtitle_selections = list(remaining)
@@ -1214,7 +1277,7 @@ class Downloader:
             ]
             audio_label = "+".join(audio_labels)
             if len(audio_label) > 48:
-                digest = hashlib.sha1("|".join(str(track.get("format_id") or "") for track in self.audio_tracks).encode("utf-8")).hexdigest()[:8]
+                digest = hashlib.sha256("|".join(str(track.get("format_id") or "") for track in self.audio_tracks).encode("utf-8")).hexdigest()[:8]
                 audio_label = f"{len(audio_labels)}-tracks-{digest}"
             tags.append(f"audio-{audio_label}")
         if self.subtitle_selections:
@@ -1225,13 +1288,25 @@ class Downloader:
                 subtitle_labels.append(f"auto-{safe_language}" if mode == "auto" else safe_language)
             subtitle_label = "+".join(subtitle_labels)
             if len(subtitle_label) > 56:
-                digest = hashlib.sha1("|".join(self.subtitle_selections).encode("utf-8")).hexdigest()[:8]
+                digest = hashlib.sha256("|".join(self.subtitle_selections).encode("utf-8")).hexdigest()[:8]
                 subtitle_label = f"{len(subtitle_labels)}-tracks-{digest}"
             tags.append(f"subs-{subtitle_label}")
         if not tags:
             return basename
         path = Path(basename)
         return f"{path.stem} {' '.join(f'[{tag}]' for tag in tags)}{path.suffix}"
+
+    @staticmethod
+    def final_basename_without_source(basename: str) -> str:
+        match = MEDIA_FILE_RE.match(basename)
+        if not match or not match.group("source"):
+            return basename
+        source_marker = f" [{match.group('source')}]"
+        suffix_marker = f" [{match.group('video_id')}] [{match.group('type')}]"
+        marker_index = basename.rfind(source_marker + suffix_marker)
+        if marker_index < 0:
+            return basename
+        return basename[:marker_index] + basename[marker_index + len(source_marker):]
 
     def short_final_basename(self, basename: str) -> str:
         if os.name != "nt":
@@ -1242,7 +1317,7 @@ class Downloader:
             return basename
         suffix = Path(basename).suffix
         stem = Path(basename).stem
-        digest = hashlib.sha1(basename.encode("utf-8", errors="replace")).hexdigest()[:8]
+        digest = hashlib.sha256(basename.encode("utf-8", errors="replace")).hexdigest()[:8]
         if budget <= len(suffix) + 12:
             return f"YTH_{digest}{suffix or '.mp4'}"
         keep = max(1, budget - len(suffix) - len(digest) - 1)
@@ -1268,6 +1343,7 @@ class Downloader:
         for file_path in files:
             source_basename = file_path.name
             match = MEDIA_FILE_RE.match(source_basename)
+            source = normalize_media_source(match.group("source") if match else "", channel_link)
             video_id = match.group("video_id") if match else "unknown"
             status_type = match.group("type") if match else "videos"
             base = match.group("base") if match else file_path.stem
@@ -1297,7 +1373,11 @@ class Downloader:
 
             self.log(f"   🔔 Найдено новое видео ({title})")
             self.log("   ⏬ Видео скачено")
-            video_url = f"https://www.youtube.com/watch?v={video_id}"
+            video_url = (
+                channel_link
+                if status_type == "queue" and media_source_from_url(channel_link)
+                else canonical_media_url(source, video_id, channel_link)
+            )
             post = (
                 f'{emoji} <a href="{html.escape(video_url, quote=True)}">{html.escape(title, quote=False)}</a>\n'
                 f'👤 <a href="{html.escape(channel_link, quote=True)}">{html.escape(uploader, quote=False)}</a>'
@@ -1316,17 +1396,19 @@ class Downloader:
             final_path = None
             try:
                 self.final_dir.mkdir(parents=True, exist_ok=True)
-                final_path = self.unique_final_path(self.variant_final_basename(source_basename))
+                final_basename = self.final_basename_without_source(source_basename)
+                final_path = self.unique_final_path(self.variant_final_basename(final_basename))
                 shutil.move(str(file_path), str(final_path))
             except Exception as exc:
                 self.log(f"   ❌ Видео не перемещено: {exc}")
                 self.failed_count += 1
-                self.remove_video_from_archive(video_id)
+                self.remove_video_from_archive(source, video_id)
 
             archive_recorded = False
             if final_path is not None:
-                self.ensure_video_in_archive(video_id)
+                self.ensure_video_in_archive(source, video_id)
                 archive_recorded = self.append_archive_details(
+                    source,
                     video_id,
                     video_url,
                     title,
@@ -1338,12 +1420,13 @@ class Downloader:
                 if not archive_recorded:
                     self.log(f"   ⚠️ Файл сохранён, но подробный архив не обновлён: {final_path}")
                     self.failed_count += 1
-                    self.remove_video_from_archive(video_id)
+                    self.remove_video_from_archive(source, video_id)
 
             if archive_recorded:
                 self.downloaded_counts[status_type] = self.downloaded_counts.get(status_type, 0) + 1
                 self.log(f"   ⚓ Видео перемещено: {final_path}")
                 self.emit_completion_event(
+                    source,
                     video_id,
                     title,
                     uploader,
@@ -1425,24 +1508,28 @@ class Downloader:
             self.write_status()
 
             self.log(f"📥 Очередь: {url}")
-            video_id = extract_video_id(url)
+            source = media_source_from_url(url)
+            video_id = extract_media_id(url, source)
             bypass_service_archive = False
             if video_id:
                 if allow_variants:
-                    if self.archive_details_has_variant(video_id):
+                    if self.archive_details_has_variant(source, video_id):
                         self.log(f"   🗃 Такой вариант уже есть в архиве, пропускаем: {video_id}")
                         self.state = "searching"
                         self.write_status()
                         continue
-                    bypass_service_archive = self.archive_has_video(video_id)
-                elif self.archive_has_video(video_id):
+                    bypass_service_archive = self.archive_has_video(source, video_id)
+                elif self.archive_has_video(source, video_id):
                     self.log(f"   🗃 Уже есть в архиве, пропускаем: {video_id}")
                     self.state = "searching"
                     self.write_status()
                     continue
 
             before = self.new_count
-            command = self.yt_dlp_base_command(str(self.temp_dir / "%(title).150s - %(uploader).80s [%(id)s] [queue] [%(height)sp].%(ext)s"))
+            command = self.yt_dlp_base_command(str(
+                self.temp_dir
+                / "%(title).150s - %(uploader).80s [%(extractor_key)s] [%(id)s] [queue] [%(height)sp].%(ext)s"
+            ))
             command.append("--no-playlist")
             if bypass_service_archive:
                 command.append("--no-download-archive")
@@ -1514,16 +1601,19 @@ class Downloader:
                 self.log(f"-{emoji} Ищем - {label}")
 
                 before = self.new_count
-                output_template = str(self.temp_dir / f"%(title).150s - %(uploader).80s [%(id)s] [{type_name}] [%(height)sp].%(ext)s")
+                output_template = str(
+                    self.temp_dir
+                    / f"%(title).150s - %(uploader).80s [%(extractor_key)s] [%(id)s] [{type_name}] [%(height)sp].%(ext)s"
+                )
                 command = self.yt_dlp_base_command(output_template)
                 command.extend(["--playlist-items", f"1-{self.type_limit(type_name)}", f"{channel}/{type_name}"])
                 lines = self.run_yt_dlp(
                     command,
                     type_name,
-                    item_completed=lambda completed_lines: self.process_type_lines(
+                    item_completed=lambda completed_lines, channel=channel, channel_name=self.channel_name, type_name=type_name: self.process_type_lines(
                         completed_lines,
                         channel,
-                        self.channel_name,
+                        channel_name,
                         type_name,
                         check_stop_after=False,
                     ),

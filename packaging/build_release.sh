@@ -2,8 +2,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DEB_VERSION="${1:-1.1.3}"
-RELEASE_VERSION="${2:-1.1.3}"
+DEB_VERSION="${1:-1.2.0~beta1}"
+RELEASE_VERSION="${2:-1.2.0-beta}"
 RELEASE_DIR="$ROOT_DIR/dist/release"
 SOURCE_TAR="$RELEASE_DIR/YouTubeHarvester_${RELEASE_VERSION}_source.tar.gz"
 DEB_SOURCE="$ROOT_DIR/dist/yt-harvester_${DEB_VERSION}_all.deb"
@@ -31,6 +31,17 @@ if git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     if [ -f "$ROOT_DIR/i18n_locales.py" ] && ! grep -z -q -x -F -- "i18n_locales.py" "$SOURCE_LIST"; then
         printf 'i18n_locales.py\0' >> "$SOURCE_LIST"
     fi
+    for required_file in \
+        requirements-build.txt \
+        requirements-windows-lock.txt \
+        .github/dependabot.yml \
+        "docs/releases/${RELEASE_VERSION}.md" \
+        tests/test_media_sources.py \
+        tests/test_preview_download.py; do
+        if [ -f "$ROOT_DIR/$required_file" ] && ! grep -z -q -x -F -- "$required_file" "$SOURCE_LIST"; then
+            printf '%s\0' "$required_file" >> "$SOURCE_LIST"
+        fi
+    done
     tar --null \
         --transform "s#^#${SOURCE_ROOT}/#" \
         -czf "$SOURCE_TAR" \

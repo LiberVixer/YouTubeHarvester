@@ -77,6 +77,7 @@ def latest_yt_dlp_release(*, user_agent: str, timeout: int = 12) -> dict:
         headers={
             "Accept": "application/vnd.github+json",
             "User-Agent": user_agent,
+            "X-GitHub-Api-Version": "2022-11-28",
         },
     )
     with _open_with_retries(request, timeout) as response:

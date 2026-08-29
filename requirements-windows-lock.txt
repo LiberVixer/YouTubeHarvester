@@ -1,0 +1,28 @@
+# Windows x64 build lock for CPython 3.11/3.12.
+# Refresh with:
+# uv pip compile requirements-build.txt --python-platform x86_64-pc-windows-msvc \
+#   --python-version 3.11 --only-binary :all: -o requirements-windows-lock.txt
+altgraph==0.17.5
+brotli==1.2.0
+certifi==2026.7.22
+charset-normalizer==3.5.1
+idna==3.19
+mutagen==1.48.1
+packaging==26.3
+pefile==2024.8.26
+pillow==12.3.0
+pycryptodomex==3.23.0
+pyinstaller==6.22.2
+pyinstaller-hooks-contrib==2026.7
+pynput==1.8.2
+PyQt5==5.15.11
+PyQt5-Qt5==5.15.2
+PyQt5-sip==12.19.0
+pywin32-ctypes==0.2.3
+requests==2.34.2
+setuptools==84.0.0
+six==1.17.0
+urllib3==2.7.0
+websockets==17.1
+yt-dlp==2026.8.19
+yt-dlp-ejs==0.8.0

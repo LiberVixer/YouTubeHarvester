@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.3
+# YouTube Harvester 1.2.0 Beta
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="Логотип YouTube Harvester" width="128">
@@ -33,6 +33,13 @@
 > а встроенный загрузчик обновлён до `yt-dlp 2026.08.19` с более надёжным
 > восстановлением после временных ошибок YouTube HTTP 403.
 
+> **UPD 4 (Beta):** Версия 1.2.0 Beta добавляет необязательное скачивание
+> отдельных видео с YouTube, Rutube и VK через Обзор, Быстрое скачивание,
+> слежение за буфером, очередь и архив. Учёт источника вместе с ID исключает
+> пересечения записей разных сервисов, а обновлённые закреплённые компоненты
+> делают сборки Windows и Linux воспроизводимее. Это предварительная версия
+> для тестирования.
+
 ![Обзор YouTube Harvester](docs/screenshots/ru/overview.png)
 
 ## Что делает программа
@@ -42,7 +49,7 @@
 ссылки, вести локальный архив, смотреть отчёты о скачанном и отправлять
 уведомления или файлы в Telegram.
 
-Версия `1.1.3` использует Python-движок на Linux и Windows. Старый Bash-движок
+Версия `1.2.0-beta` использует Python-движок на Linux и Windows. Старый Bash-движок
 оставлен в исходниках только как отключённый устаревший код.
 
 ## Основные возможности
@@ -64,9 +71,9 @@
 - Настраиваемая глобальная горячая клавиша. По умолчанию
   `Ctrl+Shift+Alt+Y`.
 - Слежение за буфером обмена с открытием окна быстрого скачивания при появлении
-  корректной ссылки YouTube.
+  поддерживаемой ссылки YouTube, Rutube или VK.
 - Планировщик автоматических запусков по часам.
-- Подробный архив с типом, каналом, названием, датой, ссылкой YouTube,
+- Подробный архив с типом, каналом, названием, датой, ссылкой на источник,
   вариантами качества и дорожек, локальным файлом, папкой и удалением записи.
 - Просмотр логов с фильтрами «Всё», «Важное» и «Ошибки».
 - Проверенное обновление самой программы из официальных релизов GitHub для
@@ -97,15 +104,15 @@
 
 Linux:
 
-- `YouTubeHarvester_1.1.3_linux_all.deb`
-- `YouTubeHarvester_1.1.3_source.tar.gz`
+- `YouTubeHarvester_1.2.0-beta_linux_all.deb`
+- `YouTubeHarvester_1.2.0-beta_source.tar.gz`
 - `SHA256SUMS-linux.txt`
 
 Windows:
 
-- `YouTubeHarvester_1.1.3_windows_setup.exe` — обычный установщик.
-- `YouTubeHarvester_1.1.3_windows_x64.msi` — пакет MSI x64.
-- `YouTubeHarvester_1.1.3_windows_portable.zip` — portable-версия.
+- `YouTubeHarvester_1.2.0-beta_windows_setup.exe` — обычный установщик.
+- `YouTubeHarvester_1.2.0-beta_windows_x64.msi` — пакет MSI x64.
+- `YouTubeHarvester_1.2.0-beta_windows_portable.zip` — portable-версия.
 - `SHA256SUMS-windows.txt`
 
 В Windows-сборки уже входят `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` и `deno.exe`.
@@ -113,7 +120,7 @@ Windows:
 ## Установка в Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.3_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.2.0-beta_linux_all.deb
 ```
 
 После установки запустите программу из меню приложений или командой:
@@ -239,14 +246,14 @@ PROXY_URL=127.0.0.1:9050
 Linux:
 
 ```bash
-packaging/build_release.sh 1.1.3 1.1.3
+packaging/build_release.sh 1.2.0~beta1 1.2.0-beta
 ```
 
 Windows:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.3 -MsiVersion 1.1.3
+  -Version 1.2.0-beta -MsiVersion 1.2.0
 ```
 
 GitHub Actions собирает Linux- и Windows-артефакты для тегов `v*`.

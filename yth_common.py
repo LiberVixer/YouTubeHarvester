@@ -27,6 +27,8 @@ YOUTUBE_URL_PREFIXES = (
     "https://youtu.be/",
 )
 
+SUPPORTED_MEDIA_SOURCES = ("youtube", "rutube", "vk")
+
 MEDIA_RESOLUTION_RE = re.compile(r"\[(?P<height>\d{3,4})p\]", re.IGNORECASE)
 
 
@@ -204,6 +206,109 @@ def extract_video_id(url: str) -> str:
     except Exception:
         return ""
     return ""
+
+
+def media_source_from_url(url: str) -> str:
+    try:
+        host = (urllib.parse.urlparse(str(url or "").strip()).hostname or "").lower().rstrip(".")
+    except ValueError:
+        return ""
+    if host == "youtu.be" or host == "youtube.com" or host.endswith(".youtube.com"):
+        return "youtube"
+    if host == "rutube.ru" or host.endswith(".rutube.ru"):
+        return "rutube"
+    if host in {"vk.com", "vk.ru", "vkvideo.ru"} or host.endswith((".vk.com", ".vk.ru", ".vkvideo.ru")):
+        return "vk"
+    return ""
+
+
+def normalize_media_source(value: str | None, url: str = "") -> str:
+    source = str(value or "").strip().lower()
+    if source.startswith("youtube"):
+        return "youtube"
+    if source.startswith("rutube"):
+        return "rutube"
+    if source == "vk" or source.startswith("vk:"):
+        return "vk"
+    return media_source_from_url(url)
+
+
+def extract_media_id(url: str, source: str = "") -> str:
+    text = str(url or "").strip()
+    source = normalize_media_source(source, text)
+    if source == "youtube":
+        return extract_video_id(text)
+    try:
+        parsed = urllib.parse.urlparse(text)
+        decoded = urllib.parse.unquote(text)
+    except ValueError:
+        return ""
+    if source == "rutube":
+        match = re.search(
+            r"/(?:live/)?video(?:/private)?/(?P<id>[a-z0-9]{8,64})(?:[/#?]|$)|"
+            r"/(?:play/)?embed/(?P<embed_id>[a-z0-9]{8,64})(?:[/#?]|$)",
+            parsed.path,
+            re.IGNORECASE,
+        )
+        return (match.group("id") or match.group("embed_id")) if match else ""
+    if source == "vk":
+        match = re.search(r"(?:video|clip)(?P<id>-?\d+_\d+)", decoded, re.IGNORECASE)
+        if match:
+            return match.group("id")
+        query = urllib.parse.parse_qs(parsed.query)
+        owner_id = (query.get("oid") or [""])[0]
+        video_id = (query.get("id") or [""])[0]
+        if re.fullmatch(r"-?\d+", owner_id) and re.fullmatch(r"\d+", video_id):
+            return f"{owner_id}_{video_id}"
+    return ""
+
+
+def looks_like_supported_media_url(url: str) -> bool:
+    text = str(url or "").strip()
+    source = media_source_from_url(text)
+    return source in SUPPORTED_MEDIA_SOURCES and bool(extract_media_id(text, source))
+
+
+def media_key(source: str, media_id: str, url: str = "") -> str:
+    normalized_source = normalize_media_source(source, url)
+    normalized_id = str(media_id or "").strip()
+    if not normalized_source or not normalized_id or normalized_id == "unknown":
+        return ""
+    return f"{normalized_source}:{normalized_id}"
+
+
+def canonical_media_url(source: str, media_id: str, fallback: str = "") -> str:
+    source = normalize_media_source(source, fallback)
+    media_id = str(media_id or "").strip()
+    if not media_id or media_id == "unknown":
+        return str(fallback or "").strip()
+    if source == "youtube":
+        return f"https://www.youtube.com/watch?v={media_id}"
+    if source == "rutube":
+        return f"https://rutube.ru/video/{media_id}/"
+    if source == "vk":
+        return f"https://vk.com/video{media_id}"
+    return str(fallback or "").strip()
+
+
+def archive_entry_source(entry: dict) -> str:
+    source_url = str(entry.get("source_url") or entry.get("youtube_url") or "").strip()
+    source = normalize_media_source(entry.get("source") or entry.get("extractor"), source_url)
+    if source:
+        return source
+    # Detailed archive entries created before multi-source support are YouTube records.
+    return "youtube" if entry.get("video_id") else ""
+
+
+def archive_entry_media_id(entry: dict) -> str:
+    return str(entry.get("media_id") or entry.get("video_id") or "").strip()
+
+
+def archive_entry_source_url(entry: dict) -> str:
+    source_url = str(entry.get("source_url") or entry.get("youtube_url") or "").strip()
+    if source_url:
+        return source_url
+    return canonical_media_url(archive_entry_source(entry), archive_entry_media_id(entry))
 
 
 def media_resolution_from_path(value: str | Path | None) -> str:

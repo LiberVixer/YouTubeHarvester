@@ -2,10 +2,10 @@ param(
     [switch]$Offline,
     [string]$Wheelhouse = "",
     [string]$FfmpegDir = "",
-    [string]$FfmpegUrl = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip",
+    [string]$FfmpegUrl = "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-9.0.1-essentials_build.zip",
     [switch]$SkipFfmpegDownload,
     [string]$DenoDir = "",
-    [string]$DenoUrl = "https://github.com/denoland/deno/releases/latest/download/deno-x86_64-pc-windows-msvc.zip",
+    [string]$DenoUrl = "https://github.com/denoland/deno/releases/download/v2.9.6/deno-x86_64-pc-windows-msvc.zip",
     [switch]$SkipDenoDownload
 )
 
@@ -21,6 +21,12 @@ $WorkDir = Join-Path $RootDir "dist\pyinstaller-build"
 $SpecDir = Join-Path $RootDir "dist\pyinstaller-spec"
 $FfmpegCacheDir = Join-Path $RootDir "dist\ffmpeg-cache"
 $DenoCacheDir = Join-Path $RootDir "dist\deno-cache"
+$PinnedFfmpegUrl = "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-9.0.1-essentials_build.zip"
+$PinnedDenoUrl = "https://github.com/denoland/deno/releases/download/v2.9.6/deno-x86_64-pc-windows-msvc.zip"
+$ExpectedFfmpegVersion = "9.0.1"
+$ExpectedDenoVersion = "2.9.6"
+$ExpectedFfmpegSha256 = "fec81ae03971d9dd4be3ebe02e263bd2ec1d789483f931bdba5f5715e65da2e9"
+$ExpectedDenoSha256 = "15e5300b0ba3c3695a7621d90160a746ec9e710228cee639afa9d580f6e3cd11"
 $WheelhouseWasProvided = -not [string]::IsNullOrWhiteSpace($Wheelhouse)
 $FfmpegDirWasProvided = -not [string]::IsNullOrWhiteSpace($FfmpegDir)
 $DenoDirWasProvided = -not [string]::IsNullOrWhiteSpace($DenoDir)
@@ -155,6 +161,16 @@ function Find-LocalFfmpegBinDir {
     return $null
 }
 
+function Get-FfmpegVersionLine {
+    param([string]$BinDir)
+
+    $output = & (Join-Path $BinDir "ffmpeg.exe") -version 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        return ""
+    }
+    return [string]($output | Select-Object -First 1)
+}
+
 function Get-DownloadedFfmpegBinDir {
     param([string]$Url)
 
@@ -168,7 +184,11 @@ function Get-DownloadedFfmpegBinDir {
 
     Write-Host "Downloading Windows ffmpeg/ffprobe:"
     Write-Host "  $Url"
-    $expectedSha256 = Get-RemoteSha256 "${Url}.sha256"
+    $expectedSha256 = if ($Url -eq $PinnedFfmpegUrl) {
+        $ExpectedFfmpegSha256
+    } else {
+        Get-RemoteSha256 "${Url}.sha256"
+    }
     Invoke-WebRequestWithRetry $Url $zipPath
     Assert-FileSha256 $zipPath $expectedSha256
     Expand-Archive -Path $zipPath -DestinationPath $extractDir -Force
@@ -190,7 +210,15 @@ function Get-DownloadedFfmpegBinDir {
 function Resolve-FfmpegBinDir {
     $found = Find-LocalFfmpegBinDir $FfmpegDir
     if ($found) {
-        return $found
+        $versionLine = Get-FfmpegVersionLine $found
+        if ($versionLine -match "^ffmpeg version $([regex]::Escape($ExpectedFfmpegVersion))\b") {
+            return $found
+        }
+        $message = "Found ffmpeg/ffprobe in '$found', but expected ffmpeg $ExpectedFfmpegVersion. Got: $versionLine"
+        if ($Offline.IsPresent -or $SkipFfmpegDownload.IsPresent -or $FfmpegDirWasProvided) {
+            throw $message
+        }
+        Write-Warning "$message Downloading the pinned Windows build instead."
     }
 
     if ($Offline.IsPresent -or $SkipFfmpegDownload.IsPresent) {
@@ -260,6 +288,16 @@ function Find-LocalDenoExe {
     return $null
 }
 
+function Get-DenoVersionLine {
+    param([string]$ExePath)
+
+    $output = & $ExePath --version 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        return ""
+    }
+    return [string]($output | Select-Object -First 1)
+}
+
 function Resolve-DenoDownloadUrl {
     if (-not [string]::IsNullOrWhiteSpace($DenoUrl)) {
         return $DenoUrl
@@ -291,7 +329,11 @@ function Get-DownloadedDenoExe {
 
     Write-Host "Downloading Windows Deno:"
     Write-Host "  $Url"
-    $expectedSha256 = Get-RemoteSha256 "${Url}.sha256sum"
+    $expectedSha256 = if ($Url -eq $PinnedDenoUrl) {
+        $ExpectedDenoSha256
+    } else {
+        Get-RemoteSha256 "${Url}.sha256sum"
+    }
     Invoke-WebRequestWithRetry $Url $zipPath
     Assert-FileSha256 $zipPath $expectedSha256
     Expand-Archive -Path $zipPath -DestinationPath $extractDir -Force
@@ -308,7 +350,15 @@ function Get-DownloadedDenoExe {
 function Resolve-DenoExe {
     $found = Find-LocalDenoExe $DenoDir
     if ($found) {
-        return $found
+        $versionLine = Get-DenoVersionLine $found
+        if ($versionLine -match "^deno $([regex]::Escape($ExpectedDenoVersion))\b") {
+            return $found
+        }
+        $message = "Found Deno in '$found', but expected Deno $ExpectedDenoVersion. Got: $versionLine"
+        if ($Offline.IsPresent -or $SkipDenoDownload.IsPresent -or $DenoDirWasProvided) {
+            throw $message
+        }
+        Write-Warning "$message Downloading the pinned Windows build instead."
     }
 
     if ($Offline.IsPresent -or $SkipDenoDownload.IsPresent) {
@@ -344,32 +394,37 @@ if ($OfflineMode) {
         "--no-index",
         "--disable-pip-version-check",
         "--find-links", "$Wheelhouse",
-        "-r", (Join-Path $RootDir "requirements.txt"),
-        "pyinstaller==6.22.2",
-        "pillow==12.3.0"
+        "-r", (Join-Path $RootDir "requirements-windows-lock.txt")
     )
 } else {
     Invoke-Checked $VenvPython @("-m", "pip", "install", "--upgrade", "pip")
     Invoke-Checked $VenvPython @(
         "-m", "pip", "install",
         "--upgrade",
-        "-r", (Join-Path $RootDir "requirements.txt"),
-        "pyinstaller==6.22.2",
-        "pillow==12.3.0"
+        "-r", (Join-Path $RootDir "requirements-windows-lock.txt")
     )
 }
 
 Invoke-Checked $VenvPython @(
     "-c",
-    "import importlib.metadata, yt_dlp_ejs; print('yt-dlp-ejs ' + importlib.metadata.version('yt-dlp-ejs'))"
+    "import importlib.metadata as m, yt_dlp_ejs; expected={'PyQt5':'5.15.11','pynput':'1.8.2','yt-dlp':'2026.8.19','yt-dlp-ejs':'0.8.0','pyinstaller':'6.22.2','pillow':'12.3.0'}; actual={name:m.version(name) for name in expected}; print('; '.join(f'{name} {actual[name]}' for name in expected)); raise SystemExit(0 if actual == expected else f'version mismatch: {actual} != {expected}')"
 )
+Invoke-Checked $VenvPython @("-m", "pip", "check")
 
 $FfmpegBinDir = Resolve-FfmpegBinDir
 Write-Host "Bundling ffmpeg/ffprobe from:"
 Write-Host "  $FfmpegBinDir"
+$ffmpegVersionLine = Get-FfmpegVersionLine $FfmpegBinDir
+if ($ffmpegVersionLine -notmatch "^ffmpeg version $([regex]::Escape($ExpectedFfmpegVersion))\b") {
+    throw "Expected ffmpeg $ExpectedFfmpegVersion, got: $ffmpegVersionLine"
+}
 $DenoExe = Resolve-DenoExe
 Write-Host "Bundling Deno from:"
 Write-Host "  $DenoExe"
+$denoVersionLine = Get-DenoVersionLine $DenoExe
+if ($denoVersionLine -notmatch "^deno $([regex]::Escape($ExpectedDenoVersion))\b") {
+    throw "Expected Deno $ExpectedDenoVersion, got: $denoVersionLine"
+}
 
 $iconScript = @"
 from pathlib import Path

@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.3
+# YouTube Harvester 1.2.0 Beta
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="Logotipo de YouTube Harvester" width="128">
@@ -34,6 +34,13 @@
 > a `yt-dlp 2026.08.19` con una recuperación más fiable ante errores HTTP 403
 > temporales de YouTube.
 
+> **UPD 4 (Beta):** La versión 1.2.0 Beta añade la descarga opcional de vídeos
+> individuales de YouTube, Rutube y VK desde Resumen, Descarga rápida, el
+> seguimiento del portapapeles, la cola y el archivo. Combinar el origen con
+> el ID evita colisiones entre servicios, mientras que los componentes
+> actualizados y fijados hacen más reproducibles las compilaciones de Windows
+> y Linux. Esta es una versión preliminar destinada a pruebas.
+
 ![Descripción general de YouTube Harvester](docs/screenshots/es/overview.png)
 
 ## Descripción
@@ -43,7 +50,7 @@ vídeos, Shorts y emisiones con `yt-dlp`. También admite enlaces individuales,
 mantiene un archivo local, muestra informes y puede enviar notificaciones o
 archivos a Telegram.
 
-La versión `1.1.3` usa el motor Python tanto en Linux como en Windows. El antiguo
+La versión `1.2.0-beta` usa el motor Python tanto en Linux como en Windows. El antiguo
 motor Bash permanece en el código fuente únicamente como código heredado y
 desactivado.
 
@@ -63,9 +70,10 @@ desactivado.
   varias pistas de audio y subtítulos, descarga inmediata, cola y casilla
   persistente de Telegram.
 - Atajo global configurable; el valor predeterminado es `Ctrl+Shift+Alt+Y`.
-- Vigilancia opcional del portapapeles para enlaces válidos de YouTube.
+- Vigilancia opcional del portapapeles para enlaces compatibles de YouTube,
+  Rutube o VK.
 - Programador de ejecuciones automáticas por hora.
-- Archivo detallado con tipo, canal, título, fecha, enlace de YouTube, variantes
+- Archivo detallado con tipo, canal, título, fecha, enlace de origen, variantes
   de calidad y pistas, archivo local, carpeta y eliminación de registros.
 - Registros con filtros Todos, Importante y Errores.
 - Actualización verificada de la aplicación desde versiones oficiales de
@@ -94,12 +102,12 @@ desactivado.
 Los paquetes se publican en
 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases).
 
-Linux: `YouTubeHarvester_1.1.3_linux_all.deb`,
-`YouTubeHarvester_1.1.3_source.tar.gz` y `SHA256SUMS-linux.txt`.
+Linux: `YouTubeHarvester_1.2.0-beta_linux_all.deb`,
+`YouTubeHarvester_1.2.0-beta_source.tar.gz` y `SHA256SUMS-linux.txt`.
 
-Windows: `YouTubeHarvester_1.1.3_windows_setup.exe`,
-`YouTubeHarvester_1.1.3_windows_x64.msi`,
-`YouTubeHarvester_1.1.3_windows_portable.zip` y `SHA256SUMS-windows.txt`.
+Windows: `YouTubeHarvester_1.2.0-beta_windows_setup.exe`,
+`YouTubeHarvester_1.2.0-beta_windows_x64.msi`,
+`YouTubeHarvester_1.2.0-beta_windows_portable.zip` y `SHA256SUMS-windows.txt`.
 
 Las compilaciones para Windows incluyen `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` y
 `deno.exe`.
@@ -107,7 +115,7 @@ Las compilaciones para Windows incluyen `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` y
 ## Instalación en Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.3_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.2.0-beta_linux_all.deb
 yt-harvester
 ```
 
@@ -201,12 +209,12 @@ localmente.
 ## Compilación
 
 ```bash
-packaging/build_release.sh 1.1.3 1.1.3
+packaging/build_release.sh 1.2.0~beta1 1.2.0-beta
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.3 -MsiVersion 1.1.3
+  -Version 1.2.0-beta -MsiVersion 1.2.0
 ```
 
 ## Uso responsable

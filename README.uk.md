@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.3
+# YouTube Harvester 1.2.0 Beta
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="Логотип YouTube Harvester" width="128">
@@ -33,6 +33,12 @@
 > завантажувач оновлено до `yt-dlp 2026.08.19` із надійнішим відновленням після
 > тимчасових помилок YouTube HTTP 403.
 
+> **UPD 4 (Beta):** Версія 1.2.0 Beta додає необов'язкове завантаження окремих
+> відео з YouTube, Rutube та VK через Огляд, Швидке завантаження, стеження за
+> буфером, чергу й архів. Поєднання джерела та ID запобігає перетину записів
+> різних сервісів, а оновлені закріплені компоненти роблять збірки Windows і
+> Linux відтворюванішими. Це попередня версія для тестування.
+
 ![Огляд YouTube Harvester](docs/screenshots/uk/overview.png)
 
 ## Що робить програма
@@ -42,7 +48,7 @@
 посилання, вести локальний архів, переглядати звіти та надсилати сповіщення або
 файли до Telegram.
 
-Версія `1.1.3` використовує Python-рушій у Linux і Windows. Старий Bash-рушій
+Версія `1.2.0-beta` використовує Python-рушій у Linux і Windows. Старий Bash-рушій
 залишено у вихідному коді лише як вимкнений застарілий компонент.
 
 ## Основні можливості
@@ -61,10 +67,10 @@
   кількох аудіодоріжок і субтитрів, негайним завантаженням, чергою та збереженим
   прапорцем Telegram.
 - Налаштовувана глобальна гаряча клавіша, типово `Ctrl+Shift+Alt+Y`.
-- Стеження за буфером обміну та відкриття швидкого завантаження для коректного
-  YouTube URL.
+- Стеження за буфером обміну та відкриття швидкого завантаження для
+  підтримуваного URL YouTube, Rutube або VK.
 - Планувальник автоматичних запусків за годинами.
-- Докладний архів із типом, каналом, назвою, датою, посиланням YouTube,
+- Докладний архів із типом, каналом, назвою, датою, посиланням на джерело,
   варіантами якості й доріжок, локальним файлом, папкою та видаленням записів.
 - Журнали з фільтрами «Усе», «Важливе» та «Помилки».
 - Перевірене оновлення самої програми з офіційних релізів GitHub для
@@ -93,19 +99,19 @@
 Файли публікуються в
 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases).
 
-Linux: `YouTubeHarvester_1.1.3_linux_all.deb`,
-`YouTubeHarvester_1.1.3_source.tar.gz` і `SHA256SUMS-linux.txt`.
+Linux: `YouTubeHarvester_1.2.0-beta_linux_all.deb`,
+`YouTubeHarvester_1.2.0-beta_source.tar.gz` і `SHA256SUMS-linux.txt`.
 
-Windows: `YouTubeHarvester_1.1.3_windows_setup.exe`,
-`YouTubeHarvester_1.1.3_windows_x64.msi`,
-`YouTubeHarvester_1.1.3_windows_portable.zip` і `SHA256SUMS-windows.txt`.
+Windows: `YouTubeHarvester_1.2.0-beta_windows_setup.exe`,
+`YouTubeHarvester_1.2.0-beta_windows_x64.msi`,
+`YouTubeHarvester_1.2.0-beta_windows_portable.zip` і `SHA256SUMS-windows.txt`.
 
 Windows-збірки вже містять `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` і `deno.exe`.
 
 ## Встановлення в Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.3_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.2.0-beta_linux_all.deb
 yt-harvester
 ```
 
@@ -196,12 +202,12 @@ PROXY_URL=127.0.0.1:9050
 ## Збирання релізу
 
 ```bash
-packaging/build_release.sh 1.1.3 1.1.3
+packaging/build_release.sh 1.2.0~beta1 1.2.0-beta
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.3 -MsiVersion 1.1.3
+  -Version 1.2.0-beta -MsiVersion 1.2.0
 ```
 
 ## Відповідальне використання

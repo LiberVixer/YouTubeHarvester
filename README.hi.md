@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.3
+# YouTube Harvester 1.2.0 Beta
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="YouTube Harvester लोगो" width="128">
@@ -31,6 +31,12 @@
 > `yt-dlp 2026.08.19` में अपडेट किया गया है और अस्थायी YouTube HTTP 403 त्रुटियों
 > से पुनर्प्राप्ति अधिक विश्वसनीय बनाई गई है।
 
+> **UPD 4 (Beta):** संस्करण 1.2.0 Beta में अवलोकन, त्वरित डाउनलोड, क्लिपबोर्ड
+> निगरानी, कतार और संग्रह से YouTube, Rutube तथा VK के अलग-अलग वीडियो डाउनलोड
+> करने का वैकल्पिक समर्थन जोड़ा गया है। स्रोत और ID को साथ रखने से सेवाओं के
+> बीच संग्रह टकराव नहीं होता, और अपडेट किए गए निश्चित संस्करण वाले घटक Windows
+> तथा Linux बिल्ड को अधिक पुनरुत्पाद्य बनाते हैं। यह परीक्षण के लिए पूर्व-रिलीज़ है।
+
 ![YouTube Harvester अवलोकन](docs/screenshots/hi/overview.png)
 
 ## परिचय
@@ -40,7 +46,7 @@
 जोड़े जा सकते हैं, स्थानीय संग्रह रखा जा सकता है, रिपोर्ट देखी जा सकती है और
 Telegram पर सूचनाएँ या फ़ाइलें भेजी जा सकती हैं।
 
-संस्करण `1.1.3` Linux और Windows दोनों पर Python इंजन का उपयोग करता है। पुराना
+संस्करण `1.2.0-beta` Linux और Windows दोनों पर Python इंजन का उपयोग करता है। पुराना
 Bash इंजन स्रोत में केवल निष्क्रिय विरासत कोड के रूप में रखा गया है।
 
 ## मुख्य सुविधाएँ
@@ -57,9 +63,10 @@ Bash इंजन स्रोत में केवल निष्क्र�
 - क्लिपबोर्ड URL, मेटाडेटा, रिज़ॉल्यूशन, कई ऑडियो व उपशीर्षक ट्रैक, तुरंत
   डाउनलोड, कतार और सहेजी गई Telegram चेकबॉक्स वाली त्वरित डाउनलोड विंडो।
 - बदलने योग्य ग्लोबल हॉटकी; डिफ़ॉल्ट `Ctrl+Shift+Alt+Y`।
-- मान्य YouTube URL मिलने पर त्वरित डाउनलोड खोलने वाली क्लिपबोर्ड निगरानी।
+- समर्थित YouTube, Rutube या VK URL मिलने पर त्वरित डाउनलोड खोलने वाली
+  क्लिपबोर्ड निगरानी।
 - चुने हुए घंटों पर स्वचालित चलाने का समय-सारणी प्रबंधक।
-- प्रकार, चैनल, शीर्षक, तारीख, YouTube लिंक, गुणवत्ता व ट्रैक संस्करण, स्थानीय
+- प्रकार, चैनल, शीर्षक, तारीख, स्रोत लिंक, गुणवत्ता व ट्रैक संस्करण, स्थानीय
   फ़ाइल, फ़ोल्डर और रिकॉर्ड हटाने वाला विस्तृत संग्रह।
 - सभी, महत्वपूर्ण और त्रुटियाँ फ़िल्टर वाले लॉग।
 - इंस्टॉल, पोर्टेबल और Linux पैकेज के लिए आधिकारिक GitHub Releases से सत्यापित
@@ -89,19 +96,19 @@ Bash इंजन स्रोत में केवल निष्क्र�
 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases) पर
 मिलते हैं।
 
-Linux: `YouTubeHarvester_1.1.3_linux_all.deb`,
-`YouTubeHarvester_1.1.3_source.tar.gz` और `SHA256SUMS-linux.txt`।
+Linux: `YouTubeHarvester_1.2.0-beta_linux_all.deb`,
+`YouTubeHarvester_1.2.0-beta_source.tar.gz` और `SHA256SUMS-linux.txt`।
 
-Windows: `YouTubeHarvester_1.1.3_windows_setup.exe`,
-`YouTubeHarvester_1.1.3_windows_x64.msi`,
-`YouTubeHarvester_1.1.3_windows_portable.zip` और `SHA256SUMS-windows.txt`।
+Windows: `YouTubeHarvester_1.2.0-beta_windows_setup.exe`,
+`YouTubeHarvester_1.2.0-beta_windows_x64.msi`,
+`YouTubeHarvester_1.2.0-beta_windows_portable.zip` और `SHA256SUMS-windows.txt`।
 
 Windows पैकेज में `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` और `deno.exe` शामिल हैं।
 
 ## Linux में स्थापना
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.3_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.2.0-beta_linux_all.deb
 yt-harvester
 ```
 
@@ -192,12 +199,12 @@ PROXY_URL=127.0.0.1:9050
 ## रिलीज़ बनाना
 
 ```bash
-packaging/build_release.sh 1.1.3 1.1.3
+packaging/build_release.sh 1.2.0~beta1 1.2.0-beta
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.3 -MsiVersion 1.1.3
+  -Version 1.2.0-beta -MsiVersion 1.2.0
 ```
 
 ## ज़िम्मेदार उपयोग

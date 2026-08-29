@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.3
+# YouTube Harvester 1.2.0 Beta
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="YouTube Harvester ロゴ" width="128">
@@ -33,6 +33,12 @@
 > 内蔵ダウンローダーは `yt-dlp 2026.08.19` に更新され、YouTube の一時的な
 > HTTP 403 エラーからの復旧も強化されています。
 
+> **UPD 4 (Beta):** バージョン 1.2.0 Beta では、概要、クイックダウンロード、
+> クリップボード監視、キュー、アーカイブから、YouTube、Rutube、VK の個別動画を
+> 任意でダウンロードできるようになりました。ソースと ID を組み合わせて記録する
+> ことでサービス間の衝突を防ぎ、更新・固定されたコンポーネントにより Windows と
+> Linux のビルド再現性も向上しています。テスト用のプレリリースです。
+
 ![YouTube Harvester 概要](docs/screenshots/ja/overview.png)
 
 ## 概要
@@ -42,7 +48,7 @@
 対応し、ローカルアーカイブ、ダウンロードレポート、Telegram への通知やファイル
 送信を利用できます。
 
-バージョン `1.1.3` は Linux と Windows の両方で Python ダウンローダーを
+バージョン `1.2.0-beta` は Linux と Windows の両方で Python ダウンローダーを
 使用します。旧 Bash エンジンは、無効化されたレガシーコードとしてのみソースに
 残されています。
 
@@ -61,10 +67,10 @@
   即時ダウンロード、キュー追加、保存される Telegram 設定を備えた
   クイックダウンロード画面。
 - 設定可能なグローバルホットキー。既定値は `Ctrl+Shift+Alt+Y` です。
-- 有効な YouTube URL を検出するとクイックダウンロードを開く、任意の
-  クリップボード監視。
+- 対応する YouTube、Rutube、VK の URL を検出するとクイックダウンロードを
+  開く、任意のクリップボード監視。
 - 指定した時刻に自動実行するスケジューラー。
-- 種別、チャンネル、タイトル、日時、YouTube リンク、ローカルファイル、保存先、
+- 種別、チャンネル、タイトル、日時、ソースリンク、ローカルファイル、保存先、
   レコード削除を備えたダウンロードアーカイブ。
 - 「すべて」「重要」「エラー」で絞り込めるログビューアー。
 - インストール版、ポータブル版、Linux パッケージで利用できる、GitHub 公式
@@ -96,15 +102,15 @@
 
 Linux:
 
-- `YouTubeHarvester_1.1.3_linux_all.deb`
-- `YouTubeHarvester_1.1.3_source.tar.gz`
+- `YouTubeHarvester_1.2.0-beta_linux_all.deb`
+- `YouTubeHarvester_1.2.0-beta_source.tar.gz`
 - `SHA256SUMS-linux.txt`
 
 Windows:
 
-- `YouTubeHarvester_1.1.3_windows_setup.exe` - 通常のインストーラー。
-- `YouTubeHarvester_1.1.3_windows_x64.msi` - x64 MSI パッケージ。
-- `YouTubeHarvester_1.1.3_windows_portable.zip` - ポータブル版。
+- `YouTubeHarvester_1.2.0-beta_windows_setup.exe` - 通常のインストーラー。
+- `YouTubeHarvester_1.2.0-beta_windows_x64.msi` - x64 MSI パッケージ。
+- `YouTubeHarvester_1.2.0-beta_windows_portable.zip` - ポータブル版。
 - `SHA256SUMS-windows.txt`
 
 Windows パッケージには `yt-dlp`、`ffmpeg.exe`、`ffprobe.exe`、`deno.exe` が
@@ -113,7 +119,7 @@ Windows パッケージには `yt-dlp`、`ffmpeg.exe`、`ffprobe.exe`、`deno.ex
 ## Linux へのインストール
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.3_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.2.0-beta_linux_all.deb
 ```
 
 アプリケーションメニューから起動するか、次を実行します。
@@ -239,14 +245,14 @@ PROXY_URL=127.0.0.1:9050
 Linux 用成果物:
 
 ```bash
-packaging/build_release.sh 1.1.3 1.1.3
+packaging/build_release.sh 1.2.0~beta1 1.2.0-beta
 ```
 
 Windows 上で Windows 用成果物を作成:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.3 -MsiVersion 1.1.3
+  -Version 1.2.0-beta -MsiVersion 1.2.0
 ```
 
 GitHub Actions は `v*` に一致するタグから Linux と Windows の成果物を作成します。

@@ -34,10 +34,13 @@ class FakeResponse(io.BytesIO):
 
 
 class AppUpdaterTests(unittest.TestCase):
-    def test_version_key_accepts_stable_semver_only(self):
-        self.assertEqual(version_key("v1.1.3"), (1, 1, 3))
-        self.assertEqual(version_key("1.1.3"), (1, 1, 3))
-        self.assertEqual(version_key("1.1.3-beta"), ())
+    def test_version_key_orders_stable_and_prerelease_versions(self):
+        self.assertEqual(version_key("v1.2.0"), (1, 2, 0, 3, 0))
+        self.assertEqual(version_key("1.2.0-beta"), (1, 2, 0, 1, 0))
+        self.assertEqual(version_key("1.2.0-beta.2"), (1, 2, 0, 1, 2))
+        self.assertGreater(version_key("1.2.0-beta"), version_key("1.1.3"))
+        self.assertGreater(version_key("1.2.0"), version_key("1.2.0-beta"))
+        self.assertEqual(version_key("1.2"), ())
 
     def test_installation_kind_distinguishes_packages(self):
         with mock.patch.dict(os.environ, {"LOCALAPPDATA": r"C:\Users\Test\AppData\Local"}):

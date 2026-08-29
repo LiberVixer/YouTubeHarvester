@@ -15,6 +15,65 @@
 
 All notable changes to **YouTube Harvester** are documented here.
 
+## [1.2.0-beta] - 2026-08-29
+
+### Added
+
+- Optional individual-video downloads from YouTube, Rutube, and VK in the
+  Overview URL field, Quick Download, clipboard watcher, manual queue, and
+  archive.
+- Source-aware archive records, canonical source links, and monochrome `Ⓥ`
+  and `Ⓡ` service symbols for VK and Rutube entries.
+- A close button beside the theme selector and bounded archive columns of
+  160 px for channels and 155 px for media IDs.
+- Automated tests for supported media URLs, archive compatibility and
+  migration, file moves, and safe preview image downloads.
+- A fully pinned Windows dependency lock and Dependabot configuration.
+
+### Changed
+
+- The application and release toolchain now identify this version as the
+  `1.2.0-beta` prerelease; Debian uses `1.2.0~beta1` for correct version order.
+- Runtime and build components are pinned to `yt-dlp 2026.08.19`,
+  `yt-dlp-ejs 0.8.0`, Deno `2.9.6`, Windows FFmpeg/FFprobe `9.0.1`,
+  PyQt5 `5.15.11`, pynput `1.8.2`, PyInstaller `6.22.2`, and Pillow `12.3.0`.
+- Windows online and offline builds verify exact component versions and
+  checksums, run `pip check`, and use a complete transitive dependency lock.
+- GitHub Actions are pinned to exact reviewed commits, and Windows offline
+  build documentation now targets the pinned tools and Inno Setup 7.1.
+- Linux package metadata now describes a general video downloader with a
+  manual YouTube, Rutube, and VK queue.
+- All supported interface languages now include the new source-aware URL and
+  archive labels.
+
+### Fixed
+
+- Application update comparison now orders alpha, beta, release candidate,
+  and stable versions correctly, preventing a beta build from downgrading to
+  an older stable release.
+- Queue, duplicate checks, quality/track variants, archive deletion, reports,
+  and migrations now use `source + media ID`, so equal IDs from different
+  services cannot collide.
+- Existing archive records remain compatible as YouTube entries; migration
+  avoids guessing when an ID is ambiguous, and source markers are removed
+  from final user-facing filenames.
+- YouTube-specific metadata and HTTP 403 fallbacks are no longer applied to
+  Rutube or VK, and a missing `yt-dlp` output stream is handled gracefully.
+- Channel callbacks bind the current channel and media type instead of stale
+  loop values; settings command output is decoded explicitly as UTF-8.
+- Windows builds ignore incompatible FFmpeg or Deno found in `PATH` and fetch
+  the verified pinned component in online mode.
+
+### Security
+
+- Preview images are downloaded atomically with HTTP(S)-only URLs, credential
+  rejection, redirect validation, timeouts, a 12 MiB limit, and cleanup of
+  incomplete temporary files.
+- Pinned FFmpeg and Deno packages are verified with SHA-256 before use, and
+  SHA-256 replaces SHA-1 in generated variant and filename digests.
+- Release source archives now include the dependency locks, tests, and other
+  required newly tracked files even when built before a commit.
+
 ## [1.1.3] - 2026-08-20
 
 ### Added

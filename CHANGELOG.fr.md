@@ -15,6 +15,63 @@
 
 Toutes les modifications importantes de **YouTube Harvester** sont listées ici.
 
+## [1.2.0-beta] - 2026-08-29
+
+### Ajouté
+
+- Téléchargement facultatif de vidéos individuelles depuis YouTube, Rutube et
+  VK dans le champ URL de l'aperçu, le téléchargement rapide, la surveillance
+  du presse-papiers, la file manuelle et l'archive.
+- Entrées d'archive tenant compte de la source, liens canoniques et symboles
+  monochromes `Ⓥ` et `Ⓡ` pour VK et Rutube.
+- Bouton de fermeture à côté du sélecteur de thème et largeur limitée des
+  colonnes : 160 px pour la chaîne et 155 px pour l'identifiant.
+- Tests automatisés des URL, de la compatibilité et de la migration de
+  l'archive, du déplacement des fichiers et des aperçus sécurisés.
+- Verrouillage complet des dépendances Windows et configuration Dependabot.
+
+### Modifié
+
+- L'application et les outils de publication identifient cette version comme
+  la préversion `1.2.0-beta`; Debian utilise `1.2.0~beta1` pour l'ordre correct.
+- Versions figées : `yt-dlp 2026.08.19`, `yt-dlp-ejs 0.8.0`, Deno `2.9.6`,
+  FFmpeg/FFprobe Windows `9.0.1`, PyQt5 `5.15.11`, pynput `1.8.2`,
+  PyInstaller `6.22.2` et Pillow `12.3.0`.
+- Les builds Windows en ligne et hors ligne vérifient les versions exactes et
+  les sommes, exécutent `pip check` et utilisent un verrou transitif complet.
+- Les actions GitHub sont figées sur des commits vérifiés; la documentation
+  hors ligne cible désormais les outils figés et Inno Setup 7.1.
+- Les métadonnées Linux décrivent un téléchargeur vidéo avec file manuelle
+  YouTube, Rutube et VK.
+- Les nouveaux libellés d'URL et de source d'archive sont traduits dans toutes
+  les langues de l'interface.
+
+### Corrigé
+
+- La comparaison des mises à jour ordonne correctement alpha, beta, release
+  candidate et stable, sans rétrograder une beta vers une ancienne stable.
+- La file, les doublons, les variantes de qualité et de pistes, la suppression,
+  les rapports et la migration utilisent « source + ID », évitant les conflits
+  entre services.
+- Les anciennes entrées restent compatibles comme entrées YouTube; la migration
+  ne devine pas les ID ambigus et le marqueur source disparaît du nom final.
+- Les solutions de repli YouTube pour les métadonnées et HTTP 403 ne sont plus
+  appliquées à Rutube ou VK; l'absence de sortie `yt-dlp` est gérée proprement.
+- Les rappels de chaîne capturent la chaîne et le type actuels; la sortie des
+  commandes de réglage est explicitement décodée en UTF-8.
+- Le build Windows ignore les FFmpeg ou Deno incompatibles dans `PATH` et
+  récupère en ligne la version figée et vérifiée.
+
+### Sécurité
+
+- Les images d'aperçu sont écrites atomiquement depuis HTTP(S) uniquement,
+  sans identifiants dans l'URL, avec validation des redirections, délai,
+  limite de 12 Mio et nettoyage des fichiers incomplets.
+- Les paquets FFmpeg et Deno sont vérifiés par SHA-256, qui remplace aussi
+  SHA-1 pour les empreintes de variantes et de noms de fichiers.
+- L'archive source du release inclut les verrous, tests et nouveaux fichiers
+  requis, même lorsqu'elle est produite avant un commit.
+
 ## [1.1.3] - 2026-08-20
 
 ### Ajouté

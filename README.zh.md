@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.3
+# YouTube Harvester 1.2.0 Beta
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="YouTube Harvester 标志" width="128">
@@ -29,6 +29,11 @@
 > 完整的白俄罗斯语界面和文档，并将内置下载器更新到 `yt-dlp 2026.08.19`，
 > 提升了从 YouTube 临时 HTTP 403 错误中恢复的可靠性。
 
+> **UPD 4（Beta）：** 1.2.0 Beta 版新增可选的单视频下载，可在概览、快速下载、
+> 剪贴板监控、队列和档案中处理 YouTube、Rutube 与 VK。档案同时记录来源与 ID，
+> 避免不同服务之间发生冲突；更新并固定版本的组件也让 Windows 与 Linux 构建
+> 更易复现。这是用于测试的预发布版本。
+
 ![YouTube Harvester 概览](docs/screenshots/zh/overview.png)
 
 ## 软件简介
@@ -37,7 +42,7 @@
 普通视频、Shorts 和直播。它也能处理单独的视频链接、维护本地下载档案、显示
 下载报告，并向 Telegram 发送通知或文件。
 
-版本 `1.1.3` 在 Linux 和 Windows 上统一使用 Python 下载引擎。旧 Bash 引擎
+版本 `1.2.0-beta` 在 Linux 和 Windows 上统一使用 Python 下载引擎。旧 Bash 引擎
 仅作为已禁用的历史代码保留在源码中。
 
 ## 主要功能
@@ -53,9 +58,9 @@
 - 快速下载窗口支持读取剪贴板 URL、预览元数据、选择分辨率、多条音轨和字幕轨、
   立即下载、加入队列以及持久化的 Telegram 复选框。
 - 可配置全局快捷键，默认是 `Ctrl+Shift+Alt+Y`。
-- 可选剪贴板监控，发现有效 YouTube URL 时自动打开快速下载。
+- 可选剪贴板监控，发现支持的 YouTube、Rutube 或 VK URL 时自动打开快速下载。
 - 按小时设置自动运行的计划任务。
-- 详细下载档案包含类型、频道、标题、日期、YouTube 链接、画质与轨道版本、本地
+- 详细下载档案包含类型、频道、标题、日期、来源链接、画质与轨道版本、本地
   文件、所在文件夹和删除记录功能。
 - 日志支持“全部”“重要”和“错误”筛选。
 - 安装版、便携版和 Linux 软件包均可从 GitHub 官方 Release 获取并校验应用更新。
@@ -83,19 +88,19 @@
 安装包发布在
 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases)。
 
-Linux：`YouTubeHarvester_1.1.3_linux_all.deb`、
-`YouTubeHarvester_1.1.3_source.tar.gz` 和 `SHA256SUMS-linux.txt`。
+Linux：`YouTubeHarvester_1.2.0-beta_linux_all.deb`、
+`YouTubeHarvester_1.2.0-beta_source.tar.gz` 和 `SHA256SUMS-linux.txt`。
 
-Windows：`YouTubeHarvester_1.1.3_windows_setup.exe`、
-`YouTubeHarvester_1.1.3_windows_x64.msi`、
-`YouTubeHarvester_1.1.3_windows_portable.zip` 和 `SHA256SUMS-windows.txt`。
+Windows：`YouTubeHarvester_1.2.0-beta_windows_setup.exe`、
+`YouTubeHarvester_1.2.0-beta_windows_x64.msi`、
+`YouTubeHarvester_1.2.0-beta_windows_portable.zip` 和 `SHA256SUMS-windows.txt`。
 
 Windows 版本已经包含 `yt-dlp`、`ffmpeg.exe`、`ffprobe.exe` 和 `deno.exe`。
 
 ## Linux 安装
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.3_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.2.0-beta_linux_all.deb
 yt-harvester
 ```
 
@@ -181,12 +186,12 @@ PROXY_URL=127.0.0.1:9050
 ## 构建发布版本
 
 ```bash
-packaging/build_release.sh 1.1.3 1.1.3
+packaging/build_release.sh 1.2.0~beta1 1.2.0-beta
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.3 -MsiVersion 1.1.3
+  -Version 1.2.0-beta -MsiVersion 1.2.0
 ```
 
 ## 负责任地使用

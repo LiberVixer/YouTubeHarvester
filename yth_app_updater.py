@@ -38,11 +38,22 @@ class AppUpdateError(RuntimeError):
     """Raised when application update metadata or a package is unsafe."""
 
 
-def version_key(version: str) -> tuple[int, int, int]:
-    match = re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)", str(version or "").strip())
+def version_key(version: str) -> tuple[int, ...]:
+    match = re.fullmatch(
+        r"v?(\d+)\.(\d+)\.(\d+)(?:-(alpha|beta|rc)(?:[.-]?(\d+))?)?",
+        str(version or "").strip().lower(),
+    )
     if not match:
         return ()
-    return tuple(int(part) for part in match.groups())
+    major, minor, patch, prerelease, prerelease_number = match.groups()
+    stage = {"alpha": 0, "beta": 1, "rc": 2, None: 3}[prerelease]
+    return (
+        int(major),
+        int(minor),
+        int(patch),
+        stage,
+        int(prerelease_number or 0),
+    )
 
 
 def _is_relative_to(path: Path, parent: Path) -> bool:

@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.3
+# YouTube Harvester 1.2.0 Beta
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="شعار YouTube Harvester" width="128">
@@ -30,6 +30,12 @@
 > الرسمية، وترجمة ووثائق بيلاروسية كاملة، ويحدّث أداة التنزيل المدمجة إلى
 > `yt-dlp 2026.08.19` مع استرداد أفضل من أخطاء YouTube المؤقتة HTTP 403.
 
+> **UPD 4 (Beta):** يضيف الإصدار 1.2.0 Beta تنزيلًا اختياريًا للفيديوهات
+> الفردية من YouTube وRutube وVK عبر صفحة النظرة العامة والتنزيل السريع ومراقبة
+> الحافظة وقائمة الانتظار والأرشيف. يمنع الجمع بين المصدر والمعرّف تعارض سجلات
+> الخدمات المختلفة، وتجعل المكونات المحدّثة والمثبتة إصدارات Windows وLinux
+> أكثر قابلية لإعادة البناء. هذه نسخة تجريبية مسبقة مخصصة للاختبار.
+
 ![نظرة عامة على YouTube Harvester](docs/screenshots/ar/overview.png)
 
 ## نبذة عن البرنامج
@@ -39,7 +45,7 @@
 والاحتفاظ بأرشيف محلي، وعرض تقارير التنزيل، وإرسال الإشعارات أو الملفات إلى
 Telegram.
 
-يستخدم الإصدار `1.1.3` محرك Python على Linux وWindows. بقي محرك Bash القديم في
+يستخدم الإصدار `1.2.0-beta` محرك Python على Linux وWindows. بقي محرك Bash القديم في
 المصدر فقط كشيفرة قديمة معطلة.
 
 ## الميزات الرئيسية
@@ -56,9 +62,10 @@ Telegram.
 - نافذة تنزيل سريع تقرأ رابط الحافظة وتعرض البيانات وتختار الدقة وعدة مسارات
   صوت وترجمة، مع تنزيل فوري وإضافة إلى القائمة وخيار Telegram محفوظ.
 - اختصار عام قابل للتعديل، والقيمة الافتراضية `Ctrl+Shift+Alt+Y`.
-- مراقبة اختيارية للحافظة وفتح التنزيل السريع عند ظهور رابط YouTube صالح.
+- مراقبة اختيارية للحافظة وفتح التنزيل السريع عند ظهور رابط مدعوم من YouTube
+  أو Rutube أو VK.
 - مجدول للتشغيل التلقائي في ساعات محددة.
-- أرشيف مفصل يضم النوع والقناة والعنوان والتاريخ ورابط YouTube ونسخ الجودة
+- أرشيف مفصل يضم النوع والقناة والعنوان والتاريخ ورابط المصدر ونسخ الجودة
   والمسارات والملف المحلي والمجلد وحذف السجل.
 - سجلات بمرشحات الكل والمهم والأخطاء.
 - تحديث موثوق للتطبيق من إصدارات GitHub الرسمية للنسخ المثبتة والمحمولة وحزم Linux.
@@ -86,19 +93,19 @@ Telegram.
 تُنشر الحزم في
 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases).
 
-Linux: `YouTubeHarvester_1.1.3_linux_all.deb` و
-`YouTubeHarvester_1.1.3_source.tar.gz` و`SHA256SUMS-linux.txt`.
+Linux: `YouTubeHarvester_1.2.0-beta_linux_all.deb` و
+`YouTubeHarvester_1.2.0-beta_source.tar.gz` و`SHA256SUMS-linux.txt`.
 
-Windows: `YouTubeHarvester_1.1.3_windows_setup.exe` و
-`YouTubeHarvester_1.1.3_windows_x64.msi` و
-`YouTubeHarvester_1.1.3_windows_portable.zip` و`SHA256SUMS-windows.txt`.
+Windows: `YouTubeHarvester_1.2.0-beta_windows_setup.exe` و
+`YouTubeHarvester_1.2.0-beta_windows_x64.msi` و
+`YouTubeHarvester_1.2.0-beta_windows_portable.zip` و`SHA256SUMS-windows.txt`.
 
 تتضمن حزم Windows الأدوات `yt-dlp` و`ffmpeg.exe` و`ffprobe.exe` و`deno.exe`.
 
 ## التثبيت على Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.3_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.2.0-beta_linux_all.deb
 yt-harvester
 ```
 
@@ -187,12 +194,12 @@ PROXY_URL=127.0.0.1:9050
 ## بناء الإصدار
 
 ```bash
-packaging/build_release.sh 1.1.3 1.1.3
+packaging/build_release.sh 1.2.0~beta1 1.2.0-beta
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.3 -MsiVersion 1.1.3
+  -Version 1.2.0-beta -MsiVersion 1.2.0
 ```
 
 ## الاستخدام المسؤول

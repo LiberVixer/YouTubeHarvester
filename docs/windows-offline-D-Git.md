@@ -10,6 +10,8 @@
 
 ```text
 YouTubeHarvester-offline\
+  deno\        Deno 2.9.6 for Windows x64 (`deno.exe`)
+  ffmpeg\      FFmpeg/FFprobe 9.0.1 essentials for Windows x64
   source\       исходники проекта
   wheelhouse\   Python wheel-зависимости для Windows x64
 ```
@@ -32,12 +34,14 @@ ISCC.exe /?
 ```
 
 Поддерживается Python 3.11 x64 или Python 3.12 x64. Для сборки установщиков
-нужны Inno Setup 6 и WiX Toolset 7.
+рекомендуются Inno Setup 7.1 и WiX Toolset 7; Inno Setup 6 также поддерживается.
 
 Если `ISCC.exe` не найден через `PATH`, сборочный скрипт также попробует найти
 Inno Setup в стандартных папках:
 
 ```text
+C:\Program Files\Inno Setup 7\ISCC.exe
+C:\Program Files (x86)\Inno Setup 7\ISCC.exe
 C:\Program Files (x86)\Inno Setup 6\ISCC.exe
 C:\Program Files\Inno Setup 6\ISCC.exe
 ```
@@ -88,9 +92,9 @@ BUILD_WINDOWS_OFFLINE.cmd
 Ожидаемые файлы:
 
 ```text
-YouTubeHarvester_1.1.3_windows_portable.zip
-YouTubeHarvester_1.1.3_windows_setup.exe
-YouTubeHarvester_1.1.3_windows_x64.msi
+YouTubeHarvester_1.2.0-beta_windows_portable.zip
+YouTubeHarvester_1.2.0-beta_windows_setup.exe
+YouTubeHarvester_1.2.0-beta_windows_x64.msi
 SHA256SUMS-windows.txt
 ```
 
@@ -103,7 +107,7 @@ Set-Location "<offline-bundle>\source\dist\windows\YouTubeHarvester"
 .\YouTubeHarvester.exe
 ```
 
-Должно открыться приложение **YouTube Harvester 1.1.3**.
+Должно открыться приложение **YouTube Harvester 1.2.0 Beta**.
 
 Потом можно проверить installer EXE и MSI из папки:
 
@@ -121,7 +125,7 @@ ISCC.exe /?
 ```
 
 Если команда не найдена, добавь папку Inno Setup в `PATH` или установи Inno
-Setup 6.
+Setup 7.1 (или совместимый Inno Setup 6).
 
 ## 7. Если не собрался MSI
 

@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PACKAGE="yt-harvester"
-VERSION="${1:-1.1.3}"
+VERSION="${1:-1.2.0~beta1}"
 ARCH="all"
 BUILD_DIR="$ROOT_DIR/dist/deb-build"
 PKG_DIR="$BUILD_DIR/${PACKAGE}_${VERSION}_${ARCH}"
@@ -42,7 +42,7 @@ DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/yt-harvester"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/yt-harvester"
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/yt-harvester"
 
-mkdir -p "$DATA_DIR" "$CONFIG_DIR" "$CACHE_DIR" "$DATA_DIR/temp" "$HOME/Videos/YouTube Harvester"
+mkdir -p "$DATA_DIR" "$CONFIG_DIR" "$CACHE_DIR" "$DATA_DIR/temp"
 touch "$DATA_DIR/channels.txt" "$DATA_DIR/queue.txt" "$DATA_DIR/yt_archive.txt" "$DATA_DIR/archive_details.jsonl"
 
 if [ ! -f "$CONFIG_DIR/.env" ]; then
@@ -91,26 +91,26 @@ Name[zh]=YouTube Harvester
 Name[ar]=YouTube Harvester
 Name[ja]=YouTube Harvester
 Name[be]=YouTube Harvester
-GenericName=YouTube downloader
-GenericName[ru]=Загрузчик YouTube
-GenericName[uk]=Завантажувач YouTube
-GenericName[fr]=Téléchargeur YouTube
-GenericName[es]=Descargador de YouTube
-GenericName[hi]=YouTube डाउनलोडर
-GenericName[zh]=YouTube 下载器
-GenericName[ar]=أداة تنزيل YouTube
-GenericName[ja]=YouTube ダウンローダー
-GenericName[be]=Загрузнік YouTube
-Comment=YouTube downloader with tray interface
-Comment[ru]=Загрузчик YouTube с интерфейсом в трее
-Comment[uk]=Завантажувач YouTube з інтерфейсом у системному треї
-Comment[fr]=Téléchargeur YouTube avec interface de zone de notification
-Comment[es]=Descargador de YouTube con interfaz de bandeja del sistema
-Comment[hi]=सिस्टम ट्रे इंटरफ़ेस के साथ YouTube डाउनलोडर
-Comment[zh]=带系统托盘界面的 YouTube 下载器
-Comment[ar]=أداة تنزيل YouTube بواجهة علبة النظام
-Comment[ja]=システムトレイ対応 YouTube ダウンローダー
-Comment[be]=Загрузнік YouTube з інтэрфейсам у сістэмным трэі
+GenericName=Video downloader
+GenericName[ru]=Загрузчик видео
+GenericName[uk]=Завантажувач відео
+GenericName[fr]=Téléchargeur de vidéos
+GenericName[es]=Descargador de vídeos
+GenericName[hi]=वीडियो डाउनलोडर
+GenericName[zh]=视频下载器
+GenericName[ar]=أداة تنزيل الفيديو
+GenericName[ja]=動画ダウンローダー
+GenericName[be]=Загрузнік відэа
+Comment=Video downloader with tray interface
+Comment[ru]=Загрузчик видео с интерфейсом в трее
+Comment[uk]=Завантажувач відео з інтерфейсом у системному треї
+Comment[fr]=Téléchargeur de vidéos avec interface de zone de notification
+Comment[es]=Descargador de vídeos con interfaz de bandeja del sistema
+Comment[hi]=सिस्टम ट्रे इंटरफ़ेस के साथ वीडियो डाउनलोडर
+Comment[zh]=带系统托盘界面的视频下载器
+Comment[ar]=أداة تنزيل الفيديو بواجهة علبة النظام
+Comment[ja]=システムトレイ対応の動画ダウンローダー
+Comment[be]=Загрузнік відэа з інтэрфейсам у сістэмным трэі
 Exec=yt-harvester
 Icon=yt-harvester
 Terminal=false
@@ -129,9 +129,9 @@ Depends: python3, python3-pyqt5, python3-pynput, python3-dbus, yt-dlp, ffmpeg, c
 Recommends: wl-clipboard
 Suggests: deno
 Maintainer: YouTube Harvester <noreply@users.noreply.github.com>
-Description: YouTube downloader with tray interface
- YouTube Harvester watches configured YouTube channels and a manual queue,
- downloads new videos through yt-dlp, and can notify a Telegram channel.
+Description: Video downloader with tray interface
+ YouTube Harvester watches configured YouTube channels, processes a manual
+ YouTube, Rutube, and VK queue through yt-dlp, and can send Telegram notices.
 EOF
 
 cat > "$PKG_DIR/DEBIAN/postinst" <<'EOF'

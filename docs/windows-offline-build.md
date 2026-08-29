@@ -1,10 +1,10 @@
 # Offline Windows Build
 
-Target machine used for the 1.1.3 Windows build:
+Target machine used for the 1.2.0 Beta Windows build:
 
 - Python 3.11 x64 or Python 3.12 x64
 - Git for Windows x64
-- Inno Setup 6
+- Inno Setup 7.1 (Inno Setup 6 is also supported)
 - WiX Toolset 7
 - No internet access
 
@@ -16,17 +16,17 @@ machine. For Python 3.11:
 ```powershell
 git clone https://github.com/LiberVixer/YouTubeHarvester.git
 cd YouTubeHarvester
-py -3.11 -m pip download -r requirements.txt pyinstaller pillow pefile pywin32-ctypes -d wheelhouse
+py -3.11 -m pip download -r requirements-windows-lock.txt -d wheelhouse
 ```
 
-Download a Windows x64 ffmpeg build and put `ffmpeg.exe` and `ffprobe.exe` into
-a folder named `ffmpeg`. The expected layout is:
+Download the Windows x64 FFmpeg 9.0.1 essentials build and put `ffmpeg.exe` and
+`ffprobe.exe` into a folder named `ffmpeg`. The expected layout is:
 
-Download Windows x64 Deno from the Deno GitHub releases and put `deno.exe` into
-a folder named `deno`. Download `deno`, not `denort`.
+Download Windows x64 Deno 2.9.6 from the Deno GitHub releases and put
+`deno.exe` into a folder named `deno`. Download `deno`, not `denort`.
 
 ```text
-YouTubeHarvester-1.1.3-offline\
+YouTubeHarvester-1.2.0-beta-offline\
   deno\
     deno.exe
   ffmpeg\
@@ -40,7 +40,7 @@ YouTubeHarvester-1.1.3-offline\
 For Python 3.12:
 
 ```powershell
-py -3.12 -m pip download -r requirements.txt pyinstaller pillow pefile pywin32-ctypes -d wheelhouse
+py -3.12 -m pip download -r requirements-windows-lock.txt -d wheelhouse
 ```
 
 Copy the whole `YouTubeHarvester` folder, including the new `wheelhouse`,
@@ -88,9 +88,9 @@ powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 -
 Expected output files:
 
 ```text
-dist\release\YouTubeHarvester_1.1.3_windows_portable.zip
-dist\release\YouTubeHarvester_1.1.3_windows_setup.exe
-dist\release\YouTubeHarvester_1.1.3_windows_x64.msi
+dist\release\YouTubeHarvester_1.2.0-beta_windows_portable.zip
+dist\release\YouTubeHarvester_1.2.0-beta_windows_setup.exe
+dist\release\YouTubeHarvester_1.2.0-beta_windows_x64.msi
 dist\release\SHA256SUMS-windows.txt
 ```
 

@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.3
+# YouTube Harvester 1.2.0 Beta
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="Лагатып YouTube Harvester" width="128">
@@ -32,6 +32,12 @@
 > загрузчык абноўлены да `yt-dlp 2026.08.19`, а аднаўленне пасля часовых
 > памылак YouTube HTTP 403 стала надзейнейшым.
 
+> **UPD 4 (Beta):** Версія 1.2.0 Beta дадае неабавязковае спампоўванне асобных
+> відэа з YouTube, Rutube і VK праз Агляд, Хуткае спампоўванне, назіранне за
+> буферам, чаргу і архіў. Спалучэнне крыніцы з ID прадухіляе супадзенні запісаў
+> розных сэрвісаў, а абноўленыя замацаваныя кампаненты робяць зборкі Windows і
+> Linux больш узнаўляльнымі. Гэта папярэдняя версія для тэсціравання.
+
 ![Агляд YouTube Harvester](docs/screenshots/be/overview.png)
 
 ## Што робіць праграма
@@ -41,7 +47,7 @@
 весці лакальны архіў, праглядаць справаздачы і адпраўляць апавяшчэнні або файлы
 ў Telegram.
 
-Версія `1.1.3` выкарыстоўвае Python-рухавік у Linux і Windows. Стары
+Версія `1.2.0-beta` выкарыстоўвае Python-рухавік у Linux і Windows. Стары
 Bash-рухавік застаўся ў зыходным кодзе толькі як адключаны састарэлы кампанент.
 
 ## Асноўныя магчымасці
@@ -60,10 +66,10 @@ Bash-рухавік застаўся ў зыходным кодзе толькі
   некалькіх аўдыядарожак і субцітраў, неадкладным спампоўваннем, чаргой і
   захаваным параметрам Telegram.
 - Наладжвальная глабальная гарачая клавіша; стандартна `Ctrl+Shift+Alt+Y`.
-- Назіранне за буферам абмену з адкрыццём хуткага спампоўвання для сапраўднага
-  YouTube URL.
+- Назіранне за буферам абмену з адкрыццём хуткага спампоўвання для
+  падтрымліваемай спасылкі YouTube, Rutube або VK.
 - Планіроўшчык аўтаматычных запускаў у выбраныя гадзіны.
-- Падрабязны архіў з тыпам, каналам, назвай, датай, спасылкай YouTube,
+- Падрабязны архіў з тыпам, каналам, назвай, датай, спасылкай на крыніцу,
   варыянтамі якасці і дарожак, лакальным файлам, папкай і выдаленнем запісу.
 - Журналы з фільтрамі «Усё», «Важнае» і «Памылкі».
 - Праверанае абнаўленне праграмы з афіцыйных рэлізаў GitHub для ўсталяванай,
@@ -95,15 +101,15 @@ Bash-рухавік застаўся ў зыходным кодзе толькі
 
 Linux:
 
-- `YouTubeHarvester_1.1.3_linux_all.deb`
-- `YouTubeHarvester_1.1.3_source.tar.gz`
+- `YouTubeHarvester_1.2.0-beta_linux_all.deb`
+- `YouTubeHarvester_1.2.0-beta_source.tar.gz`
 - `SHA256SUMS-linux.txt`
 
 Windows:
 
-- `YouTubeHarvester_1.1.3_windows_setup.exe` — звычайны ўсталёўшчык.
-- `YouTubeHarvester_1.1.3_windows_x64.msi` — пакет MSI для x64.
-- `YouTubeHarvester_1.1.3_windows_portable.zip` — партатыўная зборка.
+- `YouTubeHarvester_1.2.0-beta_windows_setup.exe` — звычайны ўсталёўшчык.
+- `YouTubeHarvester_1.2.0-beta_windows_x64.msi` — пакет MSI для x64.
+- `YouTubeHarvester_1.2.0-beta_windows_portable.zip` — партатыўная зборка.
 - `SHA256SUMS-windows.txt`
 
 У Windows-пакеты ўключаны `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe` і `deno.exe`.
@@ -111,7 +117,7 @@ Windows:
 ## Усталяванне ў Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.3_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.2.0-beta_linux_all.deb
 ```
 
 Запусціце праграму з меню або камандай:
@@ -227,14 +233,14 @@ PROXY_URL=127.0.0.1:9050
 Linux:
 
 ```bash
-packaging/build_release.sh 1.1.3 1.1.3
+packaging/build_release.sh 1.2.0~beta1 1.2.0-beta
 ```
 
 Windows:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.3 -MsiVersion 1.1.3
+  -Version 1.2.0-beta -MsiVersion 1.2.0
 ```
 
 GitHub Actions збірае Linux- і Windows-артэфакты для тэгаў `v*`.

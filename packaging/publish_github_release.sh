@@ -4,9 +4,9 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO="${GITHUB_REPOSITORY:-LiberVixer/YouTubeHarvester}"
 TARGET_BRANCH="${YTH_RELEASE_TARGET:-main}"
-TAG="${YTH_RELEASE_TAG:-v1.1.3}"
+TAG="${YTH_RELEASE_TAG:-v1.2.0-beta}"
 RELEASE_VERSION="${YTH_RELEASE_VERSION:-${TAG#v}}"
-TITLE="${YTH_RELEASE_TITLE:-YouTube Harvester ${RELEASE_VERSION}}"
+TITLE="${YTH_RELEASE_TITLE:-YouTube Harvester 1.2.0 Beta}"
 if [ -z "${YTH_RELEASE_ROOT:-}" ]; then
     echo "YTH_RELEASE_ROOT is required." >&2
     echo "Set it to a release bundle that contains release-linux/ and release-windows/." >&2
@@ -17,7 +17,7 @@ LINUX_DIR="$BUNDLE_ROOT/release-linux"
 WINDOWS_DIR="$BUNDLE_ROOT/release-windows"
 BODY_FILE="${YTH_RELEASE_BODY:-$ROOT_DIR/docs/releases/${RELEASE_VERSION}.md}"
 TOKEN_FILE="${GITHUB_TOKEN_FILE:-$HOME/.config/youtube-harvester/github-token}"
-PRERELEASE="${YTH_RELEASE_PRERELEASE:-false}"
+PRERELEASE="${YTH_RELEASE_PRERELEASE:-true}"
 
 ASSETS=(
     "$WINDOWS_DIR/YouTubeHarvester_${RELEASE_VERSION}_windows_portable.zip"

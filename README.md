@@ -1,4 +1,4 @@
-# YouTube Harvester 1.1.3
+# YouTube Harvester 1.2.0 Beta
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="YouTube Harvester logo" width="128">
@@ -33,6 +33,13 @@
 > the bundled downloader to `yt-dlp 2026.08.19` with stronger recovery from
 > temporary YouTube HTTP 403 failures.
 
+> **UPD 4 (Beta):** Version 1.2.0 Beta adds optional individual-video
+> downloads from YouTube, Rutube, and VK across Overview, Quick Download,
+> clipboard monitoring, the queue, and the archive. Source-aware IDs prevent
+> cross-service archive collisions, while refreshed and pinned components make
+> Windows and Linux builds more reproducible. This is a prerelease intended
+> for testing.
+
 ![YouTube Harvester overview](docs/screenshots/en/overview.png)
 
 ## What It Does
@@ -42,7 +49,7 @@ Videos, Shorts, and live streams through `yt-dlp`. It also accepts individual
 video links, keeps a searchable local archive, reports what was downloaded,
 and can send notifications or files to Telegram.
 
-Version `1.1.3` uses the Python downloader on both Linux and Windows. The old
+Version `1.2.0-beta` uses the Python downloader on both Linux and Windows. The old
 Bash engine remains in the source tree only as disabled legacy code.
 
 ## Main Features
@@ -62,10 +69,10 @@ Bash engine remains in the source tree only as disabled legacy code.
   queue action, and a persistent Telegram checkbox.
 - Configurable global quick-download hotkey. The default is
   `Ctrl+Shift+Alt+Y`.
-- Optional clipboard watcher that opens Quick Download when a valid YouTube URL
-  appears.
+- Optional clipboard watcher that opens Quick Download when a supported
+  YouTube, Rutube, or VK URL appears.
 - Scheduler for automatic runs at selected hours.
-- Download archive with type, channel, title, date, YouTube link, local file,
+- Download archive with type, channel, title, date, source link, local file,
   quality/track variants, containing folder, and record deletion.
 - Log viewer with All, Important, and Errors filters.
 - Verified application updates from official GitHub Releases for installed,
@@ -96,15 +103,15 @@ Ready-to-use packages are published on
 
 Linux:
 
-- `YouTubeHarvester_1.1.3_linux_all.deb`
-- `YouTubeHarvester_1.1.3_source.tar.gz`
+- `YouTubeHarvester_1.2.0-beta_linux_all.deb`
+- `YouTubeHarvester_1.2.0-beta_source.tar.gz`
 - `SHA256SUMS-linux.txt`
 
 Windows:
 
-- `YouTubeHarvester_1.1.3_windows_setup.exe` — standard installer.
-- `YouTubeHarvester_1.1.3_windows_x64.msi` — x64 MSI package.
-- `YouTubeHarvester_1.1.3_windows_portable.zip` — portable build.
+- `YouTubeHarvester_1.2.0-beta_windows_setup.exe` — standard installer.
+- `YouTubeHarvester_1.2.0-beta_windows_x64.msi` — x64 MSI package.
+- `YouTubeHarvester_1.2.0-beta_windows_portable.zip` — portable build.
 - `SHA256SUMS-windows.txt`
 
 The Windows packages bundle `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe`, and
@@ -113,7 +120,7 @@ The Windows packages bundle `yt-dlp`, `ffmpeg.exe`, `ffprobe.exe`, and
 ## Install on Linux
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.1.3_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.2.0-beta_linux_all.deb
 ```
 
 Start it from the application menu or run:
@@ -242,14 +249,14 @@ local video.
 Linux artifacts:
 
 ```bash
-packaging/build_release.sh 1.1.3 1.1.3
+packaging/build_release.sh 1.2.0~beta1 1.2.0-beta
 ```
 
 Windows artifacts, from Windows:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.1.3 -MsiVersion 1.1.3
+  -Version 1.2.0-beta -MsiVersion 1.2.0
 ```
 
 GitHub Actions builds Linux and Windows artifacts for tags matching `v*`.

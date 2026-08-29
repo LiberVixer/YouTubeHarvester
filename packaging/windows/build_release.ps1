@@ -1,13 +1,13 @@
 param(
-    [string]$Version = "1.1.3",
-    [string]$MsiVersion = "1.1.3",
+    [string]$Version = "1.2.0-beta",
+    [string]$MsiVersion = "1.2.0",
     [switch]$Offline,
     [string]$Wheelhouse = "",
     [string]$FfmpegDir = "",
-    [string]$FfmpegUrl = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip",
+    [string]$FfmpegUrl = "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-9.0.1-essentials_build.zip",
     [switch]$SkipFfmpegDownload,
     [string]$DenoDir = "",
-    [string]$DenoUrl = "https://github.com/denoland/deno/releases/latest/download/deno-x86_64-pc-windows-msvc.zip",
+    [string]$DenoUrl = "https://github.com/denoland/deno/releases/download/v2.9.6/deno-x86_64-pc-windows-msvc.zip",
     [switch]$SkipDenoDownload,
     [switch]$SkipMsi
 )
@@ -210,6 +210,8 @@ Compress-Archive -Path (Join-Path $AppDir "*") -DestinationPath $PortableZip -Fo
 Write-Host "Portable ZIP: $PortableZip"
 
 $isccPath = Find-ToolPath "ISCC.exe" @(
+    (Join-OptionalPath $env:ProgramFiles "Inno Setup 7\ISCC.exe"),
+    (Join-OptionalPath ${env:ProgramFiles(x86)} "Inno Setup 7\ISCC.exe"),
     (Join-OptionalPath ${env:ProgramFiles(x86)} "Inno Setup 6\ISCC.exe"),
     (Join-OptionalPath $env:ProgramFiles "Inno Setup 6\ISCC.exe")
 )
