@@ -10,6 +10,7 @@ import stat
 import sys
 import tempfile
 import urllib.parse
+import urllib.request
 from pathlib import Path
 
 from yth_updater import managed_yt_dlp_path
@@ -30,6 +31,72 @@ YOUTUBE_URL_PREFIXES = (
 SUPPORTED_MEDIA_SOURCES = ("youtube", "rutube", "vk")
 
 MEDIA_RESOLUTION_RE = re.compile(r"\[(?P<height>\d{3,4})p\]", re.IGNORECASE)
+PREVIEW_IMAGE_MAX_BYTES = 12 * 1024 * 1024
+PREVIEW_IMAGE_TIMEOUT_SECONDS = 15
+
+
+def download_preview_image(
+    url: str,
+    target: str | Path,
+    *,
+    max_bytes: int = PREVIEW_IMAGE_MAX_BYTES,
+    timeout: int = PREVIEW_IMAGE_TIMEOUT_SECONDS,
+) -> str:
+    """Download a bounded HTTP(S) image to the cache using an atomic replace."""
+    parsed = urllib.parse.urlsplit(str(url or "").strip())
+    if parsed.scheme.lower() not in {"http", "https"} or not parsed.hostname:
+        raise ValueError("preview URL must use HTTP or HTTPS")
+    if parsed.username is not None or parsed.password is not None:
+        raise ValueError("preview URL must not contain credentials")
+    if max_bytes <= 0:
+        raise ValueError("preview size limit must be positive")
+
+    target_path = Path(target)
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    request = urllib.request.Request(
+        parsed.geturl(),
+        headers={"User-Agent": "YouTube-Harvester/preview"},
+    )
+    temporary_path = None
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:  # nosec B310
+            final_url = urllib.parse.urlsplit(response.geturl())
+            if final_url.scheme.lower() not in {"http", "https"} or not final_url.hostname:
+                raise ValueError("preview redirect left HTTP(S)")
+            declared_size = response.headers.get("Content-Length")
+            if declared_size:
+                try:
+                    parsed_size = int(declared_size)
+                except ValueError:
+                    parsed_size = None
+                if parsed_size is not None and parsed_size > max_bytes:
+                    raise ValueError("preview image is too large")
+
+            with tempfile.NamedTemporaryFile(
+                mode="wb",
+                prefix=f".{target_path.name}.",
+                suffix=".part",
+                dir=target_path.parent,
+                delete=False,
+            ) as output:
+                temporary_path = Path(output.name)
+                downloaded = 0
+                while True:
+                    chunk = response.read(min(256 * 1024, max_bytes - downloaded + 1))
+                    if not chunk:
+                        break
+                    output.write(chunk)
+                    downloaded += len(chunk)
+                    if downloaded > max_bytes:
+                        raise ValueError("preview image is too large")
+        if not temporary_path or temporary_path.stat().st_size == 0:
+            raise ValueError("preview image is empty")
+        os.replace(temporary_path, target_path)
+        return str(target_path)
+    except Exception:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
+        raise
 
 
 def text_quality(text: str) -> int:

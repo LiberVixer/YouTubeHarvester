@@ -4,7 +4,7 @@ import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from tray_launcher import download_preview_image
+from yth_common import download_preview_image
 
 
 class PreviewHandler(BaseHTTPRequestHandler):
