@@ -15,6 +15,15 @@
 
 Toutes les modifications importantes de **YouTube Harvester** sont listées ici.
 
+## Non publié
+
+- Bureau : chaînes Rutube avec déduplication des alias, noms et avatars,
+  recherche Vidéos/Shorts, limites, planification et archivage tenant compte de la source.
+- Les recherches de diffusions et de contenu payant Rutube restent désactivées.
+  Nouveaux éléments traduits dans les dix langues ; port Android inchangé.
+- Préservation des lignes d'archive sans saut de ligne final ; recherche du canal
+  par nom dans l'archive limitée au même service vidéo.
+
 ## [1.2.0-beta] - 2026-08-29
 
 ### Ajouté

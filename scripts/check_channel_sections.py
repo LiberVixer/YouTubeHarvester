@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check which YouTube channel sections are available."""
+"""Check supported YouTube and Rutube channel sections."""
 
 import argparse
 import json
@@ -12,7 +12,10 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from yth_common import deno_runtime_arg, utf8_subprocess_env, yt_dlp_command  # noqa: E402
+from yth_common import (  # noqa: E402
+    channel_section_url, channel_supports_paid_check, deno_runtime_arg,
+    normalize_channel_url, utf8_subprocess_env, yt_dlp_command,
+)
 
 
 SECTIONS = ("videos", "shorts", "streams")
@@ -36,12 +39,15 @@ MEMBERS_ONLY_RE = re.compile(
 
 
 def section_url(channel: str, section: str) -> str:
-    return channel.strip().rstrip("/") + "/" + section
+    return channel_section_url(channel, section)
 
 
 def check_section(yt_dlp: list[str], channel: str, section: str, timeout: int) -> dict:
     url = section_url(channel, section)
+    if not url:
+        return {"status": "unsupported", "url": "", "error": ""}
     command = yt_dlp + [
+        "--ignore-config",
         "--js-runtimes",
         deno_runtime_arg(),
         "--flat-playlist",
@@ -85,6 +91,8 @@ def has_members_only_text(text: str) -> bool:
 
 
 def check_paid_content(yt_dlp: list[str], channel: str, sections: dict, timeout: int) -> str:
+    if not channel_supports_paid_check(channel):
+        return PAID_CONTENT_UNKNOWN
     checked = False
     for section in SECTIONS:
         section_info = sections.get(section) or {}
@@ -92,6 +100,7 @@ def check_paid_content(yt_dlp: list[str], channel: str, sections: dict, timeout:
             continue
         url = section_url(channel, section)
         command = yt_dlp + [
+            "--ignore-config",
             "--js-runtimes",
             deno_runtime_arg(),
             "--playlist-items",
@@ -134,8 +143,8 @@ def parse_sections(value: str) -> dict:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Check YouTube channel sections.")
-    parser.add_argument("--channel", required=True, help="YouTube channel URL")
+    parser = argparse.ArgumentParser(description="Check YouTube or Rutube channel sections.")
+    parser.add_argument("--channel", required=True, help="YouTube or Rutube channel URL")
     parser.add_argument("--timeout", type=int, default=45)
     parser.add_argument("--section", choices=SECTIONS, help="Check only one channel section.")
     parser.add_argument(
@@ -160,7 +169,10 @@ def main() -> int:
         print("yt-dlp не найден", file=sys.stderr)
         return 2
 
-    channel = args.channel.strip().rstrip("/")
+    channel = normalize_channel_url(args.channel)
+    if not channel:
+        parser.error("Invalid YouTube or Rutube channel URL")
+    paid_supported = channel_supports_paid_check(channel)
     if args.paid_content_only:
         sections = parse_sections(args.available_sections)
         for section, info in sections.items():
@@ -168,7 +180,7 @@ def main() -> int:
         payload = {
             "channel": channel,
             "sections": {},
-            "paid_content_checked": True,
+            "paid_content_checked": paid_supported,
             PAID_CONTENT_STATUS_KEY: check_paid_content(yt_dlp, channel, sections, max(5, args.timeout)),
         }
         print(json.dumps(payload, ensure_ascii=False))
@@ -186,9 +198,9 @@ def main() -> int:
     payload = {
         "channel": channel,
         "sections": sections,
-        "paid_content_checked": not args.skip_paid_content,
+        "paid_content_checked": not args.skip_paid_content and paid_supported,
     }
-    if not args.skip_paid_content:
+    if not args.skip_paid_content and paid_supported:
         payload[PAID_CONTENT_STATUS_KEY] = check_paid_content(yt_dlp, channel, sections, max(5, args.timeout))
     print(json.dumps(payload, ensure_ascii=False))
     return 0

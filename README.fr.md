@@ -184,6 +184,14 @@ l'application peut donc créer un raccourci système Cinnamon/GNOME exécutant
 
 ## Chaînes et file d'attente
 
+Les sources actuelles de la version bureau acceptent aussi les chaînes Rutube via
+`https://rutube.ru/channel/ID/` et `https://rutube.ru/u/nom/`, y compris leurs onglets
+Vidéos et Shorts. Les alias sont convertis en identifiants pour éviter les doublons.
+Le nom, l'avatar, les limites, la planification, les archives et le marquage des
+dernières vidéos comme archivées sont pris en charge. La recherche de diffusions et
+de contenu payant Rutube reste désactivée. Les vidéos individuelles fonctionnent
+dans la file et le téléchargement rapide. Le port Android n'est pas modifié.
+
 Les sections activées sont contrôlées l'une après l'autre, avec une courte pause
 après chaque résultat. La recherche members-only est faite pendant un contrôle
 explicite des chaînes si l'option est activée. Si une vidéo réservée aux membres

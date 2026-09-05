@@ -34,11 +34,15 @@ from yth_common import (  # noqa: E402
     archive_entry_matches_variant,
     archive_entry_source,
     canonical_media_url,
+    channel_section_url,
+    channel_sections,
+    channel_supports_paid_check,
     extract_media_id,
     fix_mojibake,
     media_resolution_from_path,
     media_source_from_url,
     normalize_media_source,
+    normalize_channel_url,
     positive_int,
     read_env_file,
     safe_print,
@@ -496,18 +500,14 @@ class Downloader:
             pass
 
     def normalize_channel_key(self, channel: str) -> str:
-        return str(channel or "").strip().rstrip("/")
+        return normalize_channel_url(channel) or str(channel or "").strip().rstrip("/")
 
     def looks_like_channel_url(self, url: str) -> bool:
-        text = self.normalize_channel_key(url)
-        return (
-            text.startswith(("https://www.youtube.com/", "https://youtube.com/"))
-            and ("/@" in text or "/channel/" in text or "/c/" in text or "/user/" in text)
-        )
+        return bool(normalize_channel_url(url))
 
     def set_channel_paid_content_status(self, channel: str, status: str) -> None:
         channel_key = self.normalize_channel_key(channel)
-        if not self.looks_like_channel_url(channel_key):
+        if not channel_supports_paid_check(channel_key):
             return
         rules_data = self.load_channel_rules()
         stored_key = next((key for key in rules_data if self.normalize_channel_key(key) == channel_key), channel_key)
@@ -521,12 +521,14 @@ class Downloader:
         self.save_channel_rules_data(rules_data)
 
     def channel_type_enabled(self, channel: str, type_name: str) -> bool:
+        if type_name not in channel_sections(channel):
+            return False
         rules_data = self.load_channel_rules()
-        channel_key = channel.rstrip("/")
+        channel_key = self.normalize_channel_key(channel)
         rules = rules_data.get(channel_key)
         if rules is None:
             for key, value in rules_data.items():
-                if str(key).rstrip("/") == channel_key:
+                if self.normalize_channel_key(key) == channel_key:
                     rules = value
                     break
         if not isinstance(rules, dict):
@@ -1562,7 +1564,15 @@ class Downloader:
         self.write_status()
         for raw_channel in channels:
             self.check_stop()
-            channel = raw_channel.rstrip("/")
+            channel = normalize_channel_url(raw_channel)
+            if not channel:
+                self.log(f"   ⚠️ Некорректная ссылка на канал, пропускаем: {raw_channel}")
+                self.channels_checked += 1
+                self.write_status()
+                continue
+            if media_source_from_url(channel) == "youtube":
+                # Keep existing cache/status keys; section URLs are normalized separately.
+                channel = raw_channel.rstrip("/")
             self.state = "searching"
             self.channel_url = channel
             self.channel_name = short_channel_name(channel)
@@ -1606,7 +1616,8 @@ class Downloader:
                     / f"%(title).150s - %(uploader).80s [%(extractor_key)s] [%(id)s] [{type_name}] [%(height)sp].%(ext)s"
                 )
                 command = self.yt_dlp_base_command(output_template)
-                command.extend(["--playlist-items", f"1-{self.type_limit(type_name)}", f"{channel}/{type_name}"])
+                command.extend(["--playlist-items", f"1-{self.type_limit(type_name)}",
+                                channel_section_url(channel, type_name)])
                 lines = self.run_yt_dlp(
                     command,
                     type_name,

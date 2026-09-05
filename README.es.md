@@ -183,6 +183,14 @@ crear un atajo del sistema Cinnamon/GNOME para
 
 ## Canales y cola
 
+El código fuente actual para escritorio también admite canales Rutube mediante
+`https://rutube.ru/channel/ID/` y `https://rutube.ru/u/nombre/`, incluidas sus pestañas
+Vídeos y Shorts. Los alias se resuelven a un ID para evitar duplicados. Se conservan
+el nombre y el avatar; funcionan los límites, la programación, el archivo y el
+marcado de vídeos recientes como archivados. La búsqueda de emisiones y contenido
+de pago de Rutube sigue desactivada. Los vídeos individuales funcionan en la cola
+y la descarga rápida. Estos cambios no afectan al port para Android.
+
 Las secciones activas se revisan en orden con una breve pausa después de cada
 resultado. La búsqueda members-only se realiza durante la comprobación manual
 de canales si la opción está activa. Si aparece un vídeo para miembros durante

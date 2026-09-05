@@ -3391,3 +3391,79 @@ LOCALE_MEDIA_SOURCE_TRANSLATIONS = {
 
 for _language_code, _translations in LOCALE_MEDIA_SOURCE_TRANSLATIONS.items():
     LOCALE_TRANSLATIONS.setdefault(_language_code, {}).update(_translations)
+
+LOCALE_CHANNEL_SOURCE_TRANSLATIONS = {
+    "en": {
+        "channels.add_prompt": "YouTube or Rutube channel link:",
+        "channels.need_link": "A valid YouTube or Rutube channel link is required",
+        "channels.rutube_streams_unsupported": "Rutube: channel stream scanning is not supported yet",
+        "channels.rutube_paid_unsupported": "Rutube: paid-content detection is not supported; availability is unknown",
+        "channels.check_paid_tip": "Also look for members-only videos when checking YouTube channels",
+    },
+    "ru": {
+        "channels.add_prompt": "Ссылка на канал YouTube или Rutube:",
+        "channels.need_link": "Нужна корректная ссылка на канал YouTube или Rutube",
+        "channels.rutube_streams_unsupported": "Rutube: проверка трансляций канала пока не поддерживается",
+        "channels.rutube_paid_unsupported": "Rutube: проверка платного контента не поддерживается; его наличие неизвестно",
+        "channels.check_paid_tip": "При проверке каналов YouTube дополнительно искать видео для участников",
+    },
+    "uk": {
+        "channels.add_prompt": "Посилання на канал YouTube або Rutube:",
+        "channels.need_link": "Потрібне коректне посилання на канал YouTube або Rutube",
+        "channels.rutube_streams_unsupported": "Rutube: перевірка трансляцій каналу поки не підтримується",
+        "channels.rutube_paid_unsupported": "Rutube: перевірка платного контенту не підтримується; його наявність невідома",
+        "channels.check_paid_tip": "Під час перевірки каналів YouTube також шукати відео для учасників",
+    },
+    "be": {
+        "channels.add_prompt": "Спасылка на канал YouTube або Rutube:",
+        "channels.need_link": "Патрэбна карэктная спасылка на канал YouTube або Rutube",
+        "channels.rutube_streams_unsupported": "Rutube: праверка трансляцый канала пакуль не падтрымліваецца",
+        "channels.rutube_paid_unsupported": "Rutube: праверка платнага кантэнту не падтрымліваецца; яго наяўнасць невядомая",
+        "channels.check_paid_tip": "Пры праверцы каналаў YouTube таксама шукаць відэа для ўдзельнікаў",
+    },
+    "fr": {
+        "channels.add_prompt": "Lien de chaîne YouTube ou Rutube :",
+        "channels.need_link": "Un lien de chaîne YouTube ou Rutube valide est requis",
+        "channels.rutube_streams_unsupported": "Rutube : la recherche de diffusions de chaîne n'est pas encore prise en charge",
+        "channels.rutube_paid_unsupported": "Rutube : la détection de contenu payant n'est pas prise en charge ; sa présence est inconnue",
+        "channels.check_paid_tip": "Rechercher aussi les vidéos réservées aux membres lors de la vérification des chaînes YouTube",
+    },
+    "es": {
+        "channels.add_prompt": "Enlace del canal de YouTube o Rutube:",
+        "channels.need_link": "Se requiere un enlace válido a un canal de YouTube o Rutube",
+        "channels.rutube_streams_unsupported": "Rutube: la búsqueda de emisiones del canal aún no está disponible",
+        "channels.rutube_paid_unsupported": "Rutube: no se admite la detección de contenido de pago; se desconoce si existe",
+        "channels.check_paid_tip": "Buscar también vídeos exclusivos para miembros al comprobar canales de YouTube",
+    },
+    "hi": {
+        "channels.add_prompt": "YouTube या Rutube चैनल लिंक:",
+        "channels.need_link": "एक मान्य YouTube या Rutube चैनल लिंक आवश्यक है",
+        "channels.rutube_streams_unsupported": "Rutube: चैनल के लाइव प्रसारण की जाँच अभी समर्थित नहीं है",
+        "channels.rutube_paid_unsupported": "Rutube: सशुल्क सामग्री की जाँच समर्थित नहीं है; इसकी उपलब्धता अज्ञात है",
+        "channels.check_paid_tip": "YouTube चैनलों की जाँच करते समय केवल सदस्यों के लिए उपलब्ध वीडियो भी खोजें",
+    },
+    "zh": {
+        "channels.add_prompt": "YouTube 或 Rutube 频道链接：",
+        "channels.need_link": "需要有效的 YouTube 或 Rutube 频道链接",
+        "channels.rutube_streams_unsupported": "Rutube：暂不支持检查频道直播",
+        "channels.rutube_paid_unsupported": "Rutube：不支持检测付费内容，是否存在付费内容未知",
+        "channels.check_paid_tip": "检查 YouTube 频道时也查找会员专享视频",
+    },
+    "ja": {
+        "channels.add_prompt": "YouTube または Rutube チャンネルのリンク:",
+        "channels.need_link": "有効な YouTube または Rutube チャンネルのリンクが必要です",
+        "channels.rutube_streams_unsupported": "Rutube：チャンネルのライブ配信の確認にはまだ対応していません",
+        "channels.rutube_paid_unsupported": "Rutube：有料コンテンツの検出には対応していないため、有無は不明です",
+        "channels.check_paid_tip": "YouTube チャンネルの確認時にメンバー限定動画も検索する",
+    },
+    "ar": {
+        "channels.add_prompt": "رابط قناة YouTube أو Rutube:",
+        "channels.need_link": "يلزم رابط صالح لقناة YouTube أو Rutube",
+        "channels.rutube_streams_unsupported": "Rutube: فحص بث القناة غير مدعوم حتى الآن",
+        "channels.rutube_paid_unsupported": "Rutube: اكتشاف المحتوى المدفوع غير مدعوم؛ وجوده غير معروف",
+        "channels.check_paid_tip": "البحث أيضاً عن فيديوهات الأعضاء فقط عند فحص قنوات YouTube",
+    },
+}
+
+for _language_code, _translations in LOCALE_CHANNEL_SOURCE_TRANSLATIONS.items():
+    LOCALE_TRANSLATIONS.setdefault(_language_code, {}).update(_translations)

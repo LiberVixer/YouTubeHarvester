@@ -7,6 +7,7 @@ import re
 import shlex
 import shutil
 import stat
+import subprocess
 import sys
 import tempfile
 import urllib.parse
@@ -298,6 +299,108 @@ def normalize_media_source(value: str | None, url: str = "") -> str:
     if source == "vk" or source.startswith("vk:"):
         return "vk"
     return media_source_from_url(url)
+
+
+def normalize_channel_url(url: str) -> str:
+    """Validate channel links separately from single-video and playlist links."""
+    text = str(url or "").strip()
+    if re.search(r"[\s\x00-\x1f\x7f]", text):
+        return ""
+    try:
+        parsed = urllib.parse.urlsplit(text)
+        if (parsed.scheme not in {"http", "https"} or parsed.username is not None
+                or parsed.password is not None or parsed.port is not None):
+            return ""
+        host = (parsed.hostname or "").lower()
+        path = parsed.path.rstrip("/")
+        if re.search(r"%(?:2f|5c|00)", path, re.IGNORECASE):
+            return ""
+        if host in {"youtube.com", "www.youtube.com", "m.youtube.com"}:
+            match = re.fullmatch(
+                r"/(@[^/#?\\]+|(?:channel|c|user)/[^/#?\\]+)"
+                r"(?:/(?:videos|shorts|streams|featured|about|community|playlists))?", path,
+            )
+            return f"https://www.youtube.com/{match[1]}" if match else ""
+        if host in {"rutube.ru", "www.rutube.ru"}:
+            match = re.fullmatch(r"/(channel/[0-9]+|u/\w+)(?:/(?:videos|shorts))?", path)
+            if match:
+                root = match[1]
+                if root.startswith("channel/"):
+                    root = f"channel/{int(root.split('/')[1])}"
+                return f"https://rutube.ru/{root}"
+    except ValueError:
+        pass
+    return ""
+
+
+def channel_sections(channel: str) -> tuple[str, ...]:
+    source = media_source_from_url(normalize_channel_url(channel))
+    if source == "youtube":
+        return ("videos", "shorts", "streams")
+    if source == "rutube":
+        return ("videos", "shorts")
+    return ()
+
+
+def channel_section_url(channel: str, section: str) -> str:
+    normalized = normalize_channel_url(channel)
+    if section not in channel_sections(normalized):
+        return ""
+    return f"{normalized}/{section}"
+
+
+def channel_supports_paid_check(channel: str) -> bool:
+    return media_source_from_url(normalize_channel_url(channel)) == "youtube"
+
+
+def rutube_channel_metadata(channel: str, command: list[str], *, env=None) -> dict:
+    """Resolve aliases with yt-dlp; fetch the avatar from the public author data."""
+    normalized = normalize_channel_url(channel)
+    if media_source_from_url(normalized) != "rutube":
+        raise ValueError("Invalid Rutube channel URL")
+    result = subprocess.run(
+        command + ["--ignore-config", "--no-cache-dir", "--flat-playlist", "--playlist-items", "1",
+                   "--dump-single-json", "--skip-download", "--socket-timeout", "10",
+                   "--retries", "0", "--extractor-retries", "0", normalized],
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+        env=env if env is not None else utf8_subprocess_env(), timeout=45, check=False,
+    )
+    if result.returncode:
+        raise ValueError((result.stderr or "Rutube channel metadata unavailable").strip()[-500:])
+    data = json.loads(result.stdout)
+    channel_id = str(data.get("id") or "") if isinstance(data, dict) else ""
+    if not re.fullmatch(r"[0-9]+", channel_id):
+        raise ValueError("Rutube did not return a channel ID")
+    canonical = f"https://rutube.ru/channel/{int(channel_id)}"
+    entry = next((e for e in (data.get("entries") or []) if isinstance(e, dict)), {})
+    title = str(entry.get("uploader") or f"Rutube {channel_id}")
+    thumbnail = ""
+    # yt-dlp's flat playlist exposes author names, but not channel avatars.
+    request = urllib.request.Request(
+        f"https://rutube.ru/api/video/person/{channel_id}/?page=1&format=json",
+        headers={"User-Agent": "Mozilla/5.0", "Referer": "https://rutube.ru/"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=15) as response:  # nosec B310
+            raw = response.read(2 * 1024 * 1024 + 1)
+        if len(raw) <= 2 * 1024 * 1024:
+            page = json.loads(raw)
+            for video in page.get("results", []):
+                author = video.get("author") or {}
+                if str(author.get("id")) == channel_id:
+                    title = str(author.get("name") or title)
+                    candidate = str(author.get("avatar_url") or "")
+                    image_url = urllib.parse.urlsplit(candidate)
+                    host = (image_url.hostname or "").lower()
+                    if image_url.scheme == "https" and any(
+                        host == domain or host.endswith("." + domain)
+                        for domain in ("rutube.ru", "rtbcdn.ru", "rutubelist.ru")
+                    ):
+                        thumbnail = candidate
+                    break
+    except (OSError, ValueError, TypeError, AttributeError):
+        pass  # Missing artwork must not prevent adding or scanning a channel.
+    return {"channel": canonical, "title": title, "thumbnail_url": thumbnail}
 
 
 def extract_media_id(url: str, source: str = "") -> str:

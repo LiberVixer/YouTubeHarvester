@@ -219,6 +219,15 @@ through `wl-paste` on Wayland when `wl-clipboard` is installed.
 
 ## Channel and Queue Workflow
 
+The current desktop source build also accepts Rutube channels via
+`https://rutube.ru/channel/ID/` or `https://rutube.ru/u/name/`, including links to
+their Videos/Shorts tabs. Aliases are resolved to a channel ID to prevent duplicates.
+Channel names and avatars are cached; Videos and Shorts use the existing limits,
+scheduled scans, and archive. Recent entries can also be marked as archived without
+downloading. Rutube stream scanning and paid-content detection are not supported
+yet and are disabled on its channel cards. Individual Rutube links continue to work
+in the queue and Quick Download. These changes do not modify the Android port.
+
 The application checks enabled channel sections in order and pauses briefly
 after each completed section so its result remains visible. Paid-content
 probing is performed only during an explicit channel check when enabled. If a

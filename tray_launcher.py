@@ -79,6 +79,9 @@ from yth_common import (
     archive_entry_matches_variant,
     archive_entry_source,
     archive_entry_source_url,
+    channel_section_url,
+    channel_sections,
+    channel_supports_paid_check,
     download_preview_image,
     extract_media_id,
     extract_video_id,
@@ -89,8 +92,10 @@ from yth_common import (
     media_resolution_from_path,
     media_source_from_url,
     normalize_media_source,
+    normalize_channel_url,
     normalize_text_value,
     read_text_for_display,
+    rutube_channel_metadata,
     yt_dlp_command as common_yt_dlp_command,
 )
 from i18n_locales import LOCALE_TRANSLATIONS
@@ -4017,8 +4022,7 @@ class ArchiveWindow(QMainWindow):
             QMessageBox.information(self, self.tr("archive.title"), self.tr("archive.no_channel"))
             return
         type_name = str(entry.get("type") or "").strip()
-        if type_name in {"videos", "shorts", "streams"}:
-            url = url.rstrip("/") + f"/{type_name}"
+        url = channel_section_url(url, type_name) or url
         QDesktopServices.openUrl(QUrl(url))
 
     def channel_url_from_entry(self, entry: dict):
@@ -4038,6 +4042,8 @@ class ArchiveWindow(QMainWindow):
             return ""
 
         for channel in channels:
+            if media_source_from_url(channel) != archive_entry_source(entry):
+                continue
             cache_path = self.channel_cache_path(channel).with_suffix(".json")
             title = ""
             try:
@@ -4613,6 +4619,7 @@ class MainWindow(QMainWindow):
     metadata_failed = pyqtSignal(int, str)
     quick_channel_logo_loaded = pyqtSignal(dict)
     channel_metadata_loaded = pyqtSignal(dict)
+    channel_add_resolved = pyqtSignal(dict)
     channel_marked_archived = pyqtSignal(dict)
     channel_mark_archive_failed = pyqtSignal(str)
     channel_sections_checked = pyqtSignal(dict)
@@ -4699,6 +4706,8 @@ class MainWindow(QMainWindow):
         self.metadata_failed.connect(self.on_metadata_failed)
         self.quick_channel_logo_loaded.connect(self.on_quick_channel_logo_loaded)
         self.channel_metadata_loaded.connect(self.on_channel_metadata_loaded)
+        self.channel_add_resolved.connect(self.on_channel_add_resolved)
+        self.pending_channel_additions = set()
         self.channel_marked_archived.connect(self.on_channel_marked_archived)
         self.channel_mark_archive_failed.connect(self.on_channel_mark_archive_failed)
         self.channel_sections_checked.connect(self.on_channel_sections_checked)
@@ -8222,7 +8231,7 @@ class MainWindow(QMainWindow):
         return detailed_count if detailed_count > 0 else self._count_lines(self.launcher.archive_file)
 
     def _channel_display_name(self, channel_url: str, fallback: str):
-        if channel_url and self._looks_like_youtube_channel_url(channel_url):
+        if normalize_channel_url(channel_url):
             meta_path = self.channel_cache_path(channel_url).with_suffix(".json")
             try:
                 if meta_path.exists():
@@ -8234,7 +8243,7 @@ class MainWindow(QMainWindow):
                 pass
         if fallback:
             return fallback
-        if channel_url and self._looks_like_youtube_channel_url(channel_url):
+        if normalize_channel_url(channel_url):
             return self.channel_title_from_url(channel_url)
         return ""
 
@@ -8285,15 +8294,47 @@ class MainWindow(QMainWindow):
         text = text.strip()
         if not text:
             return
-        if not self._looks_like_youtube_channel_url(text):
+        text = normalize_channel_url(text)
+        if not text:
             QMessageBox.warning(self, self.tr("tab.channels"), self.tr("channels.need_link"))
             return
-        text = text.rstrip("/")
+        if media_source_from_url(text) == "rutube":
+            if text not in self.pending_channel_additions:
+                self.pending_channel_additions.add(text)
+                self.channel_sections_status_label.setText(self.tr("channels.active", label="Rutube"))
+                threading.Thread(target=self._resolve_rutube_channel_worker, args=(text,), daemon=True).start()
+            return
+        self._add_resolved_channel(text)
+
+    def _resolve_rutube_channel_worker(self, channel: str):
+        try:
+            info = rutube_channel_metadata(
+                channel, self.launcher.yt_dlp_command(), env=self.launcher.script_environment(),
+            )
+            try:
+                self._cache_channel_metadata(info["channel"], info["title"], info["thumbnail_url"])
+            except OSError:
+                pass
+            self.channel_add_resolved.emit({**info, "requested_channel": channel})
+        except Exception as exc:
+            self.channel_add_resolved.emit({"requested_channel": channel, "error": str(exc)})
+
+    def on_channel_add_resolved(self, info: dict):
+        self.pending_channel_additions.discard(info.get("requested_channel"))
+        if info.get("error"):
+            self.channel_sections_status_label.setText(self.tr("channels.check_failed"))
+            QMessageBox.warning(self, self.tr("tab.channels"), self.tr("channels.check_failed") + "\n" + info["error"])
+            return
+        self.channel_sections_status_label.clear()
+        self._add_resolved_channel(info["channel"])
+
+    def _add_resolved_channel(self, text: str):
         existing = self._read_channels()
-        if text in existing:
+        if self.normalize_channel_key(text) in {self.normalize_channel_key(url) for url in existing}:
             QMessageBox.information(self, self.tr("tab.channels"), self.tr("channels.exists"))
             return
-        self.save_channel_urls(self._read_channels() + [text])
+        if not self.save_channel_urls(existing + [text]):
+            return
         self.refresh_channels()
         self.refresh_overview()
         self.check_channel_sections(text)
@@ -8317,11 +8358,13 @@ class MainWindow(QMainWindow):
         channels = [c.strip().rstrip("/") for c in channels if c.strip()]
         try:
             self.launcher.channels_file.write_text("\n".join(channels) + "\n", encoding="utf-8-sig")
+            return True
         except Exception as e:
             QMessageBox.warning(self, self.tr("tab.channels"), str(e))
+            return False
 
     def normalize_channel_key(self, channel: str):
-        return str(channel or "").strip().rstrip("/")
+        return normalize_channel_url(channel) or str(channel or "").strip().rstrip("/")
 
     def load_channel_rules(self):
         try:
@@ -8391,6 +8434,11 @@ class MainWindow(QMainWindow):
         rules = dict(CHANNEL_TYPE_DEFAULTS)
         rules[PAID_CONTENT_STATUS_KEY] = PAID_CONTENT_UNKNOWN
         rules.update(self.channel_rules.get(key, {}))
+        for type_name in CHANNEL_TYPE_DEFAULTS:
+            if type_name not in channel_sections(channel):
+                rules[type_name] = False
+        if not channel_supports_paid_check(channel):
+            rules[PAID_CONTENT_STATUS_KEY] = PAID_CONTENT_UNKNOWN
         return rules
 
     def compact_channel_rules(self, rules: dict) -> dict:
@@ -8404,7 +8452,7 @@ class MainWindow(QMainWindow):
         return compact
 
     def set_channel_type_enabled(self, channel: str, type_name: str, enabled: bool):
-        if type_name not in CHANNEL_TYPE_DEFAULTS:
+        if type_name not in channel_sections(channel):
             return
         key = self.normalize_channel_key(channel)
         rules = self.channel_rule(channel)
@@ -8421,7 +8469,7 @@ class MainWindow(QMainWindow):
         return status if status in PAID_CONTENT_STATUSES else PAID_CONTENT_UNKNOWN
 
     def set_channel_paid_content_status(self, channel: str, status: str):
-        if status not in PAID_CONTENT_STATUSES:
+        if status not in PAID_CONTENT_STATUSES or not channel_supports_paid_check(channel):
             return
         key = self.normalize_channel_key(channel)
         rules = self.channel_rule(channel)
@@ -8570,9 +8618,10 @@ class MainWindow(QMainWindow):
         thread.start()
 
     def mark_channel_section_checking(self, channel: str, check_paid_content: bool = True):
+        check_paid_content = check_paid_content and channel_supports_paid_check(channel)
         key = self.normalize_channel_key(channel)
         self.channel_section_checks_running.add(key)
-        self.channel_section_checks_pending[key] = {type_name for type_name, _emoji, _label in CHANNEL_TYPE_BUTTONS}
+        self.channel_section_checks_pending[key] = set(channel_sections(channel))
         if check_paid_content:
             self.channel_paid_content_checks_running.add(key)
         else:
@@ -8583,6 +8632,8 @@ class MainWindow(QMainWindow):
             return
         waiting = self.channel_check_waiting_text()
         for type_name, button in getattr(card, "type_buttons", {}).items():
+            if type_name not in channel_sections(channel):
+                continue
             button.setText(waiting)
             button.setToolTip(self.tr("channels.waiting", label=self.channel_type_label(type_name)))
         paid_button = getattr(card, "paid_content_button", None)
@@ -8614,9 +8665,13 @@ class MainWindow(QMainWindow):
         })
 
     def _check_channel_sections_worker(self, channel: str, called_from_batch: bool, check_paid_content: bool = True):
+        check_paid_content = check_paid_content and channel_supports_paid_check(channel)
         payload = {"channel": channel, "sections": {}, "error": "", "paid_content_checked": check_paid_content}
         completed = True
         for type_name, _emoji, _label in CHANNEL_TYPE_BUTTONS:
+            if type_name not in channel_sections(channel):
+                payload["sections"][type_name] = {"status": "unsupported", "url": "", "error": ""}
+                continue
             if self.channel_section_stop_event.is_set():
                 completed = False
                 payload["cancelled"] = True
@@ -8809,6 +8864,12 @@ class MainWindow(QMainWindow):
         waiting = self.channel_check_waiting_text()
         for type_name, button in getattr(card, "type_buttons", {}).items():
             base_emoji = self.channel_type_emoji(type_name)
+            if type_name not in channel_sections(channel):
+                button.setEnabled(False)
+                button.setChecked(False)
+                button.setText(base_emoji)
+                button.setToolTip(self.tr("channels.rutube_streams_unsupported"))
+                continue
             section = sections.get(type_name) or {}
             if is_running and type_name in pending_sections:
                 is_active = key == active_key and type_name == active_type
@@ -8850,6 +8911,10 @@ class MainWindow(QMainWindow):
             return
         button = getattr(card, "paid_content_button", None)
         if button is None:
+            return
+        if not channel_supports_paid_check(channel):
+            button.setText(PAID_CONTENT_EMOJIS[PAID_CONTENT_UNKNOWN])
+            button.setToolTip(self.tr("channels.rutube_paid_unsupported"))
             return
         status = self.channel_paid_content_status(channel)
         button.setText(PAID_CONTENT_EMOJIS.get(status, PAID_CONTENT_EMOJIS[PAID_CONTENT_UNKNOWN]))
@@ -8942,6 +9007,8 @@ class MainWindow(QMainWindow):
             f"{self.tr('archive.mark_added')}: {summary.get('total_added', 0)}",
         ]
         for type_name in ("videos", "shorts", "streams"):
+            if type_name not in type_info:
+                continue
             details = type_info.get(type_name) or {}
             line = f"{labels[type_name]}: {self.tr('archive.mark_found').lower()} {details.get('found', 0)}, {self.tr('archive.mark_added').lower()} {details.get('added', 0)}"
             error = (details.get("error") or "").strip()
@@ -9019,6 +9086,7 @@ class MainWindow(QMainWindow):
             type_btn = QPushButton(emoji, image_box)
             type_btn.setCheckable(True)
             type_btn.setChecked(rules.get(type_name, True))
+            type_btn.setEnabled(type_name in channel_sections(channel))
             type_btn.setGeometry(side_button_x, 35 + idx * 31, side_button_size, side_button_size)
             type_btn.setToolTip(self.tr("channels.section_toggle", label=self.channel_type_label(type_name)))
             type_btn.setStyleSheet("""
@@ -9040,6 +9108,10 @@ class MainWindow(QMainWindow):
                 }
                 QPushButton:checked:hover {
                     background: rgba(37, 150, 80, 220);
+                }
+                QPushButton:disabled {
+                    background: rgba(45, 53, 64, 190);
+                    color: #b9bec6;
                 }
             """)
             type_btn.clicked.connect(
@@ -9138,7 +9210,16 @@ class MainWindow(QMainWindow):
 
     def _channel_metadata_worker(self, channel: str):
         try:
-            metadata_url = f"{channel.rstrip('/')}/videos"
+            if media_source_from_url(channel) == "rutube":
+                info = rutube_channel_metadata(
+                    channel, self.launcher.yt_dlp_command(), env=self.launcher.script_environment(),
+                )
+                image_path = self._cache_channel_metadata(channel, info["title"], info["thumbnail_url"])
+                self.channel_metadata_loaded.emit({"channel": channel, "title": info["title"], "image_path": image_path})
+                return
+            metadata_url = channel_section_url(channel, "videos")
+            if not metadata_url:
+                return
             result = subprocess.run(
                 self.launcher.yt_dlp_command()
                 + self.launcher.yt_dlp_js_runtime_args()
@@ -9160,23 +9241,24 @@ class MainWindow(QMainWindow):
             if thumbnails:
                 thumbnail_url = thumbnails[-1].get("url") or ""
 
-            image_path = ""
-            cache = self.channel_cache_path(channel)
-            cache.parent.mkdir(parents=True, exist_ok=True)
-            cache.with_suffix(".json").write_text(json.dumps({"title": title}, ensure_ascii=False), encoding="utf-8")
-            cached_image = cache.with_suffix(".jpg")
-            if cached_image.exists():
-                image_path = str(cached_image)
-            elif thumbnail_url:
-                image_path = str(cache.with_suffix(".jpg"))
-                try:
-                    download_preview_image(thumbnail_url, image_path)
-                except Exception:
-                    image_path = ""
-
+            image_path = self._cache_channel_metadata(channel, title, thumbnail_url)
             self.channel_metadata_loaded.emit({"channel": channel, "title": title, "image_path": image_path})
         except Exception:
             return
+
+    def _cache_channel_metadata(self, channel: str, title: str, thumbnail_url: str) -> str:
+        cache = self.channel_cache_path(channel)
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        cache.with_suffix(".json").write_text(json.dumps({"title": title}, ensure_ascii=False), encoding="utf-8")
+        cached_image = cache.with_suffix(".jpg")
+        if cached_image.exists():
+            return str(cached_image)
+        if thumbnail_url:
+            try:
+                return download_preview_image(thumbnail_url, cached_image)
+            except Exception:
+                pass
+        return ""
 
     def on_channel_metadata_loaded(self, info: dict):
         channel = info.get("channel")
@@ -9444,6 +9526,8 @@ class MainWindow(QMainWindow):
                     channel_url = f"https://www.youtube.com/{uploader_id}"
                 elif uploader_id:
                     channel_url = f"https://www.youtube.com/channel/{uploader_id}"
+            if source == "rutube" and str(data.get("uploader_id") or "").isdigit():
+                channel_url = f"https://rutube.ru/channel/{data['uploader_id']}"
 
             channel_thumbnail_url = data.get("channel_thumbnail") or data.get("uploader_thumbnail") or ""
             channel_thumbnail_path = ""
@@ -9476,7 +9560,7 @@ class MainWindow(QMainWindow):
                 "audio_tracks": audio_tracks,
                 "subtitle_tracks": subtitle_track_options(data),
             })
-            if context == "quick" and source == "youtube" and not channel_thumbnail_path and channel_url:
+            if context == "quick" and source in {"youtube", "rutube"} and not channel_thumbnail_path and channel_url:
                 loaded_path = self.fetch_quick_channel_logo(channel_url, request_id)
                 if loaded_path:
                     self.quick_channel_logo_loaded.emit({
@@ -9495,6 +9579,12 @@ class MainWindow(QMainWindow):
             cached_image = cache.with_suffix(".jpg")
             if cached_image.exists():
                 return str(cached_image)
+
+            if media_source_from_url(channel_url) == "rutube":
+                info = rutube_channel_metadata(
+                    channel_url, self.launcher.yt_dlp_command(), env=self.launcher.script_environment(),
+                )
+                return self._cache_channel_metadata(channel_url, info["title"], info["thumbnail_url"])
 
             result = subprocess.run(
                 self.launcher.yt_dlp_command()

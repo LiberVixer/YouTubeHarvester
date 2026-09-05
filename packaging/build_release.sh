@@ -4,12 +4,12 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEB_VERSION="${1:-1.2.0~beta1}"
 RELEASE_VERSION="${2:-1.2.0-beta}"
-RELEASE_DIR="$ROOT_DIR/dist/release"
+RELEASE_DIR="${3:-$ROOT_DIR/dist/release}"
+mkdir -p "$RELEASE_DIR"
+RELEASE_DIR="$(cd "$RELEASE_DIR" && pwd)"
 SOURCE_TAR="$RELEASE_DIR/YouTubeHarvester_${RELEASE_VERSION}_source.tar.gz"
 DEB_SOURCE="$ROOT_DIR/dist/yt-harvester_${DEB_VERSION}_all.deb"
 DEB_TARGET="$RELEASE_DIR/YouTubeHarvester_${RELEASE_VERSION}_linux_all.deb"
-
-mkdir -p "$RELEASE_DIR"
 
 "$ROOT_DIR/packaging/build_deb.sh" "$DEB_VERSION"
 cp "$DEB_SOURCE" "$DEB_TARGET"
@@ -36,6 +36,8 @@ if git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
         requirements-windows-lock.txt \
         .github/dependabot.yml \
         "docs/releases/${RELEASE_VERSION}.md" \
+        tests/test_channel_sources.py \
+        tests/test_channel_sources_ui.py \
         tests/test_media_sources.py \
         tests/test_preview_download.py; do
         if [ -f "$ROOT_DIR/$required_file" ] && ! grep -z -q -x -F -- "$required_file" "$SOURCE_LIST"; then
@@ -56,6 +58,9 @@ else
         --exclude='./.sentry-native' \
         --exclude='./.vscode' \
         --exclude='./.venv' \
+        --exclude='./.ruff_cache' \
+        --exclude='./android' \
+        --exclude='./docs/android-ui-reference' \
         --exclude='./__pycache__' \
         --exclude='./scripts/__pycache__' \
         --exclude='./dist' \

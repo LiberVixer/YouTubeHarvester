@@ -27,7 +27,7 @@ jobs:
       - name: Install package tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y dpkg-dev fakeroot python3
+          sudo apt-get install -y dpkg-dev fakeroot python3 python3-pyqt5
 
       - name: Validate scripts
         run: |
@@ -104,6 +104,12 @@ jobs:
         shell: powershell
         run: |
           powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 -Version "$env:APP_VERSION" -MsiVersion "$env:MSI_VERSION"
+
+      - name: Test Windows runtime and offscreen channel cards
+        shell: powershell
+        run: |
+          & .\.venv\Scripts\python.exe -m unittest discover -s tests -v
+          if ($LASTEXITCODE -ne 0) { throw "Windows runtime tests failed: $LASTEXITCODE" }
 
       - name: Verify Windows release files
         shell: powershell

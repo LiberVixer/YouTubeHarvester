@@ -15,6 +15,15 @@
 
 All notable changes to **YouTube Harvester** are documented here.
 
+## Unreleased
+
+- Desktop: add Rutube channels with alias deduplication, names and avatars,
+  Videos/Shorts scans, limits, scheduling, and source-aware archive marking.
+- Keep unsupported Rutube stream and paid-content checks disabled. Translate
+  the new controls into all ten languages; the Android port remains unchanged.
+- Preserve archive lines when appending without a final newline, and resolve
+  archive channel-name fallbacks only within the same video source.
+
 ## [1.2.0-beta] - 2026-08-29
 
 ### Added

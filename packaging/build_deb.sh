@@ -130,7 +130,7 @@ Recommends: wl-clipboard
 Suggests: deno
 Maintainer: YouTube Harvester <noreply@users.noreply.github.com>
 Description: Video downloader with tray interface
- YouTube Harvester watches configured YouTube channels, processes a manual
+ YouTube Harvester watches configured YouTube and Rutube channels, processes a manual
  YouTube, Rutube, and VK queue through yt-dlp, and can send Telegram notices.
 EOF
 
@@ -167,8 +167,8 @@ YouTube Harvester stores user data outside /opt:
 - config: ~/.config/yt-harvester/.env
 - cache:  ~/.cache/yt-harvester
 
-Edit ~/.config/yt-harvester/.env and fill BOT_TOKEN and CHANNEL_ID
-before starting downloads.
+Telegram is optional. To enable it, fill BOT_TOKEN and CHANNEL_ID in
+~/.config/yt-harvester/.env or use the application's settings.
 EOF
 gzip -9n < "$DOC_DIR/README.Debian" > "$DOC_DIR/README.Debian.gz"
 rm -f "$DOC_DIR/README.Debian"
