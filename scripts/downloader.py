@@ -131,8 +131,8 @@ class Downloader:
         self.completion_event_dir = Path(
             os.environ.get("YTD_COMPLETION_EVENT_DIR", self.config_dir / "completion-events")
         )
-        self.temp_dir = Path(os.environ.get("YTD_TEMP_DIR", Path.home() / "temp" / "YTH"))
-        self.final_dir = Path(os.environ.get("YTD_FINAL_DIR", Path.home() / "Downloads" / "YouTubeHarvester"))
+        self.temp_dir = Path(os.environ.get("YTD_TEMP_DIR") or Path.home() / "temp" / "YTH")
+        self.final_dir = Path(os.environ.get("YTD_FINAL_DIR") or Path.home() / "Downloads" / "YouTubeHarvester")
         self.ffmpeg_dir = self.detect_ffmpeg_dir()
         self.deno_path = self.detect_deno_path()
         self.log_file = Path(os.environ.get("YTD_LOG_FILE", self.data_dir / "download.log"))

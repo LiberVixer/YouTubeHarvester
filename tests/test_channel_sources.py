@@ -188,6 +188,21 @@ class ChannelDownloaderTests(unittest.TestCase):
         self.downloader.log = Mock()
         self.downloader.temp_dir.mkdir()
 
+    @patch("scripts.downloader.Path.home", side_effect=RuntimeError("Could not determine home directory."))
+    def test_explicit_download_directories_do_not_require_home(self, home):
+        downloader = Downloader()
+        self.assertEqual(downloader.temp_dir, self.downloader.temp_dir)
+        self.assertEqual(downloader.final_dir, self.downloader.final_dir)
+        home.assert_not_called()
+
+    def test_default_download_directories_use_home(self):
+        root = Path(self.directory.name)
+        with patch.dict(os.environ, {"YTD_TEMP_DIR": "", "YTD_FINAL_DIR": ""}):
+            with patch("scripts.downloader.Path.home", return_value=root):
+                downloader = Downloader()
+        self.assertEqual(downloader.temp_dir, root / "temp" / "YTH")
+        self.assertEqual(downloader.final_dir, root / "Downloads" / "YouTubeHarvester")
+
     @patch("scripts.downloader.time.sleep")
     def test_scanning_obeys_supported_types_limits_and_legacy_rules(self, sleep):
         d = self.downloader
