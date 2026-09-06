@@ -176,6 +176,8 @@ class ChannelDownloaderTests(unittest.TestCase):
         self.addCleanup(self.directory.cleanup)
         root = Path(self.directory.name)
         environment = {
+            "HOME": str(root), "USERPROFILE": str(root),
+            "YTD_YT_DLP_DIR": str(root / "tools"),
             "YTD_APP_DIR": str(root), "YTD_DATA_DIR": str(root), "YTD_CONFIG_DIR": str(root),
             "YTD_TEMP_DIR": str(root / "temp"), "YTD_FINAL_DIR": str(root / "final"),
             "YTD_TELEGRAM_ENABLED": "0", "YTD_SYSTEM_NOTIFICATIONS_ENABLED": "0",
