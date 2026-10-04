@@ -38,3 +38,16 @@ index 82b1e6edca..5edf660fab 100644
 -TERMUX__ROOTFS="$TERMUX_APP__DATA_DIR/$TERMUX__ROOTFS_SUBDIR"
 +TERMUX__ROOTFS="$TERMUX_APP__DATA_DIR"
  TERMUX_BASE_DIR="$TERMUX__ROOTFS" # Deprecated alternative variable for `TERMUX__ROOTFS`
+
+diff --git a/x11-packages/foot/build.sh b/x11-packages/foot/build.sh
+--- a/x11-packages/foot/build.sh
++++ b/x11-packages/foot/build.sh
+@@ -4,7 +4,7 @@
+ TERMUX_PKG_MAINTAINER="@termux"
+ TERMUX_PKG_VERSION="1.23.1"
+ TERMUX_PKG_SRCURL=https://codeberg.org/dnkl/foot/archive/${TERMUX_PKG_VERSION}.tar.gz
+-TERMUX_PKG_SHA256=02072b8f0aaf26907b6b02293c875539ce52fc59079344e7cf811ab03394cfa3
++TERMUX_PKG_SHA256=b3fa774983abb5f95aecca4557d146091d8666bc65fb310d4d3e38327357ade9
+ TERMUX_PKG_AUTO_UPDATE=true
+ TERMUX_PKG_DEPENDS="libandroid-support, fontconfig, freetype, libfcft, libpixman, libwayland, libxkbcommon, utf8proc"
+ TERMUX_PKG_BUILD_DEPENDS="libtllist, libwayland-protocols, libwayland-cross-scanner, scdoc, xdg-utils"
