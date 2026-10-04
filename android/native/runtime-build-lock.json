@@ -1,7 +1,9 @@
 {
   "schemaVersion": 1,
   "termuxCommit": "7c74f85f3b36991d07d4cfb0d1be458c1b4f0896",
-  "builderImage": "ghcr.io/termux/package-builder@sha256:44999857244619e25bc8e3427904a16d36cc0c0e087704af039e5bdf94814ac9",
+  "builderImage": "yth-controlled-runtime-builder:termux-7c74f85",
+  "builderBaseImage": "ubuntu:24.04@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55",
+  "builderHostPython": "3.12",
   "ndkVersion": "28.2.13676358",
   "ndkArchiveSha256": "dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f",
   "apiLevel": 26,

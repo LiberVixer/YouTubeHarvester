@@ -2,6 +2,12 @@ name: Controlled Android native runtime rebuild
 
 on:
   workflow_dispatch:
+    inputs:
+      architecture:
+        description: Architecture to rebuild
+        type: choice
+        default: all
+        options: [all, aarch64, arm, i686, x86_64]
 
 permissions:
   contents: read
@@ -13,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        architecture: [aarch64, arm, i686, x86_64]
+        architecture: ${{ fromJSON(inputs.architecture == 'all' && '["aarch64","arm","i686","x86_64"]' || format('["{0}"]', inputs.architecture)) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:

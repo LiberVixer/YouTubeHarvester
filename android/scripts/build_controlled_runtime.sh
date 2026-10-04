@@ -12,17 +12,24 @@ output="$(realpath -m "$output")"
 lock="$app/android/native/runtime-build-lock.json"
 commit="$(jq -r .termuxCommit "$lock")"
 image="$(jq -r .builderImage "$lock")"
+base_image="$(jq -r .builderBaseImage "$lock")"
 test "$(git -C "$repo" rev-parse HEAD)" = "$commit"
 test -z "$(git -C "$repo" status --porcelain)"
 test ! -e "$output"
 mkdir -p "$output"
 git -C "$repo" archive --format=tar.gz --output="$output/termux-recipes.tar.gz" HEAD
 cp "$lock" "$app/android/native/termux-runtime.patch" "$output/"
+cp "$app/android/native/RuntimeBuilder.Dockerfile" "$output/"
+cp "$app/android/scripts/build_controlled_runtime.sh" "$app/android/scripts/record_runtime_build.py" "$output/"
+# Build the host tools from the same snapshot before applying runtime paths.
+docker build --build-arg "BASE_IMAGE=$base_image" \
+  --file "$app/android/native/RuntimeBuilder.Dockerfile" \
+  --tag "$image" "$repo/scripts" 2>&1 | tee "$output/builder-build.log"
 git -C "$repo" apply --check --recount --unidiff-zero "$app/android/native/termux-runtime.patch"
 git -C "$repo" apply --recount --unidiff-zero "$app/android/native/termux-runtime.patch"
+bash -n "$repo/packages/ncurses/build.sh"
 
 # Source-build dependencies too: do not use Termux's prebuilt-dependency switch.
-docker pull "$image"
 docker image inspect "$image" > "$output/builder-image.json"
 set +e
 docker run --rm --init \
@@ -42,6 +49,12 @@ docker run --rm --init \
     chown -R builder:builder /data/data/com.liberivixer.youtubeharvester /data/data/.built-packages /output
     cd /home/builder/termux-packages
     git config --global --add safe.directory /home/builder/termux-packages
+    /usr/bin/python3.12 -c "import sys; assert sys.version_info[:2] == (3, 12); print(sys.version)"
+    dpkg-query -W > /output/builder-packages.txt
+    mkdir -p /output/packages
+    chown builder:builder /output/packages
+    # Recursive dependency builds use the default output directory.
+    ln -s /output/packages output
     trap '\''tar --exclude="./_cache" --exclude="./*/build" --exclude="./*/host-build" \
       --exclude="./*/massage" --exclude="./*/package" --exclude="./*/tmp" \
       --exclude="./*/multilib-build" \
