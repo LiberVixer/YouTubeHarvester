@@ -111,6 +111,12 @@ diff --git a/packages/libgraphite/build.sh b/packages/libgraphite/build.sh
 @@ -13,1 +13,2 @@
  TERMUX_PKG_RM_AFTER_INSTALL="bin/gr2fonttest"
 +TERMUX_PKG_EXTRA_CONFIGURE_ARGS="-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+diff --git a/packages/giflib/build.sh b/packages/giflib/build.sh
+--- a/packages/giflib/build.sh
++++ b/packages/giflib/build.sh
+@@ -6,1 +6,1 @@
+-TERMUX_PKG_SRCURL=https://downloads.sourceforge.net/project/giflib/giflib-${TERMUX_PKG_VERSION}.tar.gz
++TERMUX_PKG_SRCURL=https://snapshot.debian.org/archive/debian/20240226T213049Z/pool/main/g/giflib/giflib_${TERMUX_PKG_VERSION}.orig.tar.gz
 diff --git a/packages/libunbound/build.sh b/packages/libunbound/build.sh
 --- a/packages/libunbound/build.sh
 +++ b/packages/libunbound/build.sh

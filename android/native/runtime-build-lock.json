@@ -31,7 +31,9 @@
     "texinfoOverride": "fetch texinfo_7.2-2.debian.tar.xz from the official Debian snapshot dated 20250119T025721Z because the live Debian pool returns 404; original recipe SHA256 is unchanged",
     "texinfoDebianArchiveSha256": "8654692fcc7f8b4bb042a3412ca3c9fa862ff65482896ef1ea50d59d08934824",
     "libsoxrOverride": "set CMAKE_POLICY_VERSION_MINIMUM=3.5 for compatibility with pinned CMake 4.0.3, preserving the OpenMP configuration",
-    "cmakeCompatibilityOverride": "set CMAKE_POLICY_VERSION_MINIMUM=3.5 in the runtime build container environment for legacy dependencies, including libsrt; newer project policy versions remain unchanged"
+    "cmakeCompatibilityOverride": "set CMAKE_POLICY_VERSION_MINIMUM=3.5 in the runtime build container environment for legacy dependencies, including libsrt; newer project policy versions remain unchanged",
+    "giflibOverride": "fetch the unchanged giflib 5.2.2 upstream tarball from the official Debian snapshot dated 20240226T213049Z because SourceForge returns 404; original recipe SHA256 is unchanged",
+    "giflibArchiveSha256": "be7ffbd057cadebe2aa144542fd90c6838c6a083b5e8a9048b8ee3b66b29d5fb"
   },
   "publicReleaseReady": false
 }
