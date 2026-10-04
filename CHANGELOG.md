@@ -15,7 +15,13 @@
 
 All notable changes to **YouTube Harvester** are documented here.
 
-## Unreleased
+## [1.2.1] - 2026-10-03
+
+- Align Linux, Windows, and all Android ABI application versions at `1.2.1`,
+  without beta/prerelease labels; Android version code is `120100`.
+- Build Windows from the current shared desktop sources, retaining Linux changes.
+- Update pinned desktop and Android components; public Android acceptance gates
+  remain separate from version numbering.
 
 - Desktop: add Rutube channels with alias deduplication, names and avatars,
   Videos/Shorts scans, limits, scheduling, and source-aware archive marking.
@@ -23,6 +29,8 @@ All notable changes to **YouTube Harvester** are documented here.
   the new controls into all ten languages; the Android port remains unchanged.
 - Preserve archive lines when appending without a final newline, and resolve
   archive channel-name fallbacks only within the same video source.
+
+- Track Rutube show collections (`/metainfo/tv/ID/`) as video-only channels with their own artwork and newest-first download/archive limits.
 
 ## [1.2.0-beta] - 2026-08-29
 

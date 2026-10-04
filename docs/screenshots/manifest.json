@@ -1,0 +1,458 @@
+{
+  "date": "2026-10-04",
+  "version": "1.2.1",
+  "theme": "dark",
+  "demoData": true,
+  "images": {
+    "en/overview.png": {
+      "sha256": "4898646021c248cf8beca6688dc5c514f8f0233e34d6b55608ac2d2c34e0b6ff",
+      "width": 1200,
+      "height": 820
+    },
+    "en/channels.png": {
+      "sha256": "67bfec4f8e6333d4d4e53b38c125f87a818349779cc48d22352ef054e79f0a40",
+      "width": 1200,
+      "height": 820
+    },
+    "en/queue.png": {
+      "sha256": "068cf015c5082f49e506a8189e54eea758ad027aac5baacb4f453fe7501fa409",
+      "width": 1200,
+      "height": 820
+    },
+    "en/settings.png": {
+      "sha256": "3b7288a9b755e4781738b1bb8b24b6a54f55d0cfa43eed36ac4680a7f23adad4",
+      "width": 1200,
+      "height": 820
+    },
+    "ru/overview.png": {
+      "sha256": "eba84e24044688805ed3c8fe8e8cbf19992c0d23333ac003408a8da3517e55d3",
+      "width": 1200,
+      "height": 820
+    },
+    "ru/channels.png": {
+      "sha256": "97c66edd3334bfa0605a6cac473b3e7111d2bf8f16554c21ed6b4f480173a75d",
+      "width": 1200,
+      "height": 820
+    },
+    "ru/queue.png": {
+      "sha256": "c8b6a9b6144b7850a8e6cdedc4f02b71a8c6e6101f557ed8bd004319f5510f78",
+      "width": 1200,
+      "height": 820
+    },
+    "ru/settings.png": {
+      "sha256": "e5f8d6293bbd1044eebf0aecc25581cd3a6a861feba45f00040f01f1b1d5dddb",
+      "width": 1200,
+      "height": 820
+    },
+    "uk/overview.png": {
+      "sha256": "2f567976143d6233e472ef547b9ab4261ee648f6076baef68839c91e38f5ae8a",
+      "width": 1200,
+      "height": 820
+    },
+    "uk/channels.png": {
+      "sha256": "6fa5fb6292332515a338b0fc8d1b72367fe622593b1b0ee0ae26fd43432d5e01",
+      "width": 1200,
+      "height": 820
+    },
+    "uk/queue.png": {
+      "sha256": "4429f4acce26261701505df61f7600cdf2a09b8ea97cc8c4a8f651ae3ce2ec33",
+      "width": 1200,
+      "height": 820
+    },
+    "uk/settings.png": {
+      "sha256": "2799b0861de22195f7cc34e5459a1873a3d082420c5e4abe61d7aeafe38be9bd",
+      "width": 1200,
+      "height": 820
+    },
+    "be/overview.png": {
+      "sha256": "2370531c35eab2fe1bf3b4a0cd2e96ecd8dfe865b68a6c9c89751f38145c90bd",
+      "width": 1200,
+      "height": 820
+    },
+    "be/channels.png": {
+      "sha256": "3c4f7521497aa5fd73bb0e4e5fb90463e6454afbbada8b6db5bfed4106d30fed",
+      "width": 1200,
+      "height": 820
+    },
+    "be/queue.png": {
+      "sha256": "fed262ab9676b6eaf76a208d1967a705cea93da2046a0a7bad3082a3e6dcf8f7",
+      "width": 1200,
+      "height": 820
+    },
+    "be/settings.png": {
+      "sha256": "a2915e9eee6609ee90ecb07ee36b05509774c78dab9d0c9d410b64094bf38519",
+      "width": 1200,
+      "height": 820
+    },
+    "fr/overview.png": {
+      "sha256": "a98482e926d529dd4ed3d04107d2d76010807c8c6fa77ce36ddfef4de26f6222",
+      "width": 1200,
+      "height": 820
+    },
+    "fr/channels.png": {
+      "sha256": "cbf453385ecec3cf19ee8dcfb32423d8036469f59569bb55db047db206cb0ba4",
+      "width": 1200,
+      "height": 820
+    },
+    "fr/queue.png": {
+      "sha256": "5e9a6378b42afd37613205829064e7305518c0fd379052765642ef06eec8b6fb",
+      "width": 1200,
+      "height": 820
+    },
+    "fr/settings.png": {
+      "sha256": "b85a1444acd624b89a35d169240ac0d66a416b6de332928d217e4b2941a938d5",
+      "width": 1200,
+      "height": 820
+    },
+    "es/overview.png": {
+      "sha256": "0186201b999f95fa7e3a357e34d7abc3868f02d742e76ef56680627671ba6abc",
+      "width": 1200,
+      "height": 820
+    },
+    "es/channels.png": {
+      "sha256": "5069ed6fe215fd09237f0d744be2376cc5358db60c6990a634f31e384c337edd",
+      "width": 1200,
+      "height": 820
+    },
+    "es/queue.png": {
+      "sha256": "4fc3925e7f32a261f87d9254b6a511672c39ca33b564b091b51f3a022f238b6f",
+      "width": 1200,
+      "height": 820
+    },
+    "es/settings.png": {
+      "sha256": "a1a6ab55bdb9c567c3ce1ec613d736188e44fb0423e67500467c9b012292e5e1",
+      "width": 1200,
+      "height": 820
+    },
+    "hi/overview.png": {
+      "sha256": "27c45af8aca21ef4fa0344c2d0ed8af034717962af83f62c018baf2652973e3f",
+      "width": 1200,
+      "height": 820
+    },
+    "hi/channels.png": {
+      "sha256": "622b0e2481f045c76541500b7ae1cb8fa6ffae7fca2c6671abaf0ebf5c887188",
+      "width": 1200,
+      "height": 820
+    },
+    "hi/queue.png": {
+      "sha256": "c55dbec7ad1ff410627fd9c3849636918014b7e6d18d19d4d05cd7c5b5cd49dc",
+      "width": 1200,
+      "height": 820
+    },
+    "hi/settings.png": {
+      "sha256": "374755c1dc63394689f2668aeb1cd4bc2d2413f63a5498d7334aba484434f490",
+      "width": 1200,
+      "height": 820
+    },
+    "zh/overview.png": {
+      "sha256": "0d981138cdcd93878c9850febdcb8cc93fcf1fef67772a56a8d43f8e596cd56c",
+      "width": 1200,
+      "height": 820
+    },
+    "zh/channels.png": {
+      "sha256": "eb9d2f5e398b4a1eb2c27c4f55309d07f16c98a76439310ad9ed44162ac028ad",
+      "width": 1200,
+      "height": 820
+    },
+    "zh/queue.png": {
+      "sha256": "ae773a292ab0bf6ce862f524fc664a0bd17c89b94de7404f4919f97af882eeec",
+      "width": 1200,
+      "height": 820
+    },
+    "zh/settings.png": {
+      "sha256": "9a211a53c37627f23e6805c8872833bbed99ad623011573ff5d45a9b1d8dcd6e",
+      "width": 1200,
+      "height": 820
+    },
+    "ja/overview.png": {
+      "sha256": "5565fbcb98362aba83798d9ceae2eb7471309c8f73ed2fa7fdca2755f26824ac",
+      "width": 1200,
+      "height": 820
+    },
+    "ja/channels.png": {
+      "sha256": "6ca743e751ba8e08d18ccb63e25abd4a4ec3390b85c3335373cb1d2cdc8da77a",
+      "width": 1200,
+      "height": 820
+    },
+    "ja/queue.png": {
+      "sha256": "582c36646ea095d9bd82d23833896d72bd0ea0f027dfb9b63ef1f747e14a7855",
+      "width": 1200,
+      "height": 820
+    },
+    "ja/settings.png": {
+      "sha256": "099550b5bab75247d6e0d8022c9a8694e263e10a438b21da1f0a78e347191e6f",
+      "width": 1200,
+      "height": 820
+    },
+    "ar/overview.png": {
+      "sha256": "81075b495a9181c7f539e2163b3ffc213c3f0c22dcfa76f9857c5c95b9973499",
+      "width": 1200,
+      "height": 820
+    },
+    "ar/channels.png": {
+      "sha256": "0b4219e12bd2c13462b6f43626e9e7cc71e9a0d8b39bcb944db6545e161a32fc",
+      "width": 1200,
+      "height": 820
+    },
+    "ar/queue.png": {
+      "sha256": "72f5239b8f3a07aaf0d2b357f9f53422a7c0f8ebe1d9a46c1ff4688c31e4afe0",
+      "width": 1200,
+      "height": 820
+    },
+    "ar/settings.png": {
+      "sha256": "008444e546ae1ec229d828159e9766771f6f8408f996f5a593795722d855de6d",
+      "width": 1200,
+      "height": 820
+    },
+    "android/en/overview.png": {
+      "sha256": "127f0977f0a330bf432ac3f07e3ca336bfa7faea3623f04888be4e64bfc5ba01",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/en/channels.png": {
+      "sha256": "3319091fb48abf12638e34bbdd5f044fd5b567e8590d6f7e29675e96ad53b227",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/en/queue.png": {
+      "sha256": "8dd05eb654122e7a306ed63e85b92a4cb4b24e816c06f7ccdf1ec5a7883e5079",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/en/archive.png": {
+      "sha256": "fec151757c51f7935956f42309028a324089ca39ffdced20040bee2adcffe9b0",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/en/settings.png": {
+      "sha256": "c8d05fdb482872c9d11b5c90057dc81c3fc4fe4062f93dc12b0b473277928157",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/ru/overview.png": {
+      "sha256": "78a95300bdfdb353132e17251a6f98d22870053459cf605bf6141bbeb84f29af",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/ru/channels.png": {
+      "sha256": "4d9658be60045745bd306e9deda274070c725d0a6b77e81a02cb13efedf14585",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/ru/queue.png": {
+      "sha256": "b9aee771a82c319bd41996068653ca5b0420433221f363229872c387e97480ee",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/ru/archive.png": {
+      "sha256": "a28b038c1a1436836cfb590c563c0e2a9b1798b202ef491dd95e9934362d1183",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/ru/settings.png": {
+      "sha256": "8287b893f241b7931e6bc29ae5aae564111f294850d43cdcba61d96498a0228e",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/uk/overview.png": {
+      "sha256": "44828c3cce3679c7f62fd8ffcdd45f0ec94d574228ce6e409e92d2574be3496a",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/uk/channels.png": {
+      "sha256": "1bee15c2bd7020b67a854f56490bb2c0727fffc1011e1d2ac40e5ef507323e1c",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/uk/queue.png": {
+      "sha256": "8e85138c7f96a5111a8758cdf04a0540f5cad9e131a7b73477a7472d60e70ec3",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/uk/archive.png": {
+      "sha256": "01652b738fbf94d41a7ce12900bb3af3d82ae47278a6c53246f18ef939fa183c",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/uk/settings.png": {
+      "sha256": "2acd97feb1aef2e89af9d2747c59fb8371665b8ec3a7cbe5768d62daa21722ac",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/be/overview.png": {
+      "sha256": "8f7def31175ee9037c76f2c793ad6f45c264dae5d73527fc86a464911c891a39",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/be/channels.png": {
+      "sha256": "1521ef8e71cee9ba353e781396beb74eaae647dc625fd1503025d3fceeab0e98",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/be/queue.png": {
+      "sha256": "76044d058c1ff4838936fbebc5a93300410eb16a12a1713e629cbc360f98faf9",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/be/archive.png": {
+      "sha256": "25c208f84ad35409d0f64a340b53b9be65e63b2475a947ababe117e2fe915785",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/be/settings.png": {
+      "sha256": "e19a7480f7e5ac92a6b850f07e570810ac86a8a517921ceb50476c040fed3cb0",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/fr/overview.png": {
+      "sha256": "ab619507ad9ebbfdd35456ba3865a8672cd4d721c47a14c24bd7df94e91cae41",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/fr/channels.png": {
+      "sha256": "79ad20c16d87d662711802cda844446bdb22e6f8141942f9b345d08b38ee9b22",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/fr/queue.png": {
+      "sha256": "2ba7168a127c89b5e281d3636420f6c71436f7bda02e8166f767520012cf7a45",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/fr/archive.png": {
+      "sha256": "bc5b3cc03f89accd50aadae741ca8fe8f575d9d6f26afb05272964962cb543ff",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/fr/settings.png": {
+      "sha256": "7c5378bf4e8115f8861f41a1b98e49690eacdfbc797504fe2420845819134b8f",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/es/overview.png": {
+      "sha256": "4938aa60ce2af12a589af8396da5e99bcfa5915eeac71ae3ce83fd59b2125d00",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/es/channels.png": {
+      "sha256": "9a5999746cc17fb3cf5b446ab81ad6aa4028b7d5bab85c14c4742704303b8391",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/es/queue.png": {
+      "sha256": "159c2d0389d911994a91a901053e6190e575c8f077567b1a31f74f82a2545454",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/es/archive.png": {
+      "sha256": "cc390239dfcac289fc2ca1bbc75a7ccd90cf12d8c20ae25de5a1e778ee781516",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/es/settings.png": {
+      "sha256": "39b0e642ab5a9cc2c54b1a4f80375ef2958cc9a1a7183130df354f663b8eff7e",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/hi/overview.png": {
+      "sha256": "ff015f8f3118b571018a4a1829c4bc5f09fcdf9eec970a27b7294c92f884685d",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/hi/channels.png": {
+      "sha256": "c07be0a2c3250994046061f23d44b5860a8f126f9084981417b4de075fd5ccf1",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/hi/queue.png": {
+      "sha256": "8dc78fff1c217cbc5f79c9520b490e9024d12f0f68495b1cfc5a3b295ed00000",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/hi/archive.png": {
+      "sha256": "c95efa6749204091d650ca53c654db840fad4c6b2441a9b8d2f526a760e7ad8a",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/hi/settings.png": {
+      "sha256": "df8574216806a380ed0e52baa9bf97d1466b84f42c1689143543f4d75020a3f0",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/zh/overview.png": {
+      "sha256": "1e5e0acab63a5c49dbce4cb1914ef608b3f9d4b12b7c1fe0fb183f231a12691a",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/zh/channels.png": {
+      "sha256": "0cdb4a959782cd3aaacc8284bba95337d22c91b21c3d1c7360c3720e35111cef",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/zh/queue.png": {
+      "sha256": "e6fbcceb990ff33e405d8fe55c8ba9407193d7a6aa8784d339fa720b6522aeb1",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/zh/archive.png": {
+      "sha256": "dd6552db0f9813ffe95ba175314685862431b9b8e27a6784f2c62bf9ecefba94",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/zh/settings.png": {
+      "sha256": "2fca5de4f426fc7cac93abe0cf112b3ec0e90b7b36439f09feb18b2ba6a3e05f",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/ja/overview.png": {
+      "sha256": "5b95f3f4975a9c1a77dcb5fbaa7e35e4c9b961081caf63cfbd32a7261f92666a",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/ja/channels.png": {
+      "sha256": "2e1d2a19dd221468bd1d879a2f9792017ec9b62910e226df72ba96dbef292785",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/ja/queue.png": {
+      "sha256": "a29c1f50bcd524c0d4d4283b10e7719cf4f83d5b8e1fa1eae6df0ebd68de6705",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/ja/archive.png": {
+      "sha256": "1ad900f58a34b7dd19907ab4f2c73a114d64d936f8ca17e20ebfe2edc9208fc7",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/ja/settings.png": {
+      "sha256": "75c16e1a9b1caccdfadd8c8c007eff9d025f6aece8d1395ce9eaaae55c8e6c27",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/ar/overview.png": {
+      "sha256": "e2ae583535762c216b7a2258c6cc858055f52af159be082685878f2a9597b5cb",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/ar/channels.png": {
+      "sha256": "8b7cbbeecc47669a5f35e2cb903b4369bdfbc2eec2e2055b69e8cb2f02a65c23",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/ar/queue.png": {
+      "sha256": "b8255f82e909c6f931caaa274a74dc4db3256c65899ee59d1d672b82296b4942",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/ar/archive.png": {
+      "sha256": "14a0977fa14c13f224c4d1e67bed194dfff4a28383768bfe01930d6f7aae4d3d",
+      "width": 1080,
+      "height": 1859
+    },
+    "android/ar/settings.png": {
+      "sha256": "7cb672d0b0d1b8231b13a5e33b4b3006e944fa6f093af55a35c7dc782968a079",
+      "width": 1080,
+      "height": 1859
+    }
+  }
+}

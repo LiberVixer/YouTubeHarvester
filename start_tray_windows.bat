@@ -33,6 +33,16 @@ if not exist "%YTD_ENV_FILE%" (
     >> "%YTD_ENV_FILE%" echo # PROXY_URL=127.0.0.1:9050
 )
 
+if defined YTD_PYTHON (
+    start "" "%YTD_PYTHON%" "%APP_DIR%\tray_launcher.py"
+    exit /b
+)
+
+if exist "%APP_DIR%\.venv\Scripts\pythonw.exe" (
+    start "" "%APP_DIR%\.venv\Scripts\pythonw.exe" "%APP_DIR%\tray_launcher.py"
+    exit /b
+)
+
 where pyw >nul 2>nul
 if %errorlevel%==0 (
     start "" pyw -3 "%APP_DIR%\tray_launcher.py"

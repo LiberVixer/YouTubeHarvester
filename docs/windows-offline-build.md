@@ -1,6 +1,6 @@
 # Offline Windows Build
 
-Target machine used for the 1.2.0 Beta Windows build:
+Target machine used for the 1.2.1 Windows build:
 
 - Python 3.11 x64 or Python 3.12 x64
 - Git for Windows x64
@@ -19,14 +19,14 @@ cd YouTubeHarvester
 py -3.11 -m pip download -r requirements-windows-lock.txt -d wheelhouse
 ```
 
-Download the Windows x64 FFmpeg 9.0.1 essentials build and put `ffmpeg.exe` and
+Download the Windows x64 FFmpeg 9.0.2 essentials build and put `ffmpeg.exe` and
 `ffprobe.exe` into a folder named `ffmpeg`. The expected layout is:
 
-Download Windows x64 Deno 2.9.6 from the Deno GitHub releases and put
+Download Windows x64 Deno 2.9.7 from the Deno GitHub releases and put
 `deno.exe` into a folder named `deno`. Download `deno`, not `denort`.
 
 ```text
-YouTubeHarvester-1.2.0-beta-offline\
+YouTubeHarvester-1.2.1-offline\
   deno\
     deno.exe
   ffmpeg\
@@ -88,9 +88,9 @@ powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 -
 Expected output files:
 
 ```text
-dist\release\YouTubeHarvester_1.2.0-beta_windows_portable.zip
-dist\release\YouTubeHarvester_1.2.0-beta_windows_setup.exe
-dist\release\YouTubeHarvester_1.2.0-beta_windows_x64.msi
+dist\release\YouTubeHarvester_1.2.1_windows_portable.zip
+dist\release\YouTubeHarvester_1.2.1_windows_setup.exe
+dist\release\YouTubeHarvester_1.2.1_windows_x64.msi
 dist\release\SHA256SUMS-windows.txt
 ```
 

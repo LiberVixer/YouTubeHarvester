@@ -2,8 +2,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DEB_VERSION="${1:-1.2.0~beta1}"
-RELEASE_VERSION="${2:-1.2.0-beta}"
+DEB_VERSION="${1:-1.2.1}"
+RELEASE_VERSION="${2:-1.2.1}"
 RELEASE_DIR="${3:-$ROOT_DIR/dist/release}"
 mkdir -p "$RELEASE_DIR"
 RELEASE_DIR="$(cd "$RELEASE_DIR" && pwd)"
@@ -33,7 +33,14 @@ if git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     fi
     for required_file in \
         requirements-build.txt \
+        requirements-linux-lock.txt \
         requirements-windows-lock.txt \
+        scripts/fetch_desktop_tools.py \
+        tests/test_desktop_tools.py \
+        tests/test_release_versions.py \
+        packaging/windows/version_info.txt \
+        docs/component-update-20261003.md \
+        docs/version-1.2.1-20261003.md \
         .github/dependabot.yml \
         "docs/releases/${RELEASE_VERSION}.md" \
         tests/test_channel_sources.py \
@@ -69,6 +76,7 @@ else
         --exclude='./deno' \
         --exclude='./tools/windows/ffmpeg' \
         --exclude='./tools/windows/deno' \
+        --exclude='./tools/linux' \
         --exclude='./wheelhouse' \
         --exclude='./channel_rules.json' \
         --exclude='./channels.txt' \

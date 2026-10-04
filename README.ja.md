@@ -1,4 +1,4 @@
-# YouTube Harvester 1.2.0 Beta
+# YouTube Harvester 1.2.1
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="YouTube Harvester ロゴ" width="128">
@@ -17,42 +17,21 @@
   <a href="README.ar.md">🇸🇦 العربية</a>
 </p>
 
-<p align="center">
-  チャンネル監視、手動キュー、クイックダウンロード、スケジュール、
-  アーカイブ、任意の Telegram 送信に対応した Linux / Windows 用の
-  多言語 YouTube ダウンローダーです。
-</p>
+**Linux、Windows、Android** 向けの多言語ダウンロードアプリ。YouTube/Rutube チャンネル監視、単体の YouTube/Rutube/VK 動画、キュー、アーカイブ、予約実行、任意の Telegram 送信に対応します。
 
-> **UPD 2:** クイックダウンロードで複数の音声トラックと字幕トラックを
-> 1 本の動画に埋め込めるようになりました。アーカイブは画質とトラック構成ごとに
-> 別の版として管理し、一部の字幕取得に失敗してもダウンロードを継続します。
-> 日本語インターフェースも追加されました。
+## バージョン 1.2.1
 
-> **UPD 3:** バージョン 1.1.3 では、GitHub の公式 Release から取得して
-> 検証するアプリ更新、完全なベラルーシ語 UI とドキュメントを追加しました。
-> 内蔵ダウンローダーは `yt-dlp 2026.08.19` に更新され、YouTube の一時的な
-> HTTP 403 エラーからの復旧も強化されています。
+文書更新：**2026-10-04**。
 
-> **UPD 4 (Beta):** バージョン 1.2.0 Beta では、概要、クイックダウンロード、
-> クリップボード監視、キュー、アーカイブから、YouTube、Rutube、VK の個別動画を
-> 任意でダウンロードできるようになりました。ソースと ID を組み合わせて記録する
-> ことでサービス間の衝突を防ぎ、更新・固定されたコンポーネントにより Windows と
-> Linux のビルド再現性も向上しています。テスト用のプレリリースです。
+現在のソースとローカル配布物は **1.2.1** で、beta/prerelease 表記はありません。Android は `versionCode 120100`、内部デバッグ版は `-debug` を保持します。Windows は Linux と同じ最新デスクトップソースから再ビルドされ、Rutube と中断後の復旧修正を含みます。
 
-![YouTube Harvester 概要](docs/screenshots/ja/overview.png)
+**公開済みの告知ではなく、リリース準備状況です。** PC インストーラーと四つのテスト APK はローカルで生成済みです。Android の公開受け入れは未完了で、テスト APK は開発証明書を使用します。beta を削除しただけで公開版にはなりません。
 
-## 概要
+Linux と Windows は共通の Python/yt-dlp エンジンを使用します。旧 Bash は無効な歴史的コードとしてのみ残ります。
 
-**YouTube Harvester** は、登録した YouTube チャンネルを監視し、`yt-dlp` を
-使って新しい動画、Shorts、ライブ配信をダウンロードします。個別の動画 URL にも
-対応し、ローカルアーカイブ、ダウンロードレポート、Telegram への通知やファイル
-送信を利用できます。
+[バージョン検証記録](docs/version-1.2.1-20261003.md) · [1.2.1 公開準備](docs/releases/1.2.1.md).
 
-バージョン `1.2.0-beta` は Linux と Windows の両方で Python ダウンローダーを
-使用します。旧 Bash エンジンは、無効化されたレガシーコードとしてのみソースに
-残されています。
-
-## 主な機能
+## デスクトップの機能
 
 - チャンネル進捗、メディア種別、処理段階、速度、残り時間、サイズ、最近の
   イベント、セッションと当日の合計を表示するライブ概要。
@@ -84,6 +63,43 @@
 - 英語を既定とし、ロシア語、ウクライナ語、ベラルーシ語、フランス語、
   スペイン語、ヒンディー語、中国語、日本語、アラビア語に対応。
 
+## 対応ソースと処理順序
+
+- **YouTube チャンネル：** 動画、Shorts、ライブを個別に有効化・制限。handle/channel/user/custom URL に対応。
+- **Rutube チャンネル：** `/channel/ID/` と `/u/name/`、動画/Shorts ページも対応。別名を ID に解決して重複防止、名前と画像をキャッシュ。
+- **Rutube 番組：** `/metainfo/tv/ID/`、独自のタイトルとポスター、動画のみ。最新 N 件を新しい順に選択。
+- **単体動画：** YouTube、Rutube、VK/VK Video の URL を手動入力、キュー、クイックダウンロードで処理。VK チャンネル監視、任意の Rutube プレイリストは非対応。
+
+Rutube のライブ走査と有料検出は無効です。YouTube の有料検出は利用可否を報告するだけで、アクセス制限を回避せず、制限付き動画の取得を保証しません。チャンネルメニューで最近の項目をダウンロードせず処理済みにできます。
+
+収集は手動キュー、各有効セクションの順次ダウンロード、再度キューの順です。アーカイブ済み・重複項目を省略します。チャンネルタブのチェックはセクションの検証で、収集全体は概要か予約から開始します。アーカイブは画質・トラック別の組み合わせを保持します。
+
+PC で停止しても次の実行を妨げません。安全な一時ファイル清掃と再試行を保持しています。実行中に一時ファイルを手動削除しないでください。ソース/VPN/プロキシ障害時は接続とログを確認してください。地域・アカウント・プロトコルの制約は残ります。
+
+## Android
+
+**Android 8.0+（API 26）** 向けネイティブ Kotlin/Jetpack Compose。ABI：`arm64-v8a`、`armeabi-v7a`、`x86_64`、`x86`。
+
+- 概要、チャンネル、キュー、アーカイブ、設定とダウンロードフォルダー。十言語、ダーク/ライト/システムテーマ、アラビア語 RTL。
+- 同じソース分類、Rutube チャンネル・番組、上限、最近の項目のマーク、予約、メタデータと画像。
+- 入力 URL を即時ダウンロード。概要のクイックボタンは明示的に押した場合だけクリップボードを読みます。共有はメディア選択、ショートカットは概要を開きます。任意のクリップボード監視はアプリが前面のときだけです。
+- 解像度、複数音声・字幕、永続ジョブ、一時停止/再開/キャンセル/再試行、通知と foreground-service。再開は同じジョブ・途中ファイルを保持し、バイト単位継続はソース次第です。
+- WorkManager 復旧、検査報告/日次集計、再起動復旧、MediaStore/SAF、保存ファイル、ログ/診断。Android 強制停止後は開き直してください。メーカーの省電力制限がバックグラウンドに影響する場合があります。
+- Telegram 認証情報を Android Keystore で保護。パスワード暗号化 `.ythbackup` は記録と設定を移しますが、**動画と一時ファイルは含みません**。空の DB にインポートし、移動したファイルは検証付きでフォルダーを再関連付けします。
+- APK 更新は SHA-256、パッケージ、上位 versionCode、既存証明書を検証してシステムインストーラーを開きます。`yt-dlp` は **アプリと一緒に更新**し、単独で置き換えません。
+
+**Android の VK：** 単体の VK/VK Video を取得できます。2026-09-14 に LDPlayer で公開 VK 動画の実ダウンロードを確認しました。VK チャンネル監視はありません。非公開・制限付き動画は取得できない場合があります。
+
+[Android 開発文書](android/README.md) · [データ移行手順](android/DATA-TRANSFER.ru.md).
+
+## Android の公開状況
+
+公開前に恒久署名と独立した鍵バックアップ、対応するネイティブ runtime ソース/ライセンス/安全性審査、正確な署名候補版の移行受け入れ、ARM・旧対応 Android・Android 15+ boot/resume・16 KB ページ・TalkBack を検証します。その後、最終 APK と公開パッケージを確認します。
+
+**証明書変更のためテストアプリを削除しないでください。** 暗号化移行は隔離 QA パッケージで検証済みですが、最終公開候補の受け入れの代わりにはなりません。
+
+[公開準備状況](android/RELEASE-READINESS.ru.md).
+
 ## スクリーンショット
 
 | 概要 | チャンネル |
@@ -94,32 +110,39 @@
 | --- | --- |
 | ![キュー](docs/screenshots/ja/queue.png) | ![設定](docs/screenshots/ja/settings.png) |
 
+### Android
+
+Android 1.2.1、ダークテーマ。デモ用データ。
+
+| 概要 | チャンネル |
+| --- | --- |
+| <img src="docs/screenshots/android/ja/overview.png" alt="概要 Android" width="260"> | <img src="docs/screenshots/android/ja/channels.png" alt="チャンネル Android" width="260"> |
+
+| キュー | アーカイブ |
+| --- | --- |
+| <img src="docs/screenshots/android/ja/queue.png" alt="キュー Android" width="260"> | <img src="docs/screenshots/android/ja/archive.png" alt="アーカイブ Android" width="260"> |
+
+**設定**
+
+<img src="docs/screenshots/android/ja/settings.png" alt="設定 Android" width="260">
+
+[画像一覧と撮影情報](docs/screenshots/README.md).
+
 ## ダウンロード
 
-すぐに使えるパッケージは
-[GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases)
-で公開されます。
+ローカル準備済み PC ファイルは `dist/release/` にあります。公開後は [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases) から取得できます。本書は 1.2.1 が公開済みとは主張しません。
 
-Linux:
+| 環境 | ファイル |
+| --- | --- |
+| Linux | `YouTubeHarvester_1.2.1_linux_all.deb`, `YouTubeHarvester_1.2.1_source.tar.gz`, `SHA256SUMS-linux.txt` |
+| Windows x64 | `YouTubeHarvester_1.2.1_windows_setup.exe`, `YouTubeHarvester_1.2.1_windows_x64.msi`, `YouTubeHarvester_1.2.1_windows_portable.zip`, `SHA256SUMS-windows.txt` |
 
-- `YouTubeHarvester_1.2.0-beta_linux_all.deb`
-- `YouTubeHarvester_1.2.0-beta_source.tar.gz`
-- `SHA256SUMS-linux.txt`
-
-Windows:
-
-- `YouTubeHarvester_1.2.0-beta_windows_setup.exe` - 通常のインストーラー。
-- `YouTubeHarvester_1.2.0-beta_windows_x64.msi` - x64 MSI パッケージ。
-- `YouTubeHarvester_1.2.0-beta_windows_portable.zip` - ポータブル版。
-- `SHA256SUMS-windows.txt`
-
-Windows パッケージには `yt-dlp`、`ffmpeg.exe`、`ffprobe.exe`、`deno.exe` が
-同梱されています。
+非公開テスト APK：`android/YouTubeHarvester-1.2.1-<ABI>.apk`。**公開配布物ではありません**。公開 Android にはアプリ/runtime ソース、BUILD-INFO、SHA256SUMS も必要です。
 
 ## Linux へのインストール
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.2.0-beta_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.2.1_linux_all.deb
 ```
 
 アプリケーションメニューから起動するか、次を実行します。
@@ -137,40 +160,45 @@ yt-harvester
 - 既定の一時ディレクトリ: `~/temp/YTH`
 - 既定のダウンロード先: `~/Downloads/YouTubeHarvester`
 
+`.deb` はディストリビューションの Python/Qt/yt-dlp/FFmpeg/curl を使い、黙って更新しません。実際の版は開発/Windows と異なる場合があります。Deno は推奨で未同梱。完全な YouTube 対応には互換 JavaScript runtime が必要です。
+
 ## Windows へのインストール
 
-リリースから Setup EXE、MSI、またはポータブル ZIP を選んでください。
-インストール版とポータブル版は自己完結しているため、Python、FFmpeg、Deno を
-別途インストールする必要はありません。
+x64 Setup EXE/MSI、または portable ZIP を展開して `YouTubeHarvester.exe` を起動。Python、yt-dlp、FFmpeg/FFprobe、Deno は同梱済み。データ/キャッシュ：`%LOCALAPPDATA%\YouTubeHarvester`、設定：`%APPDATA%\YouTubeHarvester`、一時：`%TEMP%\YTH`。自動起動は現ユーザーの `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` を使います。
 
-自動起動には現在のユーザーのレジストリキーを使用します。
+## Android のインストールと更新
 
-```text
-HKCU\Software\Microsoft\Windows\CurrentVersion\Run
-```
+許可されたテストでは ABI に合う APK を同じ証明書で更新し、削除やデータ初期化をしないでください。信頼できるインストール元だけを許可し、必要に応じ通知と保存フォルダーを設定します。既定は `Download/YTH` または SAF フォルダーです。異なる署名の公開 APK は現在のテスト版を上書きできません。
 
 ## ソースからの実行
+
+Linux は既存 `.venv` を優先し、`YTD_PYTHON` で別の処理系を選べます。固定環境は Python 3.12 で検証済みです。FFmpeg/FFprobe と JavaScript runtime は外部ツールで、次のスクリプトはハッシュ検証後に Deno/FFmpeg を取得します。
+
+ツールがない場合のみ取得してください。スクリプトは既存フォルダーを上書きしません。既存 `.env` を保持し、Telegram 設定はアプリか自分のファイルに入力してください。そのファイルを公開しないでください。
 
 Linux:
 
 ```bash
-sudo apt install python3 python3-pyqt5 python3-pynput yt-dlp ffmpeg curl
-# Wayland でのクリップボード監視には推奨:
-sudo apt install wl-clipboard
-cp .env.example .env
+sudo apt install python3 python3-venv python3-pyqt5 python3-pynput python3-dbus ffmpeg curl
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-linux-lock.txt
+.venv/bin/python scripts/fetch_desktop_tools.py --platform linux --output tools/linux
+cp -n .env.example .env
 ./start_tray.sh
 ```
+
+Windows のソース実行にも FFmpeg/FFprobe と Deno が必要です。ビルダーは固定ローカルツールか検証したダウンロードを使います。
 
 Windows:
 
 ```powershell
-py -3 -m venv .venv
-.\.venv\Scripts\python -m pip install -r requirements.txt
+py -3.12 -m venv .venv
+.\.venv\Scripts\python -m pip install -r requirements-windows-lock.txt
+.\.venv\Scripts\python scripts/fetch_desktop_tools.py --platform windows --output tools/windows
 .\start_tray_windows.bat
 ```
 
-ビルド環境でインターネット接続が安定しない場合は、
-[Windows オフラインビルドガイド](docs/windows-offline-build.md)を参照してください。
+[ソースからの実行 Windows (offline)](docs/windows-offline-build.md).
 
 ## 起動オプション
 
@@ -216,24 +244,6 @@ Cinnamon/GNOME のシステムショートカットを作成できます。
 クリップボード監視は Windows/X11 の通常のクリップボードを使用し、Wayland では
 `wl-clipboard` が導入済みの場合に `wl-paste` を使用します。
 
-## チャンネルとキューの処理
-
-現在のデスクトップ版ソースでは、`https://rutube.ru/channel/ID/` または
-`https://rutube.ru/u/name/` から Rutube チャンネルも追加できます。動画・Shorts
-タブのリンクにも対応し、名前付きリンクをチャンネル ID に変換して重複を防ぎます。
-名前とアバターの保存、件数制限、定期確認、アーカイブ、最近の動画をダウンロードせずに
-アーカイブ済みにする操作に対応しています。Rutube の配信確認と有料コンテンツ検出は
-未対応のため無効です。個別動画はキューとクイックダウンロードで利用できます。
-Android 移植版への変更はありません。
-
-有効なチャンネルセクションを順番に確認し、完了したセクションの結果が見えるよう
-短い間隔を置きます。有料コンテンツの探索は、有効にした明示的なチャンネル確認時
-だけ実行します。通常のダウンロード確認中に members-only 動画が見つかった場合も、
-チャンネル状態を更新し、アクセス情報を重要イベントとして穏やかに記録します。
-
-キューは処理開始時と、すべてのチャンネル確認後の 2 回処理されます。すでに
-アーカイブ済みの動画と重複エントリはスキップされ、失敗した項目は後で再試行できます。
-
 ## Telegram
 
 Telegram 送信は完全に無効化できます。利用する場合は「設定」または `.env` に
@@ -248,35 +258,66 @@ PROXY_URL=127.0.0.1:9050
 `PROXY_URL` は任意です。Telegram 送信に失敗しても、正常に保存されたローカル動画は
 削除されません。
 
+## 固定コンポーネント
+
+プロジェクトで審査した版であり、全インストールの一致や上流の最新版を保証しません。PC 依存関係：`requirements-linux-lock.txt`、`requirements-windows-lock.txt`。Android 版/ハッシュ：`android/runtime.properties`、`android/gradle/verification-metadata.xml`。
+
+| コンポーネント | PC 開発 / Windows | Android |
+| --- | --- | --- |
+| yt-dlp | 2026.08.19 | 2026.08.19 |
+| FFmpeg / FFprobe | 9.0.2 | 7.1.1 |
+| Deno / QuickJS | Deno 2.9.7 | QuickJS 2026-06-04 |
+| PyQt5 / Compose BOM | PyQt5 5.15.11 | Compose 2026.09.00 |
+| Qt runtime | Linux 5.15.19 / Windows 5.15.2 | - |
+| Room / WorkManager | - | 2.8.5 / 2.12.0 |
+| Coil | - | 3.6.3 |
+| PyInstaller / AGP / Gradle | PyInstaller 6.22.3 | AGP 9.4.1 / Gradle 9.8.0 |
+| Kotlin Compose compiler / KSP | - | 2.4.20 / 2.3.12 |
+
+Android は上流 Python 3.12.11、OpenSSL 3.5.2、FFmpeg 7.1.1 を保持し、互換再ビルド・対応ソース審査は未完了です。QuickJS 2026-06-04 と WebP/SharpYUV 1.6.0 は四 ABI、16 KB 配置で再構築しました。静的検査は 16 KB 実機の代わりになりません。
+
+[コンポーネント更新記録](docs/component-update-20261003.md) · [ネイティブ再構築手順](android/native/README.md).
+
 ## リリースのビルド
 
-Linux 用成果物:
+PC タグは `v*`、Android は別 workflow の `android-v<versionName>`。公開署名には承認された恒久証明書と審査済み対応 runtime ソースが必要です。鍵・パスワード・トークン・未署名/非公開テスト APK を公開しないでください。
+
+Linux:
 
 ```bash
-packaging/build_release.sh 1.2.0~beta1 1.2.0-beta
+packaging/build_release.sh 1.2.1 1.2.1
 ```
 
-Windows 上で Windows 用成果物を作成:
+Windows:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.2.0-beta -MsiVersion 1.2.0
+  -Version 1.2.1 -MsiVersion 1.2.1
 ```
 
-GitHub Actions は `v*` に一致するタグから Linux と Windows の成果物を作成します。
+Android (JDK 17, Android SDK, Gradle Wrapper):
 
-## 適切な利用について
+```bash
+cd android
+./gradlew testDebugUnitTest assembleDebug
+python3 -m unittest discover -s scripts -p 'test_*.py' -v
+```
 
-YouTube Harvester は YouTube、Google、Telegram、`yt-dlp` と提携していません。
-自分が所有するもの、許可を得たもの、または個人利用目的で合法的に保存できるもの
-だけをダウンロードしてください。
-[YouTube 利用規約](https://www.youtube.com/t/terms)、著作権法、お住まいの国の
-法律を守り、Telegram の認証情報を公開しないでください。
+[Android 公開・署名規則](android/RELEASING.md)
 
-外部コンポーネントとして
-[`yt-dlp`](https://github.com/yt-dlp/yt-dlp)、PyQt5/Qt、FFmpeg/FFprobe、
-Deno、`curl`、Telegram Bot API、`pynput` を使用します。それぞれに固有の
-ライセンスと利用条件が適用されます。
+## 検証と制限
+
+最新ローカル検査：**PC Python 88 件**、**Android Python 35 件**、**Android JVM 149 件**、Android 50 画面の撮影成功。版統一時には **Windows 80 件**（POSIX 二件省略）と **選択 LDPlayer 36 件**、Android 14/API 34 x86_64、も通過しました。
+
+PC ツールと実際のローカル H.264/AAC ダウンロード/remux を確認。四 APK のマニフェスト/証明書/ZIP、対象 64 ビット配置検査も通過。ただし ARM、全機種のバックグラウンド、新 Windows インストーラーの導入/削除は証明していません。文書更新は既存コピーの再ビルドや公開ではありません。
+
+[Android テスト計画](android/TEST-PLAN.ru.md).
+
+## ライセンスと適切な利用
+
+所有者が **Android モジュールの GPL-3.0-only** を承認済み：[LICENSE](android/LICENSE)、[NOTICE](android/NOTICE)、[決定記録](android/legal/README.md)。PC や第三者のライセンスは変更しません。公開 Android には完全な対応 runtime ソース一式が必要です。
+
+YouTube、Google、Rutube、VK、Telegram、yt-dlp との提携はありません。取得権限のあるメディアだけを扱い、サービス条件と法令を守ってください。認証情報とバックアップのパスワードを公開しないでください。
 
 ## 謝辞
 

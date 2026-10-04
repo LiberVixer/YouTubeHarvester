@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="beta">تجريبي</string><string name="theme">السمة</string><string name="menu">القائمة</string><string name="actions">الإجراءات</string>
+    <string name="filter">تصفية</string><string name="refresh">تحديث</string><string name="download">تنزيل</string>
+    <string name="add_to_queue">إضافة إلى قائمة الانتظار</string><string name="queue_short">قائمة الانتظار</string><string name="archive">الأرشيف</string><string name="overview">نظرة عامة</string>
+    <string name="channels">القنوات</string><string name="settings">الإعدادات</string><string name="video">فيديو</string><string name="shorts">مقاطع قصيرة</string>
+    <string name="streams">بث مباشر</string><string name="none">لا شيء</string><string name="automatic">تلقائي</string>
+    <string name="best">الأفضل</string><string name="save">حفظ</string><string name="add">إضافة</string><string name="delete">حذف</string>
+    <string name="folder">مجلد</string><string name="file">ملف</string><string name="source">المصدر</string>
+    <string name="enabled">مفعّل</string><string name="disabled">معطّل</string><string name="selected_count">المحدد: %1$d</string>
+    <string name="url_hint">رابط YouTube أو VK أو Rutube</string><string name="channels_count">القنوات: %1$d</string><string name="queue_count">قائمة الانتظار: %1$d</string>
+    <string name="archive_count">الأرشيف: %1$d</string><string name="channel_check">فحص القنوات</string>
+    <string name="start">بدء</string>
+
+    <string name="downloaded_today">تنزيلات اليوم: فيديو: %1$d · مقاطع قصيرة: %2$d · بث مباشر: %3$d</string><string name="preview_loading">جارٍ تحميل المعاينة…</string>
+    <string name="preview_unavailable">المعاينة غير متاحة</string><string name="waiting_for_download">في انتظار التنزيل</string>
+    <string name="add_link_or_scan">أضف رابطًا أو ابدأ فحص القنوات</string><string name="downloads">التنزيلات</string><string name="quick">سريع</string>
+    <string name="temporary_short">مؤقت</string><string name="stop_download">إيقاف التنزيل</string><string name="download_progress">%1$s: %2$d%%</string>
+    <string name="add_channel">إضافة قناة</string><string name="search_channels">بحث عن قنوات</string><string name="check_channels">فحص القنوات</string>
+    <string name="stop_check">إيقاف الفحص</string><string name="check_paid_content">فحص المحتوى المدفوع</string><string name="youtube_channel_url">رابط قناة YouTube / Rutube</string>
+    <string name="check_counter">الفحص %1$d / %2$d</string><string name="queued_videos">فيديوهات قائمة الانتظار</string><string name="empty_queue">قائمة الانتظار فارغة</string>
+    <string name="empty_queue_hint">أضف رابطًا أعلاه. سيبقى العنصر محفوظًا بعد إعادة تشغيل التطبيق.</string><string name="preview">معاينة</string>
+    <string name="preview_prompt">أدخل رابطًا للمعاينة</string><string name="preview_title_hint">العنوان والقناة والصورة المصغرة</string>
+    <string name="preview_metadata_hint">سيظهر العنوان والقناة هنا</string><string name="ready_to_add">جاهز للإضافة</string>
+    <string name="download_selected">تنزيل المحدد</string><string name="delete_selected">حذف المحدد</string>
+    <string name="scheduler">المجدول</string><string name="checks_schedule">جدول الفحص</string>
+    <string name="add_time">إضافة وقت</string><string name="enabled_of_total">%1$d مفعّل من %2$d</string><string name="loading_data">جارٍ تحميل البيانات…</string>
+    <string name="scheduler_android_hint">يجري Android الفحص قرب الوقت المحدد عندما تسمح الشبكة والبطارية بذلك.</string>
+    <string name="schedule_empty">لم تتم إضافة أوقات للفحص بعد</string>
+    <string name="last_run_value">آخر تشغيل: %1$s</string>
+    <string name="never_run">لم يعمل بعد</string>
+    <string name="delete_time">حذف الوقت</string>
+    <string name="schedule_save_error">تعذر حفظ الجدول</string>
+    <string name="schedule_delete_error">تعذر حذف الجدول</string>
+    <string name="schedule_time_exists">هذا الوقت موجود في الجدول بالفعل</string>
+    <string name="background_check_channel">فحوصات القنوات المجدولة</string>
+    <string name="background_check_title">جارٍ فحص القنوات</string>
+    <string name="background_check_text">جارٍ البحث عن فيديوهات جديدة في الخلفية</string>
+    <string name="archive_empty">الأرشيف فارغ</string><string name="archive_empty_hint">ستظهر التنزيلات المكتملة هنا. تُحفظ كل دقة بشكل منفصل.</string>
+    <string name="nothing_found">لم يتم العثور على شيء</string><string name="nothing_found_hint">غيّر البحث أو مرشح المصدر.</string><string name="search_archive">بحث في الأرشيف</string>
+    <string name="all">الكل</string><string name="audio_details">🎧 الصوت: %1$s</string><string name="subtitle_details">▤ الترجمة: %1$s</string>
+    <string name="download_options">خيارات التنزيل</string><string name="resolution">الدقة</string><string name="loading_tracks">جارٍ جلب المسارات عبر yt-dlp…</string>
+    <string name="tracks_unavailable">قائمة المسارات غير متاحة</string><string name="tracks_fallback">سيستمر التنزيل بصوت تلقائي ومن دون ترجمة.</string>
+    <string name="audio_tracks">المسارات الصوتية</string><string name="audio_tracks_missing">لم يتم العثور على مسارات صوتية منفصلة</string><string name="subtitles">الترجمة</string>
+    <string name="subtitles_not_selected">غير محددة</string><string name="subtitles_missing">لم يتم العثور على ترجمة</string><string name="original_tracks">المسارات الأصلية</string>
+    <string name="preferred_languages">الروسية والإنجليزية والأوكرانية ولغات الواجهة</string><string name="other_languages">لغات أخرى</string>
+    <string name="manual_subtitles">ترجمة غير تلقائية</string><string name="preferred_auto_subtitles">ترجمة تلقائية: اللغات ذات الأولوية</string>
+    <string name="other_auto_subtitles">ترجمة تلقائية: لغات أخرى</string><string name="track_original">أصلي</string><string name="track_combined">مع الفيديو</string>
+    <string name="track_auto">تلقائي</string><string name="track_manual">غير تلقائي</string><string name="loading_section">التنزيل</string>
+    <string name="temporary_files">الملفات المؤقتة</string><string name="channel_limits">حدود كل قناة</string><string name="interface_section">الواجهة</string>
+    <string name="language">اللغة</string><string name="system_theme">النظام</string><string name="light_theme">فاتح</string><string name="dark_theme">داكن</string><string name="behavior">السلوك</string><string name="watch_clipboard">مراقبة الحافظة</string>
+    <string name="watch_clipboard_hint">فتح التنزيل السريع للروابط الجديدة أثناء ظهور التطبيق على الشاشة</string>
+    <string name="system_notifications">إشعارات النظام</string>
+    <string name="quick_download">تنزيل سريع</string><string name="app_shortcut">اختصار التطبيق</string><string name="app_shortcut_hint">إضافة اختصار للتنزيل السريع إلى الشاشة الرئيسية</string><string name="telegram">Telegram</string><string name="notifications">الإشعارات</string>
+    <string name="connection_settings">إعدادات الاتصال</string><string name="updates">التحديثات</string>
+    <string name="embedded_auto_update">مدمج · تحديث تلقائي</string><string name="embedded_apk">مدمج في APK</string><string name="embedded_apk_plural">مدمجة في APK</string>
+    <string name="update_now">تحديث</string><string name="ytdlp_updating">جارٍ التحديث…</string><string name="ytdlp_updated">تم تحديث yt-dlp: %1$s</string><string name="ytdlp_already_current">إصدار yt-dlp محدّث بالفعل: %1$s</string><string name="ytdlp_update_failed">تعذّر تحديث yt-dlp. تحقق من الاتصال وحاول مرة أخرى.</string>
+    <string name="data_diagnostics">البيانات والتشخيص</string>
+    <string name="clear_thumbnail_cache">مسح ذاكرة الصور المصغرة</string><string name="diagnostics">التشخيص</string><string name="system_components">النظام والمكونات</string>
+    <string name="terms">شروط الاستخدام</string><string name="about">حول التطبيق</string><string name="development_build">إصدار Android تجريبي</string><string name="licenses">التراخيص ↗</string>
+    <string name="save_settings">حفظ الإعدادات</string><string name="choose_folder">اختيار مجلد</string><string name="restore_default_folder">استعادة Download/YTH</string>
+    <string name="downloads_folder_title">مجلد التنزيل</string><string name="folder_restriction">لا يسمح Android باختيار مساحة التخزين كلها أو مجلد Download نفسه. الوجهة القياسية Download/YTH متاحة بالفعل. لموقع آخر اختر مجلدًا فرعيًا أو أنشئه.</string>
+    <string name="choose_subfolder">اختيار مجلد فرعي</string><string name="folder_picker_hint">افتح أو أنشئ مجلدًا فرعيًا مثل Download/YTH</string>
+    <string name="folder_access_failed">لم يمنح Android وصولًا دائمًا إلى المجلد المحدد</string><string name="folder_selection_restricted">لا يسمح Android بجذر التخزين أو Download نفسه. اختر مجلدًا فرعيًا.</string>
+    <string name="decrease">تقليل</string><string name="increase">زيادة</string>
+    <string name="status_queued">في قائمة الانتظار</string><string name="status_initializing">جارٍ إعداد المحرك</string><string name="status_downloading">جارٍ التنزيل</string>
+    <string name="status_publishing">جارٍ حفظ الملف</string><string name="status_completed">مكتمل</string><string name="status_failed">خطأ</string><string name="status_cancelled">ملغى</string>
+    <string name="invalid_channel_url">أدخل رابط قناة YouTube أو معرّف @ أو رابط قناة أو برنامج Rutube</string>
+    <string name="channel_already_added">أُضيفت هذه القناة من قبل</string>
+    <string name="channel_added">أُضيفت القناة</string>
+    <string name="channel_removed">حُذفت القناة</string>
+    <string name="channel_save_error">تعذر حفظ القناة</string>
+    <string name="channel_delete_error">تعذر حذف القناة</string>
+    <string name="channel_not_checked">لم تُفحص بعد</string>
+    <string name="channels_empty">لا توجد قنوات بعد</string>
+    <string name="channels_empty_hint">أضف قناة YouTube أو معرّف @ أو قناة أو برنامج Rutube. ستُحفظ تفضيلات المحتوى على هذا الجهاز.</string>
+    <string name="channel_scan_started">بدأ فحص القنوات</string>
+    <string name="channel_scan_stopped">توقف فحص القنوات</string>
+    <string name="channel_scan_completed">اكتمل الفحص. أُضيف إلى قائمة الانتظار: %1$d</string>
+    <string name="channel_scanning_section">جارٍ الفحص: %1$s%2$s</string>
+    <string name="channel_checked">اكتمل الفحص</string>
+    <string name="channel_check_failed">فشل الفحص</string>
+    <string name="service_preparing_queue">جارٍ إعداد قائمة التنزيل</string>
+    <string name="service_download_channel_name">تنزيلات الفيديو</string>
+    <string name="service_download_channel_description">تقدم تنزيلات YouTube Harvester في الخلفية</string>
+    <string name="service_cancel_action">إلغاء</string>
+    <string name="service_eta_remaining">متبقٍ %1$s</string>
+    <string name="service_download_failed_title">فشل التنزيل</string>
+    <string name="service_download_completed_title">اكتمل التنزيل</string>
+    <string name="service_download_cancelled_title">أُلغي التنزيل</string>
+    <string name="service_saved_to">تم الحفظ في: %1$s</string>
+    <string name="service_subtitles_unavailable_retry">الترجمة %1$s غير متاحة؛ تجري إعادة المحاولة من دونها</string>
+    <string name="service_automatic_track">%1$s (تلقائي)</string>
+    <string name="service_error_members_only">هذا الفيديو متاح لأعضاء القناة فقط</string>
+    <string name="service_error_private_video">هذا الفيديو خاص</string>
+    <string name="service_error_video_unavailable">هذا الفيديو غير متاح</string>
+    <string name="service_error_unknown_engine">خطأ غير معروف في محرك التنزيل</string>
+    <string name="service_error_storage_full">مساحة تخزين الجهاز ممتلئة. حرّر بعض المساحة ثم أعد المحاولة.</string>
+    <string name="service_error_prepare_temp">تعذر إعداد المجلد المؤقت</string>
+    <string name="service_error_output_missing">انتهى yt-dlp، لكن لم يُعثر على ملف الفيديو النهائي</string>
+    <string name="service_error_android_timeout">أوقف Android التنزيل الطويل في الخلفية. افتح التطبيق وأعد المحاولة.</string>
+    <string name="invalid_media_link">لم يتم العثور على رابط فيديو مدعوم من YouTube أو VK أو Rutube</string>
+    <string name="quick_link_ready">تم فتح التنزيل السريع</string>
+    <string name="clipboard_empty">لا تحتوي الحافظة على نص</string>
+    <string name="downloads_open_error">تعذر فتح تنزيلات النظام</string>
+    <string name="temporary_cleaned">المجلدات المؤقتة المحذوفة: %1$d</string>
+    <string name="shortcut_requested">تم إرسال طلب الاختصار إلى المشغّل</string>
+    <string name="shortcut_unsupported">المشغّل الحالي لا يدعم الاختصارات المثبتة</string>
+    <string name="shortcut_rejected">رفض المشغّل طلب الاختصار</string>
+    <string name="all_files">كل الملفات</string>
+    <string name="available_files">الملفات المتاحة</string>
+    <string name="missing_files">الملفات المفقودة</string>
+    <string name="archive_refresh_result">تم فحص الأرشيف: %1$d من %2$d ملفًا متاح</string>
+    <string name="archive_delete_error">تعذر حذف سجل الأرشيف</string>
+    <string name="archive_record_removed">حُذف السجل من الأرشيف مع الاحتفاظ بملف الفيديو</string>
+    <string name="archive_file_open_error">تعذر فتح ملف الفيديو هذا</string>
+    <string name="archive_source_open_error">تعذر فتح صفحة المصدر</string>
+    <string name="archive_share_error">تعذر مشاركة ملف الفيديو هذا</string>
+    <string name="remove_archive_record">إزالة سجل الأرشيف؟</string>
+    <string name="remove_archive_record_hint">سيختفي «%1$s» من الأرشيف، ولن يُحذف ملف الفيديو.</string>
+    <string name="remove_record">إزالة السجل</string>
+    <string name="cancel">إلغاء</string>
+    <string name="share">مشاركة</string>
+    <string name="share_video">مشاركة الفيديو</string>
+    <string name="close">إغلاق</string>
+    <string name="releases">الإصدارات</string>
+    <string name="open_link_error">تعذر فتح الرابط</string>
+    <string name="telegram_configured">تم إعداد الاتصال</string>
+    <string name="telegram_not_configured">لم يتم إعداد الاتصال</string>
+    <string name="telegram_connection_title">اتصال Telegram</string>
+    <string name="bot_token">رمز البوت</string>
+    <string name="channel_id">معرّف القناة</string>
+    <string name="proxy_url_optional">عنوان الوكيل (اختياري)</string>
+    <string name="proxy_url_hint">HTTP أو SOCKS5، مثل socks5://127.0.0.1:1080</string>
+    <string name="test_connection">اختبار الاتصال</string>
+    <string name="telegram_testing">جارٍ اختبار اتصال Telegram…</string>
+    <string name="telegram_test_message">اتصال YouTube Harvester مع Telegram يعمل.</string>
+    <string name="telegram_test_success">تم إرسال رسالة الاختبار إلى Telegram</string>
+    <string name="telegram_test_failed">تعذر إرسال رسالة الاختبار إلى Telegram</string>
+    <string name="telegram_settings_saved">تم حفظ إعدادات Telegram وتفعيل الإشعارات</string>
+    <string name="telegram_credentials_required">أدخل رمز البوت ومعرّف القناة</string>
+    <string name="telegram_credentials_invalid">تحقق من رمز البوت ومعرّف القناة وعنوان الوكيل</string>
+    <string name="thumbnail_cache_cleared">تم مسح ذاكرة الصور المصغرة</string>
+    <string name="diagnostics_report">تقرير التشخيص</string>
+    <string name="share_diagnostics">مشاركة التشخيص</string>
+    <string name="app_version">إصدار التطبيق</string>
+    <string name="android_version">إصدار Android</string>
+    <string name="device">الجهاز</string>
+    <string name="supported_abis">واجهات ABI المدعومة</string>
+    <string name="download_destination">وجهة التنزيل</string>
+    <string name="schedules_count">الجداول</string>
+    <string name="licenses_title">تراخيص المصادر المفتوحة</string>
+    <string name="licenses_text">يتضمن إصدار Android ‏yt-dlp ‏(Unlicense) وyoutubedl-android ووحدة FFmpeg الخاصة به (GPL-3.0)، وFFmpeg وتراخيص برامج الترميز، وQuickJS ‏(MIT)، وAndroidX وJetpack Compose وCoil وRoom وWorkManager وتراخيص مشاريعها الأصلية. يتطلب نشر ملف ثنائي عام ترخيص مشروع متوافقًا مع GPL وإشعارات كاملة للمكونات الخارجية.</string>
+    <string name="settings_saved">تم حفظ الإعدادات</string>
+    <string name="settings_save_error">تعذر حفظ الإعدادات</string>
+    <string name="ready">جاهز</string>
+    <string name="internal_app_cache">ذاكرة التطبيق الداخلية</string>
+    <string name="data_migration_error">تعذر إكمال نقل البيانات المحلية</string>
+
+    <string name="preview_loaded">تم تحميل المعاينة</string>
+    <string name="already_in_queue">هذا الفيديو موجود بالفعل في قائمة الانتظار</string>
+    <string name="queue_item_added">تمت الإضافة إلى قائمة الانتظار</string>
+    <string name="queue_save_error">تعذر حفظ عنصر قائمة الانتظار</string>
+    <string name="download_options_loaded">تم تحميل خيارات التنزيل</string>
+    <string name="tracks_fallback_status">تعذر تحميل المسارات؛ ما زال اختيار الصوت التلقائي متاحًا</string>
+    <string name="download_started">تم إرسال الفيديو إلى أداة التنزيل</string>
+    <string name="download_start_error">تعذر بدء التنزيل</string>
+    <string name="select_downloads">اختر العناصر المراد تنزيلها</string>
+    <string name="downloads_started">بدأت التنزيلات: %1$d</string>
+    <string name="downloads_already_running">العناصر المحددة قيد التنزيل بالفعل</string>
+    <string name="queue_start_error">تعذر بدء قائمة الانتظار</string>
+    <string name="download_cancelling">جارٍ إلغاء التنزيل…</string>
+    <string name="queue_selection_save_error">تعذر حفظ تحديد قائمة الانتظار</string>
+    <string name="queue_items_removed">تمت إزالة العناصر المحددة</string>
+    <string name="queue_remove_error">تعذر إزالة العناصر المحددة</string>
+    <string name="language_save_error">تعذر حفظ لغة الواجهة</string>
+    <string name="download_folder_selected">تم اختيار مجلد التنزيل</string>
+    <string name="download_folder_save_error">تعذر حفظ المجلد المحدد</string>
+    <string name="default_download_folder">سيتم حفظ الملفات في Download/YTH</string>
+    <string name="download_folder_reset_error">تعذر استعادة مجلد التنزيل الافتراضي</string>
+    <string name="publisher_invalid_tree_uri">عنوان المجلد المحفوظ غير صالح؛ اختر مجلد التنزيل مرة أخرى</string>
+    <string name="publisher_permission_revoked">تم إلغاء الوصول إلى مجلد التنزيل؛ اختره مرة أخرى من الإعدادات</string>
+    <string name="publisher_directory_unavailable">المجلد المحدد لم يعد متاحًا؛ اختره مرة أخرى</string>
+    <string name="publisher_create_file_error">تعذر على Android إنشاء الملف في المجلد المحدد</string>
+    <string name="publisher_open_file_error">لم يسمح Android بفتح ملف الوجهة</string>
+    <string name="publisher_create_default_error">تعذر على Android إنشاء الملف في Download/YTH</string>
+    <string name="publisher_storage_permission">اسمح للتطبيق بحفظ الملفات في ذاكرة الجهاز</string>
+    <string name="publisher_create_default_directory_error">تعذر إنشاء مجلد Download/YTH</string>
+    <string name="preview_access_restricted">الوصول إلى هذا الفيديو مقيّد</string>
+    <string name="preview_video_unavailable">الفيديو غير موجود أو غير متاح</string>
+    <string name="preview_rate_limited">قيّدت الخدمة عدد الطلبات مؤقتًا</string>
+    <string name="preview_service_error">تعذر على الخدمة توفير معاينة</string>
+    <string name="preview_incomplete_data">أعادت الخدمة بيانات معاينة غير مكتملة</string>
+    <string name="preview_network_error">تعذر تحميل المعاينة. تحقق من اتصال الإنترنت</string>
+    <string name="fallback_video_title">فيديو %1$s %2$s</string>
+
+
+    <string name="metadata_tracks_error">تعذر الحصول على المسارات الصوتية والترجمات</string>
+    <string name="metadata_pending">سيتم تحميل البيانات الوصفية أثناء التنزيل</string>
+    <string name="application_logs">سجل التطبيق</string>
+    <plurals name="logs_retention_summary">
+        <item quantity="zero">لا يتم الاحتفاظ بالسجل</item>
+        <item quantity="one">الاحتفاظ لمدة يوم واحد</item>
+        <item quantity="two">الاحتفاظ لمدة يومين</item>
+        <item quantity="few">الاحتفاظ لمدة %1$d أيام</item>
+        <item quantity="many">الاحتفاظ لمدة %1$d يومًا</item>
+        <item quantity="other">الاحتفاظ لمدة %1$d يوم</item>
+    </plurals>
+    <plurals name="logs_retention_value">
+        <item quantity="zero">صفر يوم</item>
+        <item quantity="one">يوم واحد</item>
+        <item quantity="two">يومان</item>
+        <item quantity="few">%1$d أيام</item>
+        <item quantity="many">%1$d يومًا</item>
+        <item quantity="other">%1$d يوم</item>
+    </plurals>
+    <string name="log_empty">سجل التطبيق فارغ</string>
+    <string name="log_load_error">تعذرت قراءة سجل التطبيق</string>
+    <string name="logs_cleared">تم مسح سجل التطبيق</string>
+    <string name="logs_retention_saved">تم تحديث مدة الاحتفاظ بالسجل</string>
+    <string name="clear_logs">مسح السجل</string>
+    <string name="clear_logs_confirm_title">هل تريد مسح سجل التطبيق؟</string>
+    <string name="clear_logs_confirm_message">سيتم حذف سجل التشخيص نهائيًا. لن تتأثر التنزيلات والإعدادات.</string>
+    <string name="share_logs">مشاركة السجل</string>
+    <string name="logs_private_hint">يُحفظ السجل بشكل خاص بترميز UTF-8 ويُستثنى من النسخ الاحتياطي ولا يتضمن رمز بوت Telegram مطلقًا.</string>
+    <string name="diagnostics_checking">جارٍ فحص المكونات…</string>
+    <string name="diagnostics_run_error">تعذر إكمال التشخيص</string>
+    <string name="diagnostics_checked_at">وقت الفحص</string>
+    <string name="runtime_initialization">تهيئة أداة التنزيل</string>
+    <string name="network_status">الشبكة</string>
+    <string name="connection_validated">تم تأكيد الوصول إلى الإنترنت</string>
+    <string name="connection_unvalidated">متصل، لكن لم يتم تأكيد الوصول إلى الإنترنت</string>
+    <string name="diagnostic_unavailable">غير متاح</string>
+    <string name="notifications_permission">إذن الإشعارات</string>
+    <string name="download_folder_access">الوصول إلى مجلد التنزيل</string>
+    <string name="free_storage">المساحة المشتركة المتاحة</string>
+    <string name="battery_optimization">تحسين البطارية</string>
+    <string name="battery_optimized">مفعّل؛ قد تتأخر عمليات الفحص في الخلفية</string>
+    <string name="battery_unrestricted">بلا قيود</string>
+    <string name="diagnostic_attention">يتطلب الانتباه</string>
+    <string name="diagnostics_not_run">لم يتم تشغيل التشخيص بعد</string>
+    <string name="clear_filter">مسح عامل التصفية</string>
+    <string name="channel_filter_members">تم العثور على محتوى للأعضاء فقط</string>
+    <string name="channel_filter_free">لم يُعثر على محتوى للأعضاء فقط</string>
+    <string name="channel_filter_unknown_paid">حالة المحتوى المدفوع غير معروفة</string>
+    <string name="channel_resolving">جارٍ جلب تفاصيل قناة Rutube…</string>
+    <string name="channel_mark_recent">تعليم أحدث العناصر…</string>
+    <string name="channel_mark_confirm">هل تريد تعليم أحدث العناصر في الأقسام المفعّلة من «%1$s» كعناصر تمت معالجتها؟ سيتخطاها فحص القنوات ولن تظهر في أرشيف الملفات.</string>
+    <string name="channel_mark_result">تم تعليم: %1$d. أخطاء الفحص: %2$d.</string>
+    <string name="channel_mark_stop_downloads">أوقف التنزيلات وانتظر انتهاءها أولاً.</string>
+    <string name="move_up">نقل إلى أعلى</string>
+    <string name="move_down">نقل إلى أسفل</string>
+    <string name="queue_active_items_kept">تبقى التنزيلات النشطة في قائمة الانتظار</string>
+    <string name="app_update_available">يتوفر تحديث: %1$s</string>
+    <string name="app_update_confirmation">هل تريد تنزيل التحديث وفتح مثبّت Android؟</string>
+    <string name="app_update_current">لم يتم العثور على إصدار Android متوافق أحدث.</string>
+    <string name="app_update_failed">تعذّر التحقق من التحديث أو تثبيته. تحقق من الاتصال وتوقيع APK.</string>
+    <string name="status_paused">متوقف مؤقتًا</string>
+    <string name="status_processing">جارٍ معالجة الفيديو</string>
+    <string name="status_waiting_network">في انتظار الشبكة</string>
+    <string name="download_pause">إيقاف مؤقت</string>
+    <string name="download_resume">استئناف</string>
+    <string name="download_retry">إعادة المحاولة</string>
+    <string name="download_network_error">انقطع الاتصال. تم حفظ التنزيل الجزئي. يمكنك إعادة المحاولة.</string>
+    <string name="folder_open_fallback">تم فتح متصفح ملفات النظام. اختر مجلد التنزيل إذا لم يفتح تلقائيًا.</string>
+    <string name="harvest_start">بدء تنزيل قائمة الانتظار والقنوات</string>
+    <string name="harvest_queue_before">جارٍ تنزيل روابط قائمة الانتظار</string>
+    <string name="harvest_channels">جارٍ فحص القنوات وتنزيلها</string>
+    <string name="harvest_queue_after">جارٍ فحص قائمة الانتظار مجددًا</string>
+    <string name="harvest_completed">اكتمل الفحص. التنزيلات: %1$d · الأخطاء: %2$d</string>
+    <string name="channel_validation_completed">القنوات المفحوصة: %1$d · الأخطاء: %2$d</string>
+    <string name="overview_check_completed">اكتمل آخر فحص</string>
+    <string name="overview_scanning">جارٍ الفحص</string>
+    <string name="overview_downloaded">تم تنزيل: %1$d</string>
+    <string name="overview_no_new">لم يتم العثور على فيديوهات جديدة</string>
+    <string name="overview_today">تم تنزيلها اليوم: %1$d</string>
+    <string name="overview_checked">القنوات المفحوصة: %1$d / %2$d</string>
+    <string name="overview_errors">الأخطاء: %1$d</string>
+    <string name="overview_checking_channel">جارٍ فحص القناة</string>
+    <string name="clear_temporary_files">مسح الملفات المؤقتة</string>
+    <string name="engine_updates_with_app">يتم تحديث yt-dlp مع التطبيق.</string>
+    <string name="downloads_short">ملفات</string>
+    <string name="service_subtitles_omitted">تم حفظ الفيديو. لم تتم إضافة الترجمات: %1$s</string>
+    <string name="download_recovery_title">توقفت التنزيلات</string>
+    <string name="download_recovery_text">اضغط على استئناف لمتابعة التنزيلات بعد إعادة التشغيل.</string>
+    <string name="transfer_export">تصدير البيانات</string>
+    <string name="transfer_import">استيراد البيانات</string>
+    <string name="transfer_export_warning">يتضمن الملف المشفر بيانات اعتماد Telegram، دون الفيديوهات أو الملفات المؤقتة. استخدم كلمة مرور منفصلة من 12 حرفًا على الأقل. لا تحذف beta قبل التحقق من النقل.</string>
+    <string name="transfer_import_warning">يتطلب الاستيراد قاعدة بيانات فارغة ويستبدل الإعدادات. ستتوقف التنزيلات مؤقتًا وستُعطل الجداول. اختر مجلد التنزيل مجددًا ثم حدّث توفر الأرشيف.</string>
+    <string name="transfer_password">كلمة مرور النقل (12 حرفًا على الأقل)</string>
+    <string name="transfer_password_repeat">كرر كلمة المرور</string>
+    <string name="transfer_exported">تم حفظ التصدير والتحقق من إعادة قراءة الملف</string>
+    <string name="transfer_imported">تم استيراد البيانات. اختر المجلد وحدّث الأرشيف ثم فعّل الجداول.</string>
+    <string name="transfer_not_empty">رُفض الاستيراد: لن تُستبدل البيانات الحالية</string>
+    <string name="transfer_stop_downloads">أوقف التنزيلات وفحص القنوات قبل النقل</string>
+    <string name="transfer_credentials_error">أصلح بيانات اعتماد Telegram غير المقروءة أو امسحها قبل التصدير</string>
+    <string name="transfer_failed">فشل النقل: تحقق من كلمة المرور والملف والوصول إلى التخزين</string>
+    <string name="transfer_archive_error">أعد الوصول إلى ملفات الأرشيف أو حدّث توفرها قبل التصدير</string>
+    <string name="transfer_pending">تم استيراد السجلات؛ أعد تشغيل التطبيق لإكمال استعادة الإعدادات. لا تكرر الاستيراد.</string>
+</resources>

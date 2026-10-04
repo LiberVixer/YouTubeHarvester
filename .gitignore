@@ -1,4 +1,10 @@
 .env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*.p12
+*.pfx
 archive_details.jsonl
 channel_rules.json
 *.log
@@ -16,12 +22,16 @@ __pycache__/
 .codex/
 .sentry-native/
 dist/deb-build/
+dist/
+qa-dev32/
+android/Android-dev30-beta-checklist.docx
 dist/release/
 dist/windows/
 dist/pyinstaller-build/
 dist/pyinstaller-spec/
 dist/ffmpeg-cache/
 dist/deno-cache/
+dist/component-cache/
 dist/*.deb
 backups/
 packaging/windows/yt-harvester.ico
@@ -29,12 +39,19 @@ ffmpeg/
 tools/windows/ffmpeg/
 deno/
 tools/windows/deno/
+tools/linux/
 run_download-v*.sh
 run_download.sh-old
 tray_launcher (*)*.py
 wheelhouse/
 *.wixpdb
 *.part
+android/.gradle/
+android/.idea/
+android/local.properties
+android/**/build/
+android/*.iml
+android/*.apk
 run-cf-direct-test.sh
 watch-throne-final-test.sh
 xray-*

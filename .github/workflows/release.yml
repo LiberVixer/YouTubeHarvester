@@ -12,10 +12,10 @@ permissions:
   contents: write
 
 env:
-  APP_VERSION: 1.2.0-beta
-  DEB_VERSION: 1.2.0~beta1
-  MSI_VERSION: 1.2.0
-  RELEASE_TITLE: YouTube Harvester 1.2.0 Beta
+  APP_VERSION: 1.2.1
+  DEB_VERSION: 1.2.1
+  MSI_VERSION: 1.2.1
+  RELEASE_TITLE: YouTube Harvester 1.2.1
 
 jobs:
   linux:
@@ -64,7 +64,7 @@ jobs:
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           name: ${{ env.RELEASE_TITLE }}
-          prerelease: true
+          prerelease: false
           body_path: docs/releases/${{ env.APP_VERSION }}.md
           files: |
             dist/release/YouTubeHarvester_${{ env.APP_VERSION }}_linux_all.deb
@@ -80,19 +80,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install installer toolchains
         shell: powershell
         run: |
           choco install innosetup wixtoolset -y
-          $wix = Get-Command wix.exe -ErrorAction SilentlyContinue
-          if ($wix) {
-            & $wix.Source eula accept wix7
-            if ($LASTEXITCODE -ne 0) {
-              Write-Warning "Could not auto-accept WiX v7 OSMF/EULA terms; setup EXE and ZIP can still be built."
-            }
-          }
 
       - name: Validate Python files
         shell: powershell
@@ -153,7 +146,7 @@ jobs:
           $versionOutput = & (Join-Path $app "ffmpeg\ffmpeg.exe") -version
           if ($LASTEXITCODE -ne 0) { throw "Bundled ffmpeg smoke test failed: $LASTEXITCODE" }
           $versionOutput | Write-Host
-          if (($versionOutput | Select-Object -First 1) -notmatch '^ffmpeg version 9\.0\.1\b') {
+          if (($versionOutput | Select-Object -First 1) -notmatch '^ffmpeg version 9\.0\.2\b') {
             throw "Unexpected bundled ffmpeg version: $($versionOutput | Select-Object -First 1)"
           }
 
@@ -171,7 +164,7 @@ jobs:
           $versionOutput = & (Join-Path $app "deno\deno.exe") --version
           if ($LASTEXITCODE -ne 0) { throw "Bundled Deno smoke test failed: $LASTEXITCODE" }
           $versionOutput | Write-Host
-          if (($versionOutput | Select-Object -First 1) -notmatch '^deno 2\.9\.6\b') {
+          if (($versionOutput | Select-Object -First 1) -notmatch '^deno 2\.9\.7\b') {
             throw "Unexpected bundled Deno version: $($versionOutput | Select-Object -First 1)"
           }
 
@@ -190,7 +183,7 @@ jobs:
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           name: ${{ env.RELEASE_TITLE }}
-          prerelease: true
+          prerelease: false
           body_path: docs/releases/${{ env.APP_VERSION }}.md
           files: |
             dist/release/YouTubeHarvester_${{ env.APP_VERSION }}_windows_portable.zip

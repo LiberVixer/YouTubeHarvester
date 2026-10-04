@@ -13,8 +13,8 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from yth_common import (  # noqa: E402
-    channel_section_url, channel_sections, deno_runtime_arg, media_key,
-    media_source_from_url, normalize_channel_url, normalize_media_source,
+    channel_recent_playlist_args, channel_section_url, channel_sections, deno_runtime_arg, media_key,
+    is_rutube_collection, media_source_from_url, normalize_channel_url, normalize_media_source,
     utf8_subprocess_env, yt_dlp_command,
 )
 
@@ -43,12 +43,11 @@ def collect_ids(yt_dlp: list[str], channel: str, section: str, limit: int) -> tu
         "--js-runtimes",
         deno_runtime_arg(),
         "--flat-playlist",
-        "--playlist-items",
-        f"1-{limit}",
+        *channel_recent_playlist_args(channel, limit),
         "--print",
         "%(id)s",
         "--no-warnings",
-        "--ignore-errors",
+        "--abort-on-error" if is_rutube_collection(channel) else "--ignore-errors",
         url,
     ]
     try:
@@ -66,6 +65,9 @@ def collect_ids(yt_dlp: list[str], channel: str, section: str, limit: int) -> tu
         return [], "таймаут yt-dlp"
     except Exception as exc:
         return [], str(exc)
+
+    if is_rutube_collection(channel) and result.returncode != 0:
+        return [], (result.stderr or "Rutube: incomplete collection").strip()
 
     ids: list[str] = []
     seen = set()

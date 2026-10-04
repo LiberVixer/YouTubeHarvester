@@ -1,0 +1,42 @@
+YouTube Harvester for Android
+
+Android application module: GPL-3.0-only; see LICENSE and legal/README.md.
+This decision does not change the desktop application's license.
+
+Third-party components retain their respective copyrights and licenses.
+
+Runtime:
+- youtubedl-android library/common/ffmpeg 0.18.1: GPL-3.0.
+  https://github.com/yausername/youtubedl-android/tree/0.18.1
+- yt-dlp 2026.08.19: Unlicense; pinned in runtime.properties and reported in Diagnostics.
+  https://github.com/yt-dlp/yt-dlp/releases/tag/2026.08.19
+- Python: Python Software Foundation License.
+  https://www.python.org/psf/license/
+- PyCryptodome (Cryptodome namespace), observed 3.23.0 on x86_64:
+  BSD-2-Clause and public-domain portions; preserve the upstream license text.
+  https://github.com/Legrandin/pycryptodome/blob/v3.23.0/LICENSE.rst
+- OpenSSL, observed 3.5.2 through Python ssl on x86_64: Apache-2.0.
+  https://github.com/openssl/openssl/blob/openssl-3.5.2/LICENSE.txt
+- FFmpeg and the codecs in the upstream Android runtime: respective LGPL/GPL
+  licenses, including GPL components. https://ffmpeg.org/legal.html
+- libwebp 1.6.0 (including SharpYUV): BSD-style license and patent grant.
+  Five libraries per ABI replace the upstream FFmpeg runtime copies to support
+  16 KB pages. Exact source, COPYING/PATENTS/AUTHORS and build instructions are
+  included under native/. https://chromium.googlesource.com/webm/libwebp/
+- QuickJS 2026-06-04: MIT. Rebuilt for four Android ABIs from the pinned source
+  under native/; scripts/rebuild_quickjs.py and scripts/patch_quickjs.py preserve
+  the license and replace only the upstream QuickJS executables.
+  https://bellard.org/quickjs/
+
+Application libraries:
+- AndroidX / Compose / Room / WorkManager / DataStore: Apache-2.0.
+- Kotlin and kotlinx.coroutines: Apache-2.0.
+- Coil and OkHttp: Apache-2.0.
+- Apache Commons Compress and Commons IO: Apache-2.0.
+- Jackson: Apache-2.0.
+
+Gradle records exact resolved artifact hashes in gradle/verification-metadata.xml.
+Do not distribute a public APK without the approved Android project license,
+the license texts and corresponding source/build scripts for the embedded native
+runtime and its codecs. A URL to an upstream project alone is not a replacement
+for that source bundle. scripts/package_release.py requires a reviewed bundle.

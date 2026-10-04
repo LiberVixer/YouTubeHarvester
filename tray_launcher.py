@@ -86,6 +86,7 @@ from yth_common import (
     extract_media_id,
     extract_video_id,
     fix_mojibake,
+    is_rutube_collection,
     looks_like_supported_media_url,
     looks_like_youtube_url,
     media_key,
@@ -723,7 +724,7 @@ PAID_CONTENT_EMOJIS = {
 }
 
 APP_NAME = "YouTube Harvester"
-APP_VERSION = "1.2.0-beta"
+APP_VERSION = "1.2.1"
 APP_TITLE = f"{APP_NAME} {APP_VERSION}"
 APP_DESKTOP_FILE_NAME = "yt-harvester"
 APP_X11_CLASS = "YouTubeHarvester"
@@ -2947,6 +2948,8 @@ class TrayLauncher:
         candidates = []
         if configured:
             candidates.append(Path(configured))
+        tool_platform = "windows" if self.is_windows else "linux"
+        candidates.append(self.app_dir / "tools" / tool_platform / "ffmpeg")
         candidates.extend([
             self.app_dir / "ffmpeg",
             self.app_dir / "ffmpeg" / "bin",
@@ -2975,6 +2978,8 @@ class TrayLauncher:
         if configured:
             candidates.append(Path(configured))
         deno_name = "deno.exe" if self.is_windows else "deno"
+        tool_platform = "windows" if self.is_windows else "linux"
+        candidates.append(self.app_dir / "tools" / tool_platform / "deno" / deno_name)
         candidates.extend([
             self.app_dir / "deno" / deno_name,
             self.app_dir / "deno" / "bin" / deno_name,
@@ -3155,6 +3160,7 @@ class TrayLauncher:
             "YTD_CACHE_DIR": str(self.cache_dir),
             "YTD_ENV_FILE": str(self.env_file),
             "YTD_CHANNEL_RULES_FILE": str(self.channel_rules_file),
+            "YTD_ARCHIVE_FILE": str(self.archive_file),
             "YTD_ARCHIVE_DETAILS_FILE": str(self.archive_details_file),
             "YTD_TEMP_DIR": str(self.temp_dir),
             "YTD_FINAL_DIR": str(self.final_dir),
@@ -8868,7 +8874,8 @@ class MainWindow(QMainWindow):
                 button.setEnabled(False)
                 button.setChecked(False)
                 button.setText(base_emoji)
-                button.setToolTip(self.tr("channels.rutube_streams_unsupported"))
+                button.setToolTip(self.tr("channels.rutube_collection_video_only" if is_rutube_collection(channel)
+                                          else "channels.rutube_streams_unsupported"))
                 continue
             section = sections.get(type_name) or {}
             if is_running and type_name in pending_sections:

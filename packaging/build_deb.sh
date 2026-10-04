@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PACKAGE="yt-harvester"
-VERSION="${1:-1.2.0~beta1}"
+VERSION="${1:-1.2.1}"
 ARCH="all"
 BUILD_DIR="$ROOT_DIR/dist/deb-build"
 PKG_DIR="$BUILD_DIR/${PACKAGE}_${VERSION}_${ARCH}"
@@ -23,6 +23,9 @@ install -m 0644 "$ROOT_DIR/yth_app_updater.py" "$APP_DIR/yth_app_updater.py"
 install -m 0644 "$ROOT_DIR/i18n_locales.py" "$APP_DIR/i18n_locales.py"
 install -m 0755 "$ROOT_DIR/run_download.sh" "$APP_DIR/run_download.sh"
 install -m 0755 "$ROOT_DIR/start_tray.sh" "$APP_DIR/start_tray.sh"
+install -m 0644 "$ROOT_DIR/requirements.txt" "$APP_DIR/requirements.txt"
+install -m 0644 "$ROOT_DIR/requirements-linux-lock.txt" "$APP_DIR/requirements-linux-lock.txt"
+install -m 0755 "$ROOT_DIR/scripts/fetch_desktop_tools.py" "$APP_DIR/scripts/fetch_desktop_tools.py"
 install -m 0755 "$ROOT_DIR/scripts/downloader.py" "$APP_DIR/scripts/downloader.py"
 install -m 0755 "$ROOT_DIR/scripts/mark_channel_archived.py" "$APP_DIR/scripts/mark_channel_archived.py"
 install -m 0755 "$ROOT_DIR/scripts/migrate_archive_details.py" "$APP_DIR/scripts/migrate_archive_details.py"
@@ -73,7 +76,7 @@ export YTD_TEMP_DIR="${YTD_TEMP_DIR:-$HOME/temp/YTH}"
 export YTD_FINAL_DIR="${YTD_FINAL_DIR:-$HOME/Downloads/YouTubeHarvester}"
 export PATH="$HOME/.npm-global/bin:$HOME/.local/bin:$HOME/.deno/bin:$PATH"
 
-exec python3 "$APP_DIR/tray_launcher.py" "$@"
+exec "$APP_DIR/start_tray.sh" "$@"
 EOF
 chmod 0755 "$BIN_DIR/yt-harvester"
 
@@ -177,6 +180,7 @@ find "$PKG_DIR" -type d -exec chmod 0755 {} +
 find "$PKG_DIR" -type f -exec chmod 0644 {} +
 chmod 0755 "$BIN_DIR/yt-harvester"
 chmod 0755 "$APP_DIR/tray_launcher.py" "$APP_DIR/run_download.sh" "$APP_DIR/start_tray.sh" "$APP_DIR/scripts/downloader.py" "$APP_DIR/scripts/mark_channel_archived.py" "$APP_DIR/scripts/migrate_archive_details.py" "$APP_DIR/scripts/check_channel_sections.py"
+chmod 0755 "$APP_DIR/scripts/fetch_desktop_tools.py"
 chmod 0755 "$PKG_DIR/DEBIAN/postinst" "$PKG_DIR/DEBIAN/postrm"
 
 dpkg-deb --root-owner-group --build "$PKG_DIR" "$ROOT_DIR/dist/${PACKAGE}_${VERSION}_${ARCH}.deb"

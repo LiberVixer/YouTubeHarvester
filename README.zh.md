@@ -1,4 +1,4 @@
-# YouTube Harvester 1.2.0 Beta
+# YouTube Harvester 1.2.1
 
 <p align="center">
   <img src="assets/yt-harvester.png" alt="YouTube Harvester 标志" width="128">
@@ -17,35 +17,21 @@
   <a href="README.ar.md">🇸🇦 العربية</a>
 </p>
 
-<p align="center">
-  面向 Linux 和 Windows 的多语言 YouTube 下载器，支持频道监控、手动队列、
-  快速下载、定时任务、下载档案以及可选的 Telegram 发送功能。
-</p>
+适用于 **Linux、Windows 和 Android** 的多语言下载工具：监控 YouTube/Rutube 频道，下载单个 YouTube/Rutube/VK 视频，管理队列、归档、计划任务，并可选发送文件或通知到 Telegram。
 
-> **UPD 2：** 快速下载现可把多条音轨和字幕轨嵌入同一个视频。档案会按画质与
-> 轨道组合区分版本，单条字幕下载失败不再取消整个任务，并新增了完整日语本地化。
+## 1.2.1 版本
 
-> **UPD 3：** 1.1.3 版新增了从 GitHub 官方 Release 获取并校验的应用更新、
-> 完整的白俄罗斯语界面和文档，并将内置下载器更新到 `yt-dlp 2026.08.19`，
-> 提升了从 YouTube 临时 HTTP 403 错误中恢复的可靠性。
+文档更新：**2026-10-04**。
 
-> **UPD 4（Beta）：** 1.2.0 Beta 版新增可选的单视频下载，可在概览、快速下载、
-> 剪贴板监控、队列和档案中处理 YouTube、Rutube 与 VK。档案同时记录来源与 ID，
-> 避免不同服务之间发生冲突；更新并固定版本的组件也让 Windows 与 Linux 构建
-> 更易复现。这是用于测试的预发布版本。
+当前源码与本地软件包均为 **1.2.1**，不含 beta/prerelease 标记。Android 使用 `versionCode 120100`；内部调试构建保留 `-debug`。Windows 已从与 Linux 相同的最新桌面源码重新构建，包含 Rutube 和中断后恢复修复。
 
-![YouTube Harvester 概览](docs/screenshots/zh/overview.png)
+**这是发布准备，不是已发布公告。** 桌面安装包和四种测试 APK 已在本地生成。Android 公开发布验收尚未完成，测试 APK 仍使用开发证书。去掉 beta 不代表它们已成为公开发行版。
 
-## 软件简介
+Linux 与 Windows 共用 Python/yt-dlp 下载引擎；旧 Bash 仅作为已禁用历史代码保留。
 
-**YouTube Harvester** 会监控选定的 YouTube 频道，并通过 `yt-dlp` 下载新的
-普通视频、Shorts 和直播。它也能处理单独的视频链接、维护本地下载档案、显示
-下载报告，并向 Telegram 发送通知或文件。
+[版本验证记录](docs/version-1.2.1-20261003.md) · [1.2.1 发布准备](docs/releases/1.2.1.md).
 
-版本 `1.2.0-beta` 在 Linux 和 Windows 上统一使用 Python 下载引擎。旧 Bash 引擎
-仅作为已禁用的历史代码保留在源码中。
-
-## 主要功能
+## 桌面功能
 
 - 实时概览频道进度、媒体类型、下载阶段、速度、剩余时间、大小、最近事件以及
   本次和当日统计。
@@ -73,6 +59,43 @@
 - 默认英语界面，同时支持俄语、乌克兰语、白俄罗斯语、法语、西班牙语、印地语、
   中文、日语和阿拉伯语。
 
+## 来源与处理流程
+
+- **YouTube 频道：** 视频、Shorts、直播分别启用和限量；支持 handle、channel、user、自定义频道地址。
+- **Rutube 频道：** `/channel/ID/`、`/u/name/`，包括视频/Shorts 分页。别名解析为 ID 防止重复；缓存名称和图片。
+- **Rutube 节目：** `/metainfo/tv/ID/`，独立标题/海报，仅视频；按新到旧选择最近 N 项。
+- **单个视频：** YouTube、Rutube、VK/VK Video，通过手动输入、队列或快速下载。不支持监控 VK 频道或任意 Rutube 播放列表。
+
+Rutube 直播扫描和付费检测已禁用。YouTube 付费检测只报告可访问状态，不绕过权限，也不保证能下载受限视频。频道菜单可将最近项目标记为已处理而不下载。
+
+完整流程先处理手动队列，再逐个扫描已启用频道分区并下载，最后再次处理队列。跳过已归档及重复项目。频道页的检查用于验证分区；完整下载流程由概览或计划任务启动。归档保留不同画质及音轨组合。
+
+停止桌面下载不再阻止下次启动。保留安全临时文件清理和重试；下载中不要手动删除临时文件。来源、VPN、代理出错时先检查连接和日志。地区、账号及来源协议限制仍适用。
+
+## Android
+
+原生 Kotlin/Jetpack Compose 应用，要求 **Android 8.0+（API 26）**；ABI：`arm64-v8a`、`armeabi-v7a`、`x86_64`、`x86`。
+
+- 概览、频道、队列、归档、设置及下载文件夹入口；十种语言，深色/浅色/系统主题，阿拉伯语 RTL。
+- 相同来源类别，包括 Rutube 频道与节目；分区限量、最近项目标记、计划任务、元数据与图片。
+- 直接下载输入 URL；概览快速按钮仅在明确点击时读取剪贴板链接。分享打开媒体选项，快捷方式打开概览；可选剪贴板监控仅在应用前台运行。
+- 分辨率、多音轨/字幕、持久任务、暂停/继续/取消/重试、进度通知及前台服务。继续保留同一任务及部分文件；能否按字节续传取决于来源。
+- WorkManager 流程恢复、检查报告/每日统计、重启恢复、MediaStore/SAF、归档文件、日志/诊断。Android 强制停止后需重新打开；厂商省电限制可能影响后台任务。
+- Telegram 凭据通过 Android Keystore 保护。密码加密 `.ythbackup` 转移记录/设置，**不包括视频与临时文件**。导入要求目标数据库为空；移动的文件需验证后重新关联文件夹。
+- APK 更新在系统安装器前验证 SHA-256、包名、更高 versionCode 和已安装证书。内置 `yt-dlp` **随应用更新**，不单独下载替换引擎。
+
+**Android 上的 VK：** 支持单个 VK/VK Video 下载；2026-09-14 已在 LDPlayer 验证真实公开 VK 视频下载。不支持 VK 频道监控。私有或受限视频可能无法获取。
+
+[Android 开发文档](android/README.md) · [数据迁移说明](android/DATA-TRANSFER.ru.md).
+
+## Android 发布状态
+
+公开分发前需完成：永久签名及独立密钥备份、完整对应原生 runtime 源码/许可证/安全审查、准确签名候选包的迁移验收，以及 ARM、旧版受支持 Android、Android 15+ boot/resume、16 KB 页设备和 TalkBack 测试。随后验证最终 APK 与发布包。
+
+**不要为更换证书卸载测试应用。** 加密迁移已在隔离 QA 包测试，不能代替最终公开候选包验收。
+
+[发布准备状态](android/RELEASE-READINESS.ru.md).
+
 ## 截图
 
 | 概览 | 频道 |
@@ -83,24 +106,39 @@
 | --- | --- |
 | ![队列](docs/screenshots/zh/queue.png) | ![设置](docs/screenshots/zh/settings.png) |
 
+### Android
+
+Android 1.2.1，深色主题。演示数据。
+
+| 概览 | 频道 |
+| --- | --- |
+| <img src="docs/screenshots/android/zh/overview.png" alt="概览 Android" width="260"> | <img src="docs/screenshots/android/zh/channels.png" alt="频道 Android" width="260"> |
+
+| 队列 | 归档 |
+| --- | --- |
+| <img src="docs/screenshots/android/zh/queue.png" alt="队列 Android" width="260"> | <img src="docs/screenshots/android/zh/archive.png" alt="归档 Android" width="260"> |
+
+**设置**
+
+<img src="docs/screenshots/android/zh/settings.png" alt="设置 Android" width="260">
+
+[截图目录与来源](docs/screenshots/README.md).
+
 ## 下载文件
 
-安装包发布在
-[GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases)。
+本地准备的桌面文件位于 `dist/release/`。公开发布后可从 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases) 下载；本 README 不声称 1.2.1 已公开发布。
 
-Linux：`YouTubeHarvester_1.2.0-beta_linux_all.deb`、
-`YouTubeHarvester_1.2.0-beta_source.tar.gz` 和 `SHA256SUMS-linux.txt`。
+| 平台 | 文件 |
+| --- | --- |
+| Linux | `YouTubeHarvester_1.2.1_linux_all.deb`, `YouTubeHarvester_1.2.1_source.tar.gz`, `SHA256SUMS-linux.txt` |
+| Windows x64 | `YouTubeHarvester_1.2.1_windows_setup.exe`, `YouTubeHarvester_1.2.1_windows_x64.msi`, `YouTubeHarvester_1.2.1_windows_portable.zip`, `SHA256SUMS-windows.txt` |
 
-Windows：`YouTubeHarvester_1.2.0-beta_windows_setup.exe`、
-`YouTubeHarvester_1.2.0-beta_windows_x64.msi`、
-`YouTubeHarvester_1.2.0-beta_windows_portable.zip` 和 `SHA256SUMS-windows.txt`。
-
-Windows 版本已经包含 `yt-dlp`、`ffmpeg.exe`、`ffprobe.exe` 和 `deno.exe`。
+私有测试 APK：`android/YouTubeHarvester-1.2.1-<ABI>.apk`，**并非公开发行文件**。Android 公开打包还需应用/runtime 源码、BUILD-INFO 和 SHA256SUMS。
 
 ## Linux 安装
 
 ```bash
-sudo apt install ./YouTubeHarvester_1.2.0-beta_linux_all.deb
+sudo apt install ./YouTubeHarvester_1.2.1_linux_all.deb
 yt-harvester
 ```
 
@@ -113,32 +151,45 @@ yt-harvester
 - 临时目录：`~/temp/YTH`
 - 下载目录：`~/Downloads/YouTubeHarvester`
 
+`.deb` 使用发行版 Python/Qt/yt-dlp/FFmpeg/curl，不暗中升级。版本可能不同于开发/Windows 锁定环境。Deno 为建议依赖，未内置；完整 YouTube 支持需兼容 JavaScript runtime。
+
 ## Windows 安装
 
-从发布页选择 Setup EXE、MSI 或便携 ZIP。这些版本均可独立运行，不需要另外安装
-Python、FFmpeg 或 Deno。自动启动使用
-`HKCU\Software\Microsoft\Windows\CurrentVersion\Run`。
+使用 x64 Setup EXE/MSI，或解压便携 ZIP 后启动 `YouTubeHarvester.exe`。已包含 Python、yt-dlp、FFmpeg/FFprobe、Deno。数据/缓存：`%LOCALAPPDATA%\YouTubeHarvester`；设置：`%APPDATA%\YouTubeHarvester`；临时文件：`%TEMP%\YTH`。自动启动使用当前用户键 `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`。
+
+## Android 安装与更新
+
+授权测试者请选择匹配 ABI、相同证书的 APK 更新，不卸载或清除数据。只允许可信来源安装，按需授予通知权限并选择目录。默认 `Download/YTH`，或 SAF 目录。不同签名的公开 APK 无法覆盖当前测试安装。
 
 ## 从源码运行
 
-Linux：
+Linux 优先使用已有 `.venv`；`YTD_PYTHON` 可选择其他解释器。锁定环境已在 Python 3.12 验证。FFmpeg/FFprobe 和 JavaScript runtime 为外部工具；下列脚本验证哈希后获取 Deno/FFmpeg。
+
+仅在工具缺失时获取：脚本拒绝覆盖已有目录。保留现有 `.env`，在应用或自己的文件中填写 Telegram 设置，不要公开该文件。
+
+Linux:
 
 ```bash
-sudo apt install python3 python3-pyqt5 python3-pynput yt-dlp ffmpeg curl
-sudo apt install wl-clipboard  # Wayland 推荐安装
-cp .env.example .env
+sudo apt install python3 python3-venv python3-pyqt5 python3-pynput python3-dbus ffmpeg curl
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-linux-lock.txt
+.venv/bin/python scripts/fetch_desktop_tools.py --platform linux --output tools/linux
+cp -n .env.example .env
 ./start_tray.sh
 ```
 
-Windows：
+Windows 源码运行也需 FFmpeg/FFprobe 与 Deno；构建器使用固定本地工具或下载验证。
+
+Windows:
 
 ```powershell
-py -3 -m venv .venv
-.\.venv\Scripts\python -m pip install -r requirements.txt
+py -3.12 -m venv .venv
+.\.venv\Scripts\python -m pip install -r requirements-windows-lock.txt
+.\.venv\Scripts\python scripts/fetch_desktop_tools.py --platform windows --output tools/windows
 .\start_tray_windows.bat
 ```
 
-网络不稳定时请参考 [Windows 离线构建指南](docs/windows-offline-build.md)。
+[从源码运行 Windows (offline)](docs/windows-offline-build.md).
 
 ## 启动参数
 
@@ -162,21 +213,6 @@ Windows 使用原生全局快捷键，Linux/X11 使用 `pynput`。Wayland 通常
 Cinnamon/GNOME 系统快捷键。安装 `wl-clipboard` 后，Wayland 剪贴板通过
 `wl-paste` 读取。
 
-## 频道与队列流程
-
-当前桌面版源码也支持通过 `https://rutube.ru/channel/ID/` 或
-`https://rutube.ru/u/name/` 添加 Rutube 频道，包括视频和 Shorts 标签页链接。
-名称链接会转换为频道 ID，避免重复添加。支持缓存名称和头像、数量限制、定时检查、
-归档，以及不下载就将最近视频标记为已归档。Rutube 频道直播检查和付费内容检测暂未
-支持，相关按钮已禁用。单个视频仍可使用队列和快速下载。Android 移植版不受影响。
-
-启用的频道分区会按顺序检查，每个结果完成后短暂停留。只有在启用选项并主动检查
-频道时才会搜索 members-only。普通扫描中如果遇到会员视频，频道状态仍会更新，
-并以重要事件显示，而不会出现红色错误。
-
-队列在运行开始时处理，并在全部频道完成后再次处理。重复链接和已归档视频会跳过；
-失败项目可以返回队列重试。
-
 ## Telegram
 
 Telegram 可以完全关闭。需要使用时请在界面或 `.env` 中配置：
@@ -189,27 +225,66 @@ PROXY_URL=127.0.0.1:9050
 
 代理是可选项。Telegram 发送失败不会删除已经保存在本地的视频。
 
+## 固定组件版本
+
+这是项目已审查的版本，不保证所有安装副本相同，也不声称是上游最新版本。桌面依赖：`requirements-linux-lock.txt`、`requirements-windows-lock.txt`。Android 版本/哈希：`android/runtime.properties`、`android/gradle/verification-metadata.xml`。
+
+| 组件 | 桌面开发 / Windows | Android |
+| --- | --- | --- |
+| yt-dlp | 2026.08.19 | 2026.08.19 |
+| FFmpeg / FFprobe | 9.0.2 | 7.1.1 |
+| Deno / QuickJS | Deno 2.9.7 | QuickJS 2026-06-04 |
+| PyQt5 / Compose BOM | PyQt5 5.15.11 | Compose 2026.09.00 |
+| Qt runtime | Linux 5.15.19 / Windows 5.15.2 | - |
+| Room / WorkManager | - | 2.8.5 / 2.12.0 |
+| Coil | - | 3.6.3 |
+| PyInstaller / AGP / Gradle | PyInstaller 6.22.3 | AGP 9.4.1 / Gradle 9.8.0 |
+| Kotlin Compose compiler / KSP | - | 2.4.20 / 2.3.12 |
+
+Android 保留上游 Python 3.12.11、OpenSSL 3.5.2、FFmpeg 7.1.1；兼容重建及对应源码审查仍待完成。QuickJS 2026-06-04、WebP/SharpYUV 1.6.0 已为四个 ABI 重建并采用 16 KB 对齐。静态检查不能代替 16 KB 设备测试。
+
+[组件更新记录](docs/component-update-20261003.md) · [原生组件重建说明](android/native/README.md).
+
 ## 构建发布版本
 
+桌面标签 `v*`；Android 标签 `android-v<versionName>`，使用独立 workflow。公开 Android 签名要求已批准永久证书及审查过的对应 runtime 源码。不要公开密钥、密码、token、未签名或私有测试 APK。
+
+Linux:
+
 ```bash
-packaging/build_release.sh 1.2.0~beta1 1.2.0-beta
+packaging/build_release.sh 1.2.1 1.2.1
 ```
+
+Windows:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\packaging\windows\build_release.ps1 `
-  -Version 1.2.0-beta -MsiVersion 1.2.0
+  -Version 1.2.1 -MsiVersion 1.2.1
 ```
 
-## 负责任地使用
+Android (JDK 17, Android SDK, Gradle Wrapper):
 
-YouTube Harvester 与 YouTube、Google、Telegram 或 `yt-dlp` 没有隶属关系。
-请仅下载您拥有、已获得许可或可合法保存供个人使用的内容。请遵守
-[YouTube 服务条款](https://www.youtube.com/t/terms)、版权法和当地法律，并
-妥善保管 Telegram 凭据。
+```bash
+cd android
+./gradlew testDebugUnitTest assembleDebug
+python3 -m unittest discover -s scripts -p 'test_*.py' -v
+```
 
-外部组件包括 [`yt-dlp`](https://github.com/yt-dlp/yt-dlp)、PyQt5/Qt、
-FFmpeg/FFprobe、Deno、`curl`、Telegram Bot API 和 `pynput`，各自采用独立
-许可证。
+[Android 发布与签名规则](android/RELEASING.md)
+
+## 验证与限制
+
+最近本地检查：**88 项桌面 Python**、**35 项 Android Python**、**149 项 Android JVM** 测试，以及 50 张 Android 截图成功捕获。版本统一时还通过 **80 项 Windows 测试**（跳过两项 POSIX）及 **36 项精选 LDPlayer 测试**，Android 14/API 34 x86_64。
+
+桌面工具及真实本地 H.264/AAC 下载/remux 已验证。四种 APK 通过清单/证书/ZIP 及适用 64 位原生对齐检查。这不证明 ARM、所有设备后台行为或新 Windows 安装器的安装/卸载。文档更新不等于重新构建或发布已安装副本。
+
+[Android 测试计划](android/TEST-PLAN.ru.md).
+
+## 许可证与合理使用
+
+所有者已批准 **Android 模块 GPL-3.0-only**：[LICENSE](android/LICENSE)、[NOTICE](android/NOTICE)、[许可记录](android/legal/README.md)。桌面及第三方许可证不变。公开 Android 发行仍必须提供完整对应 runtime 源码。
+
+本项目与 YouTube、Google、Rutube、VK、Telegram、yt-dlp 无隶属关系。仅下载有权获取的内容，遵守来源服务条款和适用法律。保护凭据及备份密码。
 
 ## 致谢
 

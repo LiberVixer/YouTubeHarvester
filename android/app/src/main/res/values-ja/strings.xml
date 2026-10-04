@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="beta">ベータ</string><string name="theme">テーマ</string><string name="menu">メニュー</string><string name="actions">操作</string>
+    <string name="filter">フィルター</string><string name="refresh">更新</string><string name="download">ダウンロード</string>
+    <string name="add_to_queue">キューに追加</string><string name="queue_short">キュー</string><string name="archive">アーカイブ</string><string name="overview">概要</string>
+    <string name="channels">チャンネル</string><string name="settings">設定</string><string name="video">動画</string><string name="shorts">ショート</string>
+    <string name="streams">ライブ配信</string><string name="none">なし</string><string name="automatic">自動</string>
+    <string name="best">最高</string><string name="save">保存</string><string name="add">追加</string><string name="delete">削除</string>
+    <string name="folder">フォルダー</string><string name="file">ファイル</string><string name="source">ソース</string>
+    <string name="enabled">有効</string><string name="disabled">無効</string><string name="selected_count">選択済み：%1$d</string>
+    <string name="url_hint">YouTube、VK、Rutube の URL</string><string name="channels_count">チャンネル：%1$d</string><string name="queue_count">キュー：%1$d</string>
+    <string name="archive_count">アーカイブ：%1$d</string><string name="channel_check">チャンネル確認</string>
+    <string name="start">開始</string>
+
+    <string name="downloaded_today">本日のダウンロード：動画 %1$d · ショート %2$d · ライブ配信 %3$d</string><string name="preview_loading">プレビューを読み込み中…</string>
+    <string name="preview_unavailable">プレビューを利用できません</string><string name="waiting_for_download">ダウンロード待機中</string>
+    <string name="add_link_or_scan">リンクを追加するか、チャンネル確認を開始してください</string><string name="downloads">ダウンロード</string>
+    <string name="quick">クイック</string><string name="temporary_short">一時</string><string name="stop_download">ダウンロードを停止</string>
+    <string name="download_progress">%1$s：%2$d%%</string><string name="add_channel">チャンネルを追加</string><string name="search_channels">チャンネルを検索</string>
+    <string name="check_channels">チャンネルを確認</string><string name="stop_check">確認を停止</string><string name="check_paid_content">有料コンテンツを確認</string>
+    <string name="youtube_channel_url">YouTube / Rutube チャンネル URL</string><string name="check_counter">確認 %1$d / %2$d</string><string name="queued_videos">キュー内の動画</string>
+    <string name="empty_queue">キューは空です</string><string name="empty_queue_hint">上にリンクを追加してください。アプリ再起動後も保存されます。</string>
+    <string name="preview">プレビュー</string><string name="preview_prompt">プレビューするリンクを入力</string><string name="preview_title_hint">タイトル、チャンネル、サムネイル</string>
+    <string name="preview_metadata_hint">タイトルとチャンネルがここに表示されます</string><string name="ready_to_add">追加できます</string>
+    <string name="download_selected">選択項目をダウンロード</string><string name="delete_selected">選択項目を削除</string>
+    <string name="scheduler">スケジューラー</string><string name="checks_schedule">確認スケジュール</string>
+    <string name="add_time">時刻を追加</string><string name="enabled_of_total">%2$d件中%1$d件が有効</string><string name="loading_data">データを取得中…</string>
+    <string name="scheduler_android_hint">ネットワークとバッテリーの状態が許す場合、Android は選択時刻の前後に確認を実行します。</string>
+    <string name="schedule_empty">確認時刻はまだ追加されていません</string>
+    <string name="last_run_value">前回の実行：%1$s</string>
+    <string name="never_run">まだ実行されていません</string>
+    <string name="delete_time">時刻を削除</string>
+    <string name="schedule_save_error">スケジュールを保存できませんでした</string>
+    <string name="schedule_delete_error">スケジュールを削除できませんでした</string>
+    <string name="schedule_time_exists">この時刻はすでにスケジュールにあります</string>
+    <string name="background_check_channel">チャンネルの定期確認</string>
+    <string name="background_check_title">チャンネルを確認中</string>
+    <string name="background_check_text">バックグラウンドで新しい動画を探しています</string>
+    <string name="archive_empty">アーカイブは空です</string><string name="archive_empty_hint">完了したダウンロードがここに表示されます。解像度ごとに別々に保存されます。</string>
+    <string name="nothing_found">見つかりません</string><string name="nothing_found_hint">検索語またはソースフィルターを変更してください。</string><string name="search_archive">アーカイブを検索</string>
+    <string name="all">すべて</string><string name="audio_details">🎧 音声：%1$s</string><string name="subtitle_details">▤ 字幕：%1$s</string>
+    <string name="download_options">ダウンロード設定</string><string name="resolution">解像度</string><string name="loading_tracks">yt-dlp でトラックを取得中…</string>
+    <string name="tracks_unavailable">トラック一覧を利用できません</string><string name="tracks_fallback">自動音声、字幕なしでダウンロードを続行します。</string>
+    <string name="audio_tracks">音声トラック</string><string name="audio_tracks_missing">個別の音声トラックが見つかりません</string><string name="subtitles">字幕</string>
+    <string name="subtitles_not_selected">未選択</string><string name="subtitles_missing">字幕が見つかりません</string><string name="original_tracks">オリジナルトラック</string>
+    <string name="preferred_languages">ロシア語、英語、ウクライナ語、インターフェース言語</string><string name="other_languages">その他の言語</string>
+    <string name="manual_subtitles">自動生成ではない字幕</string><string name="preferred_auto_subtitles">自動字幕：優先言語</string><string name="other_auto_subtitles">自動字幕：その他の言語</string>
+    <string name="track_original">オリジナル</string><string name="track_combined">動画と一体</string><string name="track_auto">自動</string><string name="track_manual">非自動</string>
+    <string name="loading_section">ダウンロード</string><string name="temporary_files">一時ファイル</string><string name="channel_limits">チャンネルごとの上限</string>
+    <string name="interface_section">インターフェース</string><string name="language">言語</string><string name="system_theme">システム</string><string name="light_theme">ライト</string>
+    <string name="dark_theme">ダーク</string><string name="behavior">動作</string><string name="watch_clipboard">クリップボードを監視</string>
+    <string name="watch_clipboard_hint">アプリが画面に表示されている間、新しい対応リンクでクイックダウンロードを開く</string><string name="system_notifications">システム通知</string><string name="quick_download">クイックダウンロード</string>
+    <string name="app_shortcut">アプリのショートカット</string><string name="app_shortcut_hint">ホーム画面にクイックダウンロードのショートカットを追加</string><string name="telegram">Telegram</string><string name="notifications">通知</string><string name="connection_settings">接続設定</string>
+    <string name="updates">更新</string><string name="embedded_auto_update">内蔵 · 自動更新</string>
+    <string name="update_now">更新</string><string name="ytdlp_updating">更新中…</string><string name="ytdlp_updated">yt-dlpを更新しました：%1$s</string><string name="ytdlp_already_current">yt-dlpは最新です：%1$s</string><string name="ytdlp_update_failed">yt-dlpを更新できませんでした。接続を確認して再試行してください。</string>
+    <string name="embedded_apk">APK に内蔵</string><string name="embedded_apk_plural">APK に内蔵</string><string name="data_diagnostics">データと診断</string><string name="clear_thumbnail_cache">サムネイルキャッシュを消去</string>
+    <string name="diagnostics">診断</string><string name="system_components">システムとコンポーネント</string><string name="terms">利用規約</string>
+    <string name="about">このアプリについて</string><string name="development_build">Android 開発ビルド</string><string name="licenses">ライセンス ↗</string>
+    <string name="save_settings">設定を保存</string><string name="choose_folder">フォルダーを選択</string><string name="restore_default_folder">Download/YTH に戻す</string>
+    <string name="downloads_folder_title">ダウンロードフォルダー</string><string name="folder_restriction">Android ではストレージ全体や Download フォルダー自体を選択できません。標準の Download/YTH は既に利用できます。別の場所にはサブフォルダーを選択または作成してください。</string>
+    <string name="choose_subfolder">サブフォルダーを選択</string><string name="folder_picker_hint">Download/YTH などのサブフォルダーを開くか作成してください</string>
+    <string name="folder_access_failed">選択したフォルダーへの永続アクセスが許可されませんでした</string><string name="folder_selection_restricted">ストレージのルートや Download 自体は選択できません。サブフォルダーを選択してください。</string>
+    <string name="decrease">減らす</string><string name="increase">増やす</string>
+    <string name="status_queued">キューに追加済み</string><string name="status_initializing">エンジンを準備中</string><string name="status_downloading">ダウンロード中</string>
+    <string name="status_publishing">ファイルを保存中</string><string name="status_completed">完了</string><string name="status_failed">エラー</string><string name="status_cancelled">キャンセル済み</string>
+    <string name="invalid_channel_url">YouTube チャンネルのリンク、@ハンドル、または Rutube のチャンネル・番組リンクを入力してください</string>
+    <string name="channel_already_added">このチャンネルは追加済みです</string>
+    <string name="channel_added">チャンネルを追加しました</string>
+    <string name="channel_removed">チャンネルを削除しました</string>
+    <string name="channel_save_error">チャンネルを保存できませんでした</string>
+    <string name="channel_delete_error">チャンネルを削除できませんでした</string>
+    <string name="channel_not_checked">まだ確認していません</string>
+    <string name="channels_empty">チャンネルはまだありません</string>
+    <string name="channels_empty_hint">上に YouTube チャンネル、@ハンドル、または Rutube のチャンネル・番組を追加してください。コンテンツ設定はこの端末に保存されます。</string>
+    <string name="channel_scan_started">チャンネル確認を開始しました</string>
+    <string name="channel_scan_stopped">チャンネル確認を停止しました</string>
+    <string name="channel_scan_completed">確認完了。キューへの追加：%1$d</string>
+    <string name="channel_scanning_section">確認中：%1$s%2$s</string>
+    <string name="channel_checked">確認完了</string>
+    <string name="channel_check_failed">確認に失敗しました</string>
+    <string name="service_preparing_queue">ダウンロードキューを準備しています</string>
+    <string name="service_download_channel_name">動画のダウンロード</string>
+    <string name="service_download_channel_description">YouTube Harvester のバックグラウンドダウンロード進行状況</string>
+    <string name="service_cancel_action">キャンセル</string>
+    <string name="service_eta_remaining">残り %1$s</string>
+    <string name="service_download_failed_title">ダウンロード失敗</string>
+    <string name="service_download_completed_title">ダウンロード完了</string>
+    <string name="service_download_cancelled_title">ダウンロードをキャンセルしました</string>
+    <string name="service_saved_to">保存先：%1$s</string>
+    <string name="service_subtitles_unavailable_retry">字幕 %1$s は利用できません。字幕なしで再試行します</string>
+    <string name="service_automatic_track">%1$s（自動）</string>
+    <string name="service_error_members_only">この動画はチャンネルメンバーのみ視聴できます</string>
+    <string name="service_error_private_video">この動画は非公開です</string>
+    <string name="service_error_video_unavailable">この動画は利用できません</string>
+    <string name="service_error_unknown_engine">不明なダウンローダーエラー</string>
+    <string name="service_error_storage_full">端末のストレージがいっぱいです。空き容量を増やしてから再試行してください。</string>
+    <string name="service_error_prepare_temp">一時フォルダーを準備できませんでした</string>
+    <string name="service_error_output_missing">yt-dlp は完了しましたが、完成した動画ファイルが見つかりません</string>
+    <string name="service_error_android_timeout">Android が長時間のバックグラウンドダウンロードを停止しました。アプリを開いて再試行してください。</string>
+    <string name="invalid_media_link">対応する YouTube、VK、Rutube の動画リンクが見つかりません</string>
+    <string name="quick_link_ready">クイックダウンロードを開きました</string>
+    <string name="clipboard_empty">クリップボードにテキストがありません</string>
+    <string name="downloads_open_error">システムのダウンロードを開けませんでした</string>
+    <string name="temporary_cleaned">削除した一時フォルダー：%1$d</string>
+    <string name="shortcut_requested">ショートカットの要求をランチャーに送信しました</string>
+    <string name="shortcut_unsupported">現在のランチャーは固定ショートカットに対応していません</string>
+    <string name="shortcut_rejected">ランチャーがショートカットの要求を拒否しました</string>
+    <string name="all_files">すべてのファイル</string>
+    <string name="available_files">利用可能なファイル</string>
+    <string name="missing_files">見つからないファイル</string>
+    <string name="archive_refresh_result">アーカイブを確認しました：%2$d件中%1$d件が利用可能</string>
+    <string name="archive_delete_error">アーカイブ項目を削除できませんでした</string>
+    <string name="archive_record_removed">アーカイブ項目を削除しました。動画ファイルは保持されます</string>
+    <string name="archive_file_open_error">この動画ファイルを開けませんでした</string>
+    <string name="archive_source_open_error">配信元ページを開けませんでした</string>
+    <string name="archive_share_error">この動画ファイルを共有できませんでした</string>
+    <string name="remove_archive_record">アーカイブ項目を削除しますか？</string>
+    <string name="remove_archive_record_hint">「%1$s」はアーカイブから消えます。動画ファイルは削除されません。</string>
+    <string name="remove_record">項目を削除</string>
+    <string name="cancel">キャンセル</string>
+    <string name="share">共有</string>
+    <string name="share_video">動画を共有</string>
+    <string name="close">閉じる</string>
+    <string name="releases">リリース</string>
+    <string name="open_link_error">リンクを開けませんでした</string>
+    <string name="telegram_configured">接続は設定済みです</string>
+    <string name="telegram_not_configured">接続が設定されていません</string>
+    <string name="telegram_connection_title">Telegram 接続</string>
+    <string name="bot_token">Bot トークン</string>
+    <string name="channel_id">チャンネル ID</string>
+    <string name="proxy_url_optional">プロキシ URL（任意）</string>
+    <string name="proxy_url_hint">HTTP または SOCKS5（例: socks5://127.0.0.1:1080）</string>
+    <string name="test_connection">接続をテスト</string>
+    <string name="telegram_testing">Telegram 接続をテストしています…</string>
+    <string name="telegram_test_message">YouTube Harvester の Telegram 接続は正常です。</string>
+    <string name="telegram_test_success">Telegram にテストメッセージを送信しました</string>
+    <string name="telegram_test_failed">Telegram にテストメッセージを送信できませんでした</string>
+    <string name="telegram_settings_saved">Telegram 設定を保存し、通知を有効にしました</string>
+    <string name="telegram_credentials_required">Bot トークンとチャンネル ID を入力してください</string>
+    <string name="telegram_credentials_invalid">Bot トークン、チャンネル ID、プロキシアドレスを確認してください</string>
+    <string name="thumbnail_cache_cleared">サムネイルキャッシュを消去しました</string>
+    <string name="diagnostics_report">診断レポート</string>
+    <string name="share_diagnostics">診断情報を共有</string>
+    <string name="app_version">アプリのバージョン</string>
+    <string name="android_version">Android バージョン</string>
+    <string name="device">端末</string>
+    <string name="supported_abis">対応 ABI</string>
+    <string name="download_destination">ダウンロード先</string>
+    <string name="schedules_count">スケジュール</string>
+    <string name="licenses_title">オープンソースライセンス</string>
+    <string name="licenses_text">Android 版には yt-dlp（Unlicense）、youtubedl-android とその FFmpeg モジュール（GPL-3.0）、FFmpeg とコーデックの各ライセンス、QuickJS（MIT）、AndroidX、Jetpack Compose、Coil、Room、WorkManager および各上流プロジェクトのライセンスが含まれます。公開バイナリの配布には GPL 互換のプロジェクトライセンスと完全な第三者通知が必要です。</string>
+    <string name="settings_saved">設定を保存しました</string>
+    <string name="settings_save_error">設定を保存できませんでした</string>
+    <string name="ready">準備完了</string>
+    <string name="internal_app_cache">アプリ内部キャッシュ</string>
+    <string name="data_migration_error">ローカルデータの移行を完了できませんでした</string>
+
+    <string name="preview_loaded">プレビューを読み込みました</string>
+    <string name="already_in_queue">この動画はすでにキューにあります</string>
+    <string name="queue_item_added">キューに追加しました</string>
+    <string name="queue_save_error">キュー項目を保存できませんでした</string>
+    <string name="download_options_loaded">ダウンロード設定を読み込みました</string>
+    <string name="tracks_fallback_status">トラックを読み込めませんでした。音声の自動選択は利用できます</string>
+    <string name="download_started">動画をダウンローダーに送りました</string>
+    <string name="download_start_error">ダウンロードを開始できませんでした</string>
+    <string name="select_downloads">ダウンロードする項目を選択してください</string>
+    <string name="downloads_started">開始したダウンロード: %1$d</string>
+    <string name="downloads_already_running">選択した項目はすでにダウンロード中です</string>
+    <string name="queue_start_error">キューを開始できませんでした</string>
+    <string name="download_cancelling">ダウンロードをキャンセルしています…</string>
+    <string name="queue_selection_save_error">キューの選択状態を保存できませんでした</string>
+    <string name="queue_items_removed">選択した項目を削除しました</string>
+    <string name="queue_remove_error">選択した項目を削除できませんでした</string>
+    <string name="language_save_error">インターフェース言語を保存できませんでした</string>
+    <string name="download_folder_selected">ダウンロードフォルダーを選択しました</string>
+    <string name="download_folder_save_error">選択したフォルダーを保存できませんでした</string>
+    <string name="default_download_folder">ファイルは Download/YTH に保存されます</string>
+    <string name="download_folder_reset_error">既定のダウンロードフォルダーに戻せませんでした</string>
+    <string name="publisher_invalid_tree_uri">保存されたフォルダーの場所が無効です。ダウンロードフォルダーを再選択してください</string>
+    <string name="publisher_permission_revoked">ダウンロードフォルダーへのアクセスが取り消されました。設定で再選択してください</string>
+    <string name="publisher_directory_unavailable">選択したフォルダーは利用できません。再選択してください</string>
+    <string name="publisher_create_file_error">選択したフォルダーにファイルを作成できませんでした</string>
+    <string name="publisher_open_file_error">保存先ファイルを開く権限がありません</string>
+    <string name="publisher_create_default_error">Download/YTH にファイルを作成できませんでした</string>
+    <string name="publisher_storage_permission">端末ストレージへのファイル保存を許可してください</string>
+    <string name="publisher_create_default_directory_error">Download/YTH フォルダーを作成できませんでした</string>
+    <string name="preview_access_restricted">この動画へのアクセスは制限されています</string>
+    <string name="preview_video_unavailable">動画が見つからないか利用できません</string>
+    <string name="preview_rate_limited">サービスが一時的にリクエストを制限しました</string>
+    <string name="preview_service_error">サービスからプレビューを取得できませんでした</string>
+    <string name="preview_incomplete_data">プレビューデータが不完全です</string>
+    <string name="preview_network_error">プレビューを読み込めませんでした。インターネット接続を確認してください</string>
+    <string name="fallback_video_title">動画 %1$s %2$s</string>
+
+
+    <string name="metadata_tracks_error">音声トラックと字幕を取得できませんでした</string>
+    <string name="metadata_pending">メタデータはダウンロード中に読み込まれます</string>
+    <string name="application_logs">アプリケーションログ</string>
+    <plurals name="logs_retention_summary">
+        <item quantity="other">%1$d 日間保存</item>
+    </plurals>
+    <plurals name="logs_retention_value">
+        <item quantity="other">%1$d 日</item>
+    </plurals>
+    <string name="log_empty">アプリケーションログは空です</string>
+    <string name="log_load_error">アプリケーションログを読み込めませんでした</string>
+    <string name="logs_cleared">アプリケーションログを消去しました</string>
+    <string name="logs_retention_saved">ログの保存期間を更新しました</string>
+    <string name="clear_logs">ログを消去</string>
+    <string name="clear_logs_confirm_title">アプリケーションログを消去しますか？</string>
+    <string name="clear_logs_confirm_message">診断履歴は完全に削除されます。ダウンロードと設定には影響しません。</string>
+    <string name="share_logs">ログを共有</string>
+    <string name="logs_private_hint">ログは UTF-8 で非公開保存され、バックアップから除外されます。Telegram ボットトークンは記録されません。</string>
+    <string name="diagnostics_checking">コンポーネントを確認しています…</string>
+    <string name="diagnostics_run_error">診断を完了できませんでした</string>
+    <string name="diagnostics_checked_at">確認日時</string>
+    <string name="runtime_initialization">ダウンローダーの初期化</string>
+    <string name="network_status">ネットワーク</string>
+    <string name="connection_validated">インターネット接続を確認済み</string>
+    <string name="connection_unvalidated">接続済みですが、インターネットアクセスは未確認です</string>
+    <string name="diagnostic_unavailable">利用不可</string>
+    <string name="notifications_permission">通知の権限</string>
+    <string name="download_folder_access">ダウンロードフォルダーへのアクセス</string>
+    <string name="free_storage">共有ストレージの空き容量</string>
+    <string name="battery_optimization">バッテリー最適化</string>
+    <string name="battery_optimized">有効。バックグラウンド確認が遅れる場合があります</string>
+    <string name="battery_unrestricted">制限なし</string>
+    <string name="diagnostic_attention">確認が必要</string>
+    <string name="diagnostics_not_run">診断はまだ実行されていません</string>
+    <string name="clear_filter">フィルターを解除</string>
+    <string name="channel_filter_members">メンバー限定コンテンツあり</string>
+    <string name="channel_filter_free">メンバー限定コンテンツは未検出</string>
+    <string name="channel_filter_unknown_paid">有料コンテンツの有無は不明</string>
+    <string name="channel_resolving">Rutube チャンネル情報を取得中…</string>
+    <string name="channel_mark_recent">最新の項目をマーク…</string>
+    <string name="channel_mark_confirm">「%1$s」の有効なセクションの最新項目を処理済みにしますか？チャンネル確認時にスキップされ、ファイルアーカイブには表示されません。</string>
+    <string name="channel_mark_result">マーク済み：%1$d。確認エラー：%2$d。</string>
+    <string name="channel_mark_stop_downloads">先にダウンロードを停止し、終了するまでお待ちください。</string>
+    <string name="move_up">上へ移動</string>
+    <string name="move_down">下へ移動</string>
+    <string name="queue_active_items_kept">実行中のダウンロードはキューに残ります</string>
+    <string name="app_update_available">更新があります：%1$s</string>
+    <string name="app_update_confirmation">更新をダウンロードしてAndroidインストーラーを開きますか？</string>
+    <string name="app_update_current">新しい互換性のあるAndroid版は見つかりませんでした。</string>
+    <string name="app_update_failed">更新を検証またはインストールできません。接続とAPK署名を確認してください。</string>
+    <string name="status_paused">一時停止中</string>
+    <string name="status_processing">動画を処理中</string>
+    <string name="status_waiting_network">ネットワーク待機中</string>
+    <string name="download_pause">一時停止</string>
+    <string name="download_resume">再開</string>
+    <string name="download_retry">再試行</string>
+    <string name="download_network_error">接続が切断されました。ダウンロード済みのデータは保存されています。再試行できます。</string>
+    <string name="folder_open_fallback">システムのファイルブラウザを開きました。ダウンロードフォルダが自動で開かない場合は選択してください。</string>
+    <string name="harvest_start">キューとチャンネルのダウンロードを開始</string>
+    <string name="harvest_queue_before">キュー内のリンクをダウンロード中</string>
+    <string name="harvest_channels">チャンネルの確認とダウンロード中</string>
+    <string name="harvest_queue_after">キューを再確認中</string>
+    <string name="harvest_completed">確認完了。ダウンロード：%1$d · エラー：%2$d</string>
+    <string name="channel_validation_completed">確認したチャンネル：%1$d · エラー：%2$d</string>
+    <string name="overview_check_completed">前回の確認が完了しました</string>
+    <string name="overview_scanning">確認中</string>
+    <string name="overview_downloaded">ダウンロード済み：%1$d</string>
+    <string name="overview_no_new">新しい動画はありません</string>
+    <string name="overview_today">今日のダウンロード：%1$d</string>
+    <string name="overview_checked">確認済みチャンネル：%1$d / %2$d</string>
+    <string name="overview_errors">エラー：%1$d</string>
+    <string name="overview_checking_channel">チャンネルを確認中</string>
+    <string name="clear_temporary_files">一時ファイルを削除</string>
+    <string name="engine_updates_with_app">yt-dlpはアプリと一緒に更新されます。</string>
+    <string name="downloads_short">ファイル</string>
+    <string name="service_subtitles_omitted">動画を保存しました。追加されなかった字幕: %1$s</string>
+    <string name="download_recovery_title">ダウンロードが中断されました</string>
+    <string name="download_recovery_text">再起動後にダウンロードを続けるには、再開をタップしてください。</string>
+    <string name="transfer_export">データをエクスポート</string>
+    <string name="transfer_import">データをインポート</string>
+    <string name="transfer_export_warning">暗号化ファイルには Telegram の認証情報が含まれますが、動画や一時ファイルは含まれません。12 文字以上の専用パスワードを使用してください。移行の確認まで beta を削除しないでください。</string>
+    <string name="transfer_import_warning">インポートには空のデータベースが必要で、設定が置き換わります。ダウンロードは一時停止、スケジュールは無効になります。保存フォルダーを選び直し、アーカイブの利用状況を更新してください。</string>
+    <string name="transfer_password">移行パスワード（12 文字以上）</string>
+    <string name="transfer_password_repeat">パスワードを再入力</string>
+    <string name="transfer_exported">エクスポートを保存し、ファイルの再読み取りを確認しました</string>
+    <string name="transfer_imported">データをインポートしました。フォルダーを選び、アーカイブを更新してからスケジュールを有効にしてください。</string>
+    <string name="transfer_not_empty">インポート拒否：既存のデータは上書きされません</string>
+    <string name="transfer_stop_downloads">移行前にダウンロードとチャンネル確認を停止してください</string>
+    <string name="transfer_credentials_error">エクスポート前に読み取れない Telegram 認証情報を修復または消去してください</string>
+    <string name="transfer_failed">移行失敗：パスワード、ファイル、ストレージへのアクセスを確認してください</string>
+    <string name="transfer_archive_error">エクスポート前にアーカイブへのアクセスを復元するか、利用状況を更新してください</string>
+    <string name="transfer_pending">データはインポート済みです。設定の復元を完了するため再起動してください。再インポートしないでください。</string>
+</resources>

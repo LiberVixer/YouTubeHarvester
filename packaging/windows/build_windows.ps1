@@ -2,10 +2,10 @@ param(
     [switch]$Offline,
     [string]$Wheelhouse = "",
     [string]$FfmpegDir = "",
-    [string]$FfmpegUrl = "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-9.0.1-essentials_build.zip",
+    [string]$FfmpegUrl = "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-9.0.2-essentials_build.zip",
     [switch]$SkipFfmpegDownload,
     [string]$DenoDir = "",
-    [string]$DenoUrl = "https://github.com/denoland/deno/releases/download/v2.9.6/deno-x86_64-pc-windows-msvc.zip",
+    [string]$DenoUrl = "https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-pc-windows-msvc.zip",
     [switch]$SkipDenoDownload
 )
 
@@ -21,12 +21,12 @@ $WorkDir = Join-Path $RootDir "dist\pyinstaller-build"
 $SpecDir = Join-Path $RootDir "dist\pyinstaller-spec"
 $FfmpegCacheDir = Join-Path $RootDir "dist\ffmpeg-cache"
 $DenoCacheDir = Join-Path $RootDir "dist\deno-cache"
-$PinnedFfmpegUrl = "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-9.0.1-essentials_build.zip"
-$PinnedDenoUrl = "https://github.com/denoland/deno/releases/download/v2.9.6/deno-x86_64-pc-windows-msvc.zip"
-$ExpectedFfmpegVersion = "9.0.1"
-$ExpectedDenoVersion = "2.9.6"
-$ExpectedFfmpegSha256 = "fec81ae03971d9dd4be3ebe02e263bd2ec1d789483f931bdba5f5715e65da2e9"
-$ExpectedDenoSha256 = "15e5300b0ba3c3695a7621d90160a746ec9e710228cee639afa9d580f6e3cd11"
+$PinnedFfmpegUrl = "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-9.0.2-essentials_build.zip"
+$PinnedDenoUrl = "https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-pc-windows-msvc.zip"
+$ExpectedFfmpegVersion = "9.0.2"
+$ExpectedDenoVersion = "2.9.7"
+$ExpectedFfmpegSha256 = "60f467265b1e312373dbcd92200c2618a74850f98d3d078e94296bb3fa2047ba"
+$ExpectedDenoSha256 = "a0c3101b4158d1dfb7d6a78a7bf0f3de80c96bb423c152beec8beb22786f2238"
 $WheelhouseWasProvided = -not [string]::IsNullOrWhiteSpace($Wheelhouse)
 $FfmpegDirWasProvided = -not [string]::IsNullOrWhiteSpace($FfmpegDir)
 $DenoDirWasProvided = -not [string]::IsNullOrWhiteSpace($DenoDir)
@@ -407,7 +407,7 @@ if ($OfflineMode) {
 
 Invoke-Checked $VenvPython @(
     "-c",
-    "import importlib.metadata as m, yt_dlp_ejs; expected={'PyQt5':'5.15.11','pynput':'1.8.2','yt-dlp':'2026.8.19','yt-dlp-ejs':'0.8.0','pyinstaller':'6.22.2','pillow':'12.3.0'}; actual={name:m.version(name) for name in expected}; print('; '.join(f'{name} {actual[name]}' for name in expected)); raise SystemExit(0 if actual == expected else f'version mismatch: {actual} != {expected}')"
+    "import importlib.metadata as m, yt_dlp_ejs; expected={'PyQt5':'5.15.11','pynput':'1.8.2','yt-dlp':'2026.8.19','yt-dlp-ejs':'0.8.0','pyinstaller':'6.22.3','pillow':'12.3.0'}; actual={name:m.version(name) for name in expected}; print('; '.join(f'{name} {actual[name]}' for name in expected)); raise SystemExit(0 if actual == expected else f'version mismatch: {actual} != {expected}')"
 )
 Invoke-Checked $VenvPython @("-m", "pip", "check")
 
@@ -449,6 +449,7 @@ $pyInstallerArgs = @(
     "--windowed",
     "--name", "YouTubeHarvester",
     "--icon", "$IconIco",
+    "--version-file", (Join-Path $ScriptDir "version_info.txt"),
     "--collect-all", "yt_dlp",
     "--collect-all", "yt_dlp_ejs",
     "--add-data", "$RootDir\yth_common.py;.",

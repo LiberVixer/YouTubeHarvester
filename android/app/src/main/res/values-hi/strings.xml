@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="beta">बीटा</string><string name="theme">थीम</string><string name="menu">मेनू</string><string name="actions">क्रियाएँ</string>
+    <string name="filter">फ़िल्टर</string><string name="refresh">रीफ़्रेश</string><string name="download">डाउनलोड</string>
+    <string name="add_to_queue">कतार में जोड़ें</string><string name="queue_short">कतार</string><string name="archive">संग्रह</string><string name="overview">अवलोकन</string>
+    <string name="channels">चैनल</string><string name="settings">सेटिंग</string><string name="video">वीडियो</string><string name="shorts">शॉर्ट्स</string>
+    <string name="streams">लाइव स्ट्रीम</string><string name="none">कोई नहीं</string><string name="automatic">स्वचालित</string>
+    <string name="best">सर्वोत्तम</string><string name="save">सहेजें</string><string name="add">जोड़ें</string><string name="delete">हटाएँ</string>
+    <string name="folder">फ़ोल्डर</string><string name="file">फ़ाइल</string><string name="source">स्रोत</string>
+    <string name="enabled">चालू</string><string name="disabled">बंद</string><string name="selected_count">चयनित: %1$d</string>
+    <string name="url_hint">YouTube, VK या Rutube URL</string><string name="channels_count">चैनल: %1$d</string><string name="queue_count">कतार: %1$d</string>
+    <string name="archive_count">संग्रह: %1$d</string><string name="channel_check">चैनल जाँच</string>
+    <string name="start">शुरू करें</string>
+
+    <string name="downloaded_today">आज डाउनलोड: वीडियो: %1$d · शॉर्ट्स: %2$d · लाइव स्ट्रीम: %3$d</string><string name="preview_loading">पूर्वावलोकन लोड हो रहा है…</string>
+    <string name="preview_unavailable">पूर्वावलोकन उपलब्ध नहीं</string><string name="waiting_for_download">डाउनलोड की प्रतीक्षा</string>
+    <string name="add_link_or_scan">लिंक जोड़ें या चैनल जाँच शुरू करें</string><string name="downloads">डाउनलोड</string><string name="quick">त्वरित</string>
+    <string name="temporary_short">अस्थायी</string><string name="stop_download">डाउनलोड रोकें</string><string name="download_progress">%1$s: %2$d%%</string>
+    <string name="add_channel">चैनल जोड़ें</string><string name="search_channels">चैनल खोजें</string><string name="check_channels">चैनल जाँचें</string>
+    <string name="stop_check">जाँच रोकें</string><string name="check_paid_content">सशुल्क सामग्री जाँचें</string><string name="youtube_channel_url">YouTube / Rutube चैनल URL</string>
+    <string name="check_counter">जाँच %1$d / %2$d</string><string name="queued_videos">कतार के वीडियो</string><string name="empty_queue">कतार खाली है</string>
+    <string name="empty_queue_hint">ऊपर लिंक जोड़ें। ऐप दोबारा शुरू होने पर भी प्रविष्टि सहेजी रहेगी।</string><string name="preview">पूर्वावलोकन</string>
+    <string name="preview_prompt">पूर्वावलोकन के लिए लिंक डालें</string><string name="preview_title_hint">शीर्षक, चैनल और थंबनेल</string>
+    <string name="preview_metadata_hint">शीर्षक और चैनल यहाँ दिखेंगे</string><string name="ready_to_add">जोड़ने के लिए तैयार</string>
+    <string name="download_selected">चयनित डाउनलोड करें</string><string name="delete_selected">चयनित हटाएँ</string>
+    <string name="scheduler">शेड्यूलर</string><string name="checks_schedule">जाँच शेड्यूल</string>
+    <string name="add_time">समय जोड़ें</string><string name="enabled_of_total">%2$d में से %1$d चालू</string><string name="loading_data">डेटा लोड हो रहा है…</string>
+    <string name="scheduler_android_hint">नेटवर्क और बैटरी की स्थिति अनुमति देने पर Android चुने गए समय के आसपास जाँच चलाता है।</string>
+    <string name="schedule_empty">अभी कोई जाँच समय नहीं जोड़ा गया</string>
+    <string name="last_run_value">पिछली जाँच: %1$s</string>
+    <string name="never_run">अभी तक नहीं चला</string>
+    <string name="delete_time">समय हटाएँ</string>
+    <string name="schedule_save_error">शेड्यूल सहेजा नहीं जा सका</string>
+    <string name="schedule_delete_error">शेड्यूल हटाया नहीं जा सका</string>
+    <string name="schedule_time_exists">यह समय पहले से शेड्यूल में है</string>
+    <string name="background_check_channel">तय समय पर चैनल जाँच</string>
+    <string name="background_check_title">चैनल जाँचे जा रहे हैं</string>
+    <string name="background_check_text">बैकग्राउंड में नए वीडियो खोजे जा रहे हैं</string>
+    <string name="archive_empty">संग्रह खाली है</string><string name="archive_empty_hint">पूरे हुए डाउनलोड यहाँ दिखेंगे। हर रिज़ॉल्यूशन अलग सहेजा जाता है।</string>
+    <string name="nothing_found">कुछ नहीं मिला</string><string name="nothing_found_hint">खोज या स्रोत फ़िल्टर बदलें।</string><string name="search_archive">संग्रह में खोजें</string>
+    <string name="all">सभी</string><string name="audio_details">🎧 ऑडियो: %1$s</string><string name="subtitle_details">▤ उपशीर्षक: %1$s</string>
+    <string name="download_options">डाउनलोड विकल्प</string><string name="resolution">रिज़ॉल्यूशन</string><string name="loading_tracks">yt-dlp से ट्रैक मिल रहे हैं…</string>
+    <string name="tracks_unavailable">ट्रैक सूची उपलब्ध नहीं</string><string name="tracks_fallback">डाउनलोड स्वचालित ऑडियो और बिना उपशीर्षक के जारी रहेगा।</string>
+    <string name="audio_tracks">ऑडियो ट्रैक</string><string name="audio_tracks_missing">अलग ऑडियो ट्रैक नहीं मिले</string><string name="subtitles">उपशीर्षक</string>
+    <string name="subtitles_not_selected">चयनित नहीं</string><string name="subtitles_missing">उपशीर्षक नहीं मिले</string><string name="original_tracks">मूल ट्रैक</string>
+    <string name="preferred_languages">रूसी, अंग्रेज़ी, यूक्रेनी और इंटरफ़ेस भाषाएँ</string><string name="other_languages">अन्य भाषाएँ</string>
+    <string name="manual_subtitles">गैर-स्वचालित उपशीर्षक</string><string name="preferred_auto_subtitles">स्वचालित उपशीर्षक: प्राथमिक भाषाएँ</string>
+    <string name="other_auto_subtitles">स्वचालित उपशीर्षक: अन्य भाषाएँ</string><string name="track_original">मूल</string><string name="track_combined">वीडियो के साथ</string>
+    <string name="track_auto">स्वचालित</string><string name="track_manual">गैर-स्वचालित</string><string name="loading_section">डाउनलोड</string>
+    <string name="temporary_files">अस्थायी फ़ाइलें</string><string name="channel_limits">प्रति चैनल सीमा</string><string name="interface_section">इंटरफ़ेस</string>
+    <string name="language">भाषा</string><string name="system_theme">सिस्टम</string><string name="light_theme">हल्की</string><string name="dark_theme">गहरी</string>
+    <string name="behavior">व्यवहार</string><string name="watch_clipboard">क्लिपबोर्ड देखें</string><string name="watch_clipboard_hint">ऐप स्क्रीन पर होने पर नए समर्थित लिंक के लिए त्वरित डाउनलोड खोलें</string><string name="system_notifications">सिस्टम सूचनाएँ</string><string name="quick_download">त्वरित डाउनलोड</string><string name="app_shortcut">ऐप शॉर्टकट</string>
+    <string name="app_shortcut_hint">होम स्क्रीन पर त्वरित डाउनलोड शॉर्टकट जोड़ें</string>
+    <string name="telegram">Telegram</string><string name="notifications">सूचनाएँ</string><string name="connection_settings">कनेक्शन सेटिंग</string><string name="updates">अपडेट</string><string name="embedded_auto_update">अंतर्निहित · स्वतः अपडेट</string><string name="embedded_apk">APK में अंतर्निहित</string>
+    <string name="update_now">अपडेट करें</string><string name="ytdlp_updating">अपडेट हो रहा है…</string><string name="ytdlp_updated">yt-dlp अपडेट हुआ: %1$s</string><string name="ytdlp_already_current">yt-dlp पहले से नवीनतम है: %1$s</string><string name="ytdlp_update_failed">yt-dlp अपडेट नहीं हो सका। कनेक्शन जाँचें और फिर प्रयास करें।</string>
+    <string name="embedded_apk_plural">APK में अंतर्निहित</string><string name="data_diagnostics">डेटा और निदान</string>
+    <string name="clear_thumbnail_cache">थंबनेल कैश साफ़ करें</string><string name="diagnostics">निदान</string><string name="system_components">सिस्टम और घटक</string>
+    <string name="terms">उपयोग की शर्तें</string><string name="about">ऐप के बारे में</string><string name="development_build">Android विकास बिल्ड</string><string name="licenses">लाइसेंस ↗</string>
+    <string name="save_settings">सेटिंग सहेजें</string><string name="choose_folder">फ़ोल्डर चुनें</string><string name="restore_default_folder">Download/YTH वापस लाएँ</string>
+    <string name="downloads_folder_title">डाउनलोड फ़ोल्डर</string><string name="folder_restriction">Android पूरे स्टोरेज या Download फ़ोल्डर को चुनने नहीं देता। मानक Download/YTH पहले से उपलब्ध है। दूसरी जगह के लिए कोई उपफ़ोल्डर चुनें या बनाएँ।</string>
+    <string name="choose_subfolder">उपफ़ोल्डर चुनें</string><string name="folder_picker_hint">Download/YTH जैसा उपफ़ोल्डर खोलें या बनाएँ</string>
+    <string name="folder_access_failed">Android ने चुने हुए फ़ोल्डर की स्थायी अनुमति नहीं दी</string><string name="folder_selection_restricted">स्टोरेज रूट या Download स्वयं नहीं चुना जा सकता। उपफ़ोल्डर चुनें।</string>
+    <string name="decrease">घटाएँ</string><string name="increase">बढ़ाएँ</string>
+    <string name="status_queued">कतार में</string><string name="status_initializing">इंजन तैयार हो रहा है</string><string name="status_downloading">डाउनलोड हो रहा है</string>
+    <string name="status_publishing">फ़ाइल सहेजी जा रही है</string><string name="status_completed">पूरा हुआ</string><string name="status_failed">त्रुटि</string><string name="status_cancelled">रद्द किया गया</string>
+    <string name="invalid_channel_url">YouTube चैनल लिंक, @हैंडल या Rutube चैनल या शो का लिंक दर्ज करें</string>
+    <string name="channel_already_added">यह चैनल पहले से जोड़ा गया है</string>
+    <string name="channel_added">चैनल जोड़ा गया</string>
+    <string name="channel_removed">चैनल हटाया गया</string>
+    <string name="channel_save_error">चैनल सहेजा नहीं जा सका</string>
+    <string name="channel_delete_error">चैनल हटाया नहीं जा सका</string>
+    <string name="channel_not_checked">अभी जाँच नहीं हुई</string>
+    <string name="channels_empty">अभी कोई चैनल नहीं है</string>
+    <string name="channels_empty_hint">ऊपर YouTube चैनल, @हैंडल या Rutube चैनल या शो जोड़ें। सामग्री की पसंद इस डिवाइस पर सहेजी जाएगी।</string>
+    <string name="channel_scan_started">चैनल जाँच शुरू हुई</string>
+    <string name="channel_scan_stopped">चैनल जाँच रोक दी गई</string>
+    <string name="channel_scan_completed">जाँच पूरी हुई। कतार में जोड़े गए: %1$d</string>
+    <string name="channel_scanning_section">जाँच जारी: %1$s%2$s</string>
+    <string name="channel_checked">जाँच पूरी हुई</string>
+    <string name="channel_check_failed">जाँच विफल</string>
+    <string name="service_preparing_queue">डाउनलोड कतार तैयार हो रही है</string>
+    <string name="service_download_channel_name">वीडियो डाउनलोड</string>
+    <string name="service_download_channel_description">YouTube Harvester के बैकग्राउंड डाउनलोड की प्रगति</string>
+    <string name="service_cancel_action">रद्द करें</string>
+    <string name="service_eta_remaining">%1$s शेष</string>
+    <string name="service_download_failed_title">डाउनलोड विफल</string>
+    <string name="service_download_completed_title">डाउनलोड पूरा हुआ</string>
+    <string name="service_download_cancelled_title">डाउनलोड रद्द किया गया</string>
+    <string name="service_saved_to">यहाँ सहेजा गया: %1$s</string>
+    <string name="service_subtitles_unavailable_retry">उपशीर्षक %1$s उपलब्ध नहीं हैं; उनके बिना फिर प्रयास किया जा रहा है</string>
+    <string name="service_automatic_track">%1$s (स्वचालित)</string>
+    <string name="service_error_members_only">यह वीडियो केवल चैनल के सदस्यों के लिए उपलब्ध है</string>
+    <string name="service_error_private_video">यह वीडियो निजी है</string>
+    <string name="service_error_video_unavailable">यह वीडियो उपलब्ध नहीं है</string>
+    <string name="service_error_unknown_engine">डाउनलोड इंजन की अज्ञात त्रुटि</string>
+    <string name="service_error_storage_full">डिवाइस का स्टोरेज भर गया है। जगह खाली करें, फिर से कोशिश करें।</string>
+    <string name="service_error_prepare_temp">अस्थायी फ़ोल्डर तैयार नहीं किया जा सका</string>
+    <string name="service_error_output_missing">yt-dlp पूरा हुआ, लेकिन तैयार वीडियो फ़ाइल नहीं मिली</string>
+    <string name="service_error_android_timeout">Android ने लंबे बैकग्राउंड डाउनलोड को रोक दिया। ऐप खोलें और फिर प्रयास करें।</string>
+    <string name="invalid_media_link">YouTube, VK या Rutube का समर्थित वीडियो लिंक नहीं मिला</string>
+    <string name="quick_link_ready">त्वरित डाउनलोड खोला गया</string>
+    <string name="clipboard_empty">क्लिपबोर्ड में टेक्स्ट नहीं है</string>
+    <string name="downloads_open_error">सिस्टम डाउनलोड नहीं खोले जा सके</string>
+    <string name="temporary_cleaned">हटाए गए अस्थायी फ़ोल्डर: %1$d</string>
+    <string name="shortcut_requested">शॉर्टकट अनुरोध लॉन्चर को भेजा गया</string>
+    <string name="shortcut_unsupported">वर्तमान लॉन्चर पिन किए गए शॉर्टकट का समर्थन नहीं करता</string>
+    <string name="shortcut_rejected">लॉन्चर ने शॉर्टकट अनुरोध अस्वीकार कर दिया</string>
+    <string name="all_files">सभी फ़ाइलें</string>
+    <string name="available_files">उपलब्ध फ़ाइलें</string>
+    <string name="missing_files">अनुपलब्ध फ़ाइलें</string>
+    <string name="archive_refresh_result">आर्काइव जाँचा गया: %2$d में से %1$d फ़ाइलें उपलब्ध</string>
+    <string name="archive_delete_error">आर्काइव प्रविष्टि हटाई नहीं जा सकी</string>
+    <string name="archive_record_removed">आर्काइव प्रविष्टि हटाई गई; वीडियो फ़ाइल सुरक्षित है</string>
+    <string name="archive_file_open_error">यह वीडियो फ़ाइल खोली नहीं जा सकी</string>
+    <string name="archive_source_open_error">स्रोत पृष्ठ खोला नहीं जा सका</string>
+    <string name="archive_share_error">यह वीडियो फ़ाइल साझा नहीं की जा सकी</string>
+    <string name="remove_archive_record">आर्काइव प्रविष्टि हटाएँ?</string>
+    <string name="remove_archive_record_hint">“%1$s” आर्काइव से हटेगा। वीडियो फ़ाइल नहीं हटाई जाएगी।</string>
+    <string name="remove_record">प्रविष्टि हटाएँ</string>
+    <string name="cancel">रद्द करें</string>
+    <string name="share">साझा करें</string>
+    <string name="share_video">वीडियो साझा करें</string>
+    <string name="close">बंद करें</string>
+    <string name="releases">रिलीज़</string>
+    <string name="open_link_error">लिंक नहीं खोला जा सका</string>
+    <string name="telegram_configured">कनेक्शन कॉन्फ़िगर किया गया</string>
+    <string name="telegram_not_configured">कनेक्शन कॉन्फ़िगर नहीं है</string>
+    <string name="telegram_connection_title">Telegram कनेक्शन</string>
+    <string name="bot_token">बॉट टोकन</string>
+    <string name="channel_id">चैनल ID</string>
+    <string name="proxy_url_optional">प्रॉक्सी URL (वैकल्पिक)</string>
+    <string name="proxy_url_hint">HTTP या SOCKS5, उदाहरण: socks5://127.0.0.1:1080</string>
+    <string name="test_connection">कनेक्शन जाँचें</string>
+    <string name="telegram_testing">Telegram कनेक्शन की जाँच हो रही है…</string>
+    <string name="telegram_test_message">YouTube Harvester का Telegram कनेक्शन काम कर रहा है।</string>
+    <string name="telegram_test_success">Telegram पर परीक्षण संदेश भेजा गया</string>
+    <string name="telegram_test_failed">Telegram परीक्षण संदेश नहीं भेजा जा सका</string>
+    <string name="telegram_settings_saved">Telegram सेटिंग सहेजी गईं और सूचनाएँ चालू हैं</string>
+    <string name="telegram_credentials_required">बॉट टोकन और चैनल ID दर्ज करें</string>
+    <string name="telegram_credentials_invalid">बॉट टोकन, चैनल ID और प्रॉक्सी पता जाँचें</string>
+    <string name="thumbnail_cache_cleared">थंबनेल कैश साफ़ किया गया</string>
+    <string name="diagnostics_report">डायग्नोस्टिक रिपोर्ट</string>
+    <string name="share_diagnostics">डायग्नोस्टिक्स साझा करें</string>
+    <string name="app_version">ऐप संस्करण</string>
+    <string name="android_version">Android संस्करण</string>
+    <string name="device">डिवाइस</string>
+    <string name="supported_abis">समर्थित ABI</string>
+    <string name="download_destination">डाउनलोड स्थान</string>
+    <string name="schedules_count">शेड्यूल</string>
+    <string name="licenses_title">ओपन-सोर्स लाइसेंस</string>
+    <string name="licenses_text">Android पोर्ट में yt-dlp (Unlicense), youtubedl-android और उसका FFmpeg मॉड्यूल (GPL-3.0), FFmpeg तथा कोडेक लाइसेंस, QuickJS (MIT), AndroidX, Jetpack Compose, Coil, Room, WorkManager और उनके संबंधित लाइसेंस शामिल हैं। सार्वजनिक बाइनरी रिलीज़ के लिए GPL-संगत प्रोजेक्ट लाइसेंस और तृतीय-पक्ष सूचनाओं की पूरी सूची आवश्यक है।</string>
+    <string name="settings_saved">सेटिंग सहेजी गईं</string>
+    <string name="settings_save_error">सेटिंग सहेजी नहीं जा सकीं</string>
+    <string name="ready">तैयार</string>
+    <string name="internal_app_cache">ऐप का आंतरिक कैश</string>
+    <string name="data_migration_error">स्थानीय डेटा माइग्रेशन पूरा नहीं हुआ</string>
+
+    <string name="preview_loaded">पूर्वावलोकन लोड हुआ</string>
+    <string name="already_in_queue">यह वीडियो पहले से कतार में है</string>
+    <string name="queue_item_added">कतार में जोड़ा गया</string>
+    <string name="queue_save_error">कतार का आइटम सहेजा नहीं जा सका</string>
+    <string name="download_options_loaded">डाउनलोड विकल्प लोड हुए</string>
+    <string name="tracks_fallback_status">ट्रैक लोड नहीं हुए; स्वचालित ऑडियो उपलब्ध है</string>
+    <string name="download_started">वीडियो डाउनलोडर को भेजा गया</string>
+    <string name="download_start_error">डाउनलोड शुरू नहीं किया जा सका</string>
+    <string name="select_downloads">डाउनलोड के लिए आइटम चुनें</string>
+    <string name="downloads_started">डाउनलोड शुरू हुए: %1$d</string>
+    <string name="downloads_already_running">चुने गए आइटम पहले से डाउनलोड हो रहे हैं</string>
+    <string name="queue_start_error">कतार शुरू नहीं की जा सकी</string>
+    <string name="download_cancelling">डाउनलोड रद्द हो रहा है…</string>
+    <string name="queue_selection_save_error">कतार का चयन सहेजा नहीं जा सका</string>
+    <string name="queue_items_removed">चुने गए आइटम हटाए गए</string>
+    <string name="queue_remove_error">चुने गए आइटम हटाए नहीं जा सके</string>
+    <string name="language_save_error">इंटरफ़ेस भाषा सहेजी नहीं जा सकी</string>
+    <string name="download_folder_selected">डाउनलोड फ़ोल्डर चुना गया</string>
+    <string name="download_folder_save_error">चुना गया फ़ोल्डर सहेजा नहीं जा सका</string>
+    <string name="default_download_folder">फ़ाइलें Download/YTH में सहेजी जाएँगी</string>
+    <string name="download_folder_reset_error">डिफ़ॉल्ट डाउनलोड फ़ोल्डर वापस नहीं किया जा सका</string>
+    <string name="publisher_invalid_tree_uri">सहेजा गया फ़ोल्डर पता अमान्य है; डाउनलोड फ़ोल्डर फिर से चुनें</string>
+    <string name="publisher_permission_revoked">डाउनलोड फ़ोल्डर की पहुँच रद्द हो गई; सेटिंग में इसे फिर चुनें</string>
+    <string name="publisher_directory_unavailable">चुना गया फ़ोल्डर अब उपलब्ध नहीं है; इसे फिर चुनें</string>
+    <string name="publisher_create_file_error">Android चुने गए फ़ोल्डर में फ़ाइल नहीं बना सका</string>
+    <string name="publisher_open_file_error">Android ने गंतव्य फ़ाइल खोलने की अनुमति नहीं दी</string>
+    <string name="publisher_create_default_error">Android Download/YTH में फ़ाइल नहीं बना सका</string>
+    <string name="publisher_storage_permission">ऐप को डिवाइस संग्रहण में फ़ाइलें सहेजने दें</string>
+    <string name="publisher_create_default_directory_error">Download/YTH फ़ोल्डर नहीं बनाया जा सका</string>
+    <string name="preview_access_restricted">इस वीडियो की पहुँच सीमित है</string>
+    <string name="preview_video_unavailable">वीडियो नहीं मिला या उपलब्ध नहीं है</string>
+    <string name="preview_rate_limited">सेवा ने अनुरोधों को अस्थायी रूप से सीमित किया</string>
+    <string name="preview_service_error">सेवा पूर्वावलोकन नहीं दे सकी</string>
+    <string name="preview_incomplete_data">सेवा ने अधूरा पूर्वावलोकन डेटा लौटाया</string>
+    <string name="preview_network_error">पूर्वावलोकन लोड नहीं हुआ। इंटरनेट जाँचें</string>
+    <string name="fallback_video_title">वीडियो %1$s %2$s</string>
+
+
+    <string name="metadata_tracks_error">ऑडियो ट्रैक और उपशीर्षक नहीं मिल सके</string>
+    <string name="metadata_pending">डाउनलोड के दौरान मेटाडेटा लोड होगा</string>
+    <string name="application_logs">ऐप्लिकेशन लॉग</string>
+    <plurals name="logs_retention_summary">
+        <item quantity="one">%1$d दिन तक सुरक्षित</item>
+        <item quantity="other">%1$d दिनों तक सुरक्षित</item>
+    </plurals>
+    <plurals name="logs_retention_value">
+        <item quantity="one">%1$d दिन</item>
+        <item quantity="other">%1$d दिन</item>
+    </plurals>
+    <string name="log_empty">ऐप्लिकेशन लॉग खाली है</string>
+    <string name="log_load_error">ऐप्लिकेशन लॉग पढ़ा नहीं जा सका</string>
+    <string name="logs_cleared">ऐप्लिकेशन लॉग साफ़ किया गया</string>
+    <string name="logs_retention_saved">लॉग रखने की अवधि बदली गई</string>
+    <string name="clear_logs">लॉग साफ़ करें</string>
+    <string name="clear_logs_confirm_title">ऐप्लिकेशन लॉग साफ़ करें?</string>
+    <string name="clear_logs_confirm_message">निदान इतिहास स्थायी रूप से हट जाएगा। डाउनलोड और सेटिंग प्रभावित नहीं होंगे।</string>
+    <string name="share_logs">लॉग साझा करें</string>
+    <string name="logs_private_hint">लॉग निजी रूप से UTF-8 में रखा जाता है, बैकअप से बाहर रहता है और इसमें Telegram बॉट टोकन कभी शामिल नहीं होता।</string>
+    <string name="diagnostics_checking">घटकों की जाँच हो रही है…</string>
+    <string name="diagnostics_run_error">निदान पूरा नहीं हो सका</string>
+    <string name="diagnostics_checked_at">जाँच का समय</string>
+    <string name="runtime_initialization">डाउनलोडर प्रारंभ</string>
+    <string name="network_status">नेटवर्क</string>
+    <string name="connection_validated">इंटरनेट पहुँच की पुष्टि हुई</string>
+    <string name="connection_unvalidated">कनेक्ट है, लेकिन इंटरनेट पहुँच की पुष्टि नहीं हुई</string>
+    <string name="diagnostic_unavailable">अनुपलब्ध</string>
+    <string name="notifications_permission">सूचना अनुमति</string>
+    <string name="download_folder_access">डाउनलोड फ़ोल्डर की पहुँच</string>
+    <string name="free_storage">साझा स्टोरेज में खाली स्थान</string>
+    <string name="battery_optimization">बैटरी अनुकूलन</string>
+    <string name="battery_optimized">चालू; पृष्ठभूमि जाँच में देरी हो सकती है</string>
+    <string name="battery_unrestricted">अप्रतिबंधित</string>
+    <string name="diagnostic_attention">ध्यान आवश्यक</string>
+    <string name="diagnostics_not_run">निदान अभी तक नहीं चलाया गया</string>
+    <string name="clear_filter">फ़िल्टर हटाएँ</string>
+    <string name="channel_filter_members">सदस्यों के लिए सामग्री मिली</string>
+    <string name="channel_filter_free">सदस्यों के लिए सामग्री नहीं मिली</string>
+    <string name="channel_filter_unknown_paid">सशुल्क सामग्री की स्थिति अज्ञात</string>
+    <string name="channel_resolving">Rutube चैनल की जानकारी प्राप्त हो रही है…</string>
+    <string name="channel_mark_recent">नवीनतम चिह्नित करें…</string>
+    <string name="channel_mark_confirm">क्या “%1$s” के सक्रिय अनुभागों के नवीनतम आइटम पहले से संसाधित के रूप में चिह्नित करें? चैनल की जाँच में उन्हें छोड़ दिया जाएगा। वे फ़ाइल संग्रह में नहीं दिखेंगे।</string>
+    <string name="channel_mark_result">चिह्नित: %1$d। जाँच त्रुटियाँ: %2$d।</string>
+    <string name="channel_mark_stop_downloads">पहले डाउनलोड रोकें और उनके समाप्त होने की प्रतीक्षा करें।</string>
+    <string name="move_up">ऊपर ले जाएँ</string>
+    <string name="move_down">नीचे ले जाएँ</string>
+    <string name="queue_active_items_kept">सक्रिय डाउनलोड कतार में बने रहेंगे</string>
+    <string name="app_update_available">अपडेट उपलब्ध है: %1$s</string>
+    <string name="app_update_confirmation">अपडेट डाउनलोड करके Android इंस्टॉलर खोलें?</string>
+    <string name="app_update_current">कोई नया संगत Android संस्करण नहीं मिला।</string>
+    <string name="app_update_failed">अपडेट की पुष्टि या स्थापना नहीं हो सकी। कनेक्शन और APK हस्ताक्षर जाँचें।</string>
+    <string name="status_paused">रुका हुआ</string>
+    <string name="status_processing">वीडियो प्रोसेस हो रहा है</string>
+    <string name="status_waiting_network">नेटवर्क की प्रतीक्षा</string>
+    <string name="download_pause">रोकें</string>
+    <string name="download_resume">जारी रखें</string>
+    <string name="download_retry">फिर कोशिश करें</string>
+    <string name="download_network_error">कनेक्शन टूट गया। आंशिक डाउनलोड सुरक्षित है। फिर से कोशिश कर सकते हैं।</string>
+    <string name="folder_open_fallback">सिस्टम फ़ाइल ब्राउज़र खुला है। डाउनलोड फ़ोल्डर अपने आप न खुले तो उसे चुनें।</string>
+    <string name="harvest_start">कतार और चैनलों का डाउनलोड शुरू करें</string>
+    <string name="harvest_queue_before">कतार के लिंक डाउनलोड हो रहे हैं</string>
+    <string name="harvest_channels">चैनलों की जाँच और डाउनलोड</string>
+    <string name="harvest_queue_after">कतार की फिर से जाँच</string>
+    <string name="harvest_completed">जाँच पूरी। डाउनलोड: %1$d · त्रुटियाँ: %2$d</string>
+    <string name="channel_validation_completed">जाँचे गए चैनल: %1$d · त्रुटियाँ: %2$d</string>
+    <string name="overview_check_completed">पिछली जाँच पूरी हुई</string>
+    <string name="overview_scanning">जाँच जारी</string>
+    <string name="overview_downloaded">डाउनलोड किए: %1$d</string>
+    <string name="overview_no_new">कोई नया वीडियो नहीं मिला</string>
+    <string name="overview_today">आज डाउनलोड किए: %1$d</string>
+    <string name="overview_checked">जाँचे गए चैनल: %1$d / %2$d</string>
+    <string name="overview_errors">त्रुटियाँ: %1$d</string>
+    <string name="overview_checking_channel">चैनल की जाँच जारी</string>
+    <string name="clear_temporary_files">अस्थायी फ़ाइलें साफ़ करें</string>
+    <string name="engine_updates_with_app">yt-dlp ऐप के साथ अपडेट होता है।</string>
+    <string name="downloads_short">फ़ाइलें</string>
+    <string name="service_subtitles_omitted">वीडियो सहेजा गया। उपशीर्षक नहीं जोड़े गए: %1$s</string>
+    <string name="download_recovery_title">डाउनलोड बाधित हुए</string>
+    <string name="download_recovery_text">पुनरारंभ के बाद डाउनलोड जारी रखने के लिए फिर शुरू करें पर टैप करें।</string>
+    <string name="transfer_export">डेटा निर्यात</string>
+    <string name="transfer_import">डेटा आयात</string>
+    <string name="transfer_export_warning">एन्क्रिप्टेड फ़ाइल में Telegram क्रेडेंशियल शामिल हैं, वीडियो या अस्थायी फ़ाइलें नहीं। कम से कम 12 अक्षरों का अलग पासवर्ड चुनें। स्थानांतरण की जाँच तक beta न हटाएँ।</string>
+    <string name="transfer_import_warning">आयात के लिए खाली डेटाबेस चाहिए और सेटिंग बदलेंगी। डाउनलोड रुके रहेंगे और शेड्यूल बंद होंगे। डाउनलोड फ़ोल्डर दोबारा चुनें, फिर संग्रह की उपलब्धता ताज़ा करें।</string>
+    <string name="transfer_password">स्थानांतरण पासवर्ड (12+ अक्षर)</string>
+    <string name="transfer_password_repeat">पासवर्ड दोहराएँ</string>
+    <string name="transfer_exported">निर्यात सहेजा गया और फ़ाइल दोबारा पढ़कर जाँची गई</string>
+    <string name="transfer_imported">डेटा आयात हुआ। फ़ोल्डर चुनें, संग्रह ताज़ा करें, फिर शेड्यूल चालू करें।</string>
+    <string name="transfer_not_empty">आयात अस्वीकृत: मौजूदा डेटा नहीं बदलेगा</string>
+    <string name="transfer_stop_downloads">स्थानांतरण से पहले डाउनलोड और चैनल जाँच रोकें</string>
+    <string name="transfer_credentials_error">निर्यात से पहले अपठनीय Telegram क्रेडेंशियल ठीक करें या हटाएँ</string>
+    <string name="transfer_failed">स्थानांतरण विफल: पासवर्ड, फ़ाइल और संग्रहण की पहुँच जाँचें</string>
+    <string name="transfer_archive_error">निर्यात से पहले संग्रह की फ़ाइलों की पहुँच बहाल करें या उनकी उपलब्धता ताज़ा करें</string>
+    <string name="transfer_pending">डेटा आयात हुआ; सेटिंग बहाल करने के लिए ऐप दोबारा शुरू करें। फिर से आयात न करें।</string>
+</resources>

@@ -15,7 +15,7 @@
 
 Aquí se documentan todos los cambios importantes de **YouTube Harvester**.
 
-## Sin publicar
+## [1.2.1] - 2026-10-03
 
 - Escritorio: canales Rutube con deduplicación de alias, nombres y avatares,
   búsqueda de Vídeos/Shorts, límites, programación y marcado de archivo según la fuente.
@@ -23,6 +23,8 @@ Aquí se documentan todos los cambios importantes de **YouTube Harvester**.
   Nuevos elementos traducidos a diez idiomas; el port de Android no cambia.
 - Se conservan las líneas del archivo sin salto final; la búsqueda del canal por
   nombre en el archivo se limita al mismo servicio de vídeo.
+
+- Programas de Rutube (`/metainfo/tv/ID/`) como canales de vídeo, con portada propia y selección de las últimas N entradas para descarga y archivo.
 
 ## [1.2.0-beta] - 2026-08-29
 

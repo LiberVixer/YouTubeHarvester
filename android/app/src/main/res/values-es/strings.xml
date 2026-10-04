@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="beta">BETA</string><string name="theme">Tema</string><string name="menu">Menú</string><string name="actions">Acciones</string>
+    <string name="filter">Filtro</string><string name="refresh">Actualizar</string><string name="download">Descargar</string>
+    <string name="add_to_queue">Añadir a la cola</string><string name="queue_short">Cola</string><string name="archive">Archivo</string><string name="overview">Resumen</string>
+    <string name="channels">Canales</string><string name="settings">Ajustes</string><string name="video">Vídeo</string><string name="shorts">Shorts</string>
+    <string name="streams">Directos</string><string name="none">Ninguno</string><string name="automatic">Automático</string>
+    <string name="best">Mejor</string><string name="save">Guardar</string><string name="add">Añadir</string><string name="delete">Eliminar</string>
+    <string name="folder">Carpeta</string><string name="file">Archivo</string><string name="source">Fuente</string>
+    <string name="enabled">Activado</string><string name="disabled">Desactivado</string><string name="selected_count">Seleccionados: %1$d</string>
+    <string name="url_hint">URL de YouTube, VK o Rutube</string><string name="channels_count">Canales: %1$d</string><string name="queue_count">Cola: %1$d</string>
+    <string name="archive_count">Archivo: %1$d</string><string name="channel_check">Comprobación de canales</string>
+    <string name="start">Iniciar</string>
+
+    <string name="downloaded_today">Descargado hoy: Vídeos: %1$d · Shorts: %2$d · Directos: %3$d</string><string name="preview_loading">Cargando vista previa…</string>
+    <string name="preview_unavailable">Vista previa no disponible</string><string name="waiting_for_download">Esperando descarga</string>
+    <string name="add_link_or_scan">Añade un enlace o inicia la comprobación de canales</string><string name="downloads">Descargas</string><string name="quick">Rápida</string>
+    <string name="temporary_short">Temp.</string><string name="stop_download">Detener descarga</string><string name="download_progress">%1$s: %2$d%%</string>
+    <string name="add_channel">Añadir canal</string><string name="search_channels">Buscar canales</string><string name="check_channels">Comprobar canales</string>
+    <string name="stop_check">Detener comprobación</string><string name="check_paid_content">Comprobar contenido de pago</string><string name="youtube_channel_url">URL del canal de YouTube / Rutube</string>
+    <string name="check_counter">Comprobación %1$d / %2$d</string><string name="queued_videos">Vídeos en cola</string><string name="empty_queue">La cola está vacía</string>
+    <string name="empty_queue_hint">Añade un enlace arriba. La entrada seguirá guardada al reiniciar.</string><string name="preview">VISTA PREVIA</string>
+    <string name="preview_prompt">Introduce un enlace para previsualizar</string><string name="preview_title_hint">Título, canal y miniatura</string>
+    <string name="preview_metadata_hint">El título y el canal aparecerán aquí</string><string name="ready_to_add">Listo para añadir</string>
+    <string name="download_selected">Descargar seleccionados</string><string name="delete_selected">Eliminar seleccionados</string>
+    <string name="scheduler">Programador</string><string name="checks_schedule">Horario de comprobaciones</string>
+    <string name="add_time">Añadir hora</string><string name="enabled_of_total">%1$d activados de %2$d</string><string name="loading_data">Cargando datos…</string>
+    <string name="scheduler_android_hint">Android ejecuta la comprobación cerca de la hora elegida cuando la red y la batería lo permiten.</string>
+    <string name="schedule_empty">Aún no hay horas de comprobación</string>
+    <string name="last_run_value">Última ejecución: %1$s</string>
+    <string name="never_run">Aún no se ha ejecutado</string>
+    <string name="delete_time">Eliminar hora</string>
+    <string name="schedule_save_error">No se pudo guardar el horario</string>
+    <string name="schedule_delete_error">No se pudo eliminar el horario</string>
+    <string name="schedule_time_exists">Esta hora ya está en el horario</string>
+    <string name="background_check_channel">Comprobaciones programadas de canales</string>
+    <string name="background_check_title">Comprobando canales</string>
+    <string name="background_check_text">Buscando nuevos vídeos en segundo plano</string>
+    <string name="archive_empty">El archivo está vacío</string><string name="archive_empty_hint">Las descargas terminadas aparecerán aquí. Cada resolución se guarda por separado.</string>
+    <string name="nothing_found">No se encontró nada</string><string name="nothing_found_hint">Cambia la búsqueda o el filtro de fuente.</string><string name="search_archive">Buscar en el archivo</string>
+    <string name="all">Todos</string><string name="audio_details">🎧 Audio: %1$s</string><string name="subtitle_details">▤ Subtítulos: %1$s</string>
+    <string name="download_options">Opciones de descarga</string><string name="resolution">Resolución</string><string name="loading_tracks">Obteniendo pistas mediante yt-dlp…</string>
+    <string name="tracks_unavailable">Lista de pistas no disponible</string><string name="tracks_fallback">La descarga continuará con audio automático y sin subtítulos.</string>
+    <string name="audio_tracks">Pistas de audio</string><string name="audio_tracks_missing">No se encontraron pistas de audio separadas</string><string name="subtitles">Subtítulos</string>
+    <string name="subtitles_not_selected">Sin seleccionar</string><string name="subtitles_missing">No se encontraron subtítulos</string><string name="original_tracks">Pistas originales</string>
+    <string name="preferred_languages">Ruso, inglés, ucraniano e idiomas de la interfaz</string><string name="other_languages">Otros idiomas</string>
+    <string name="manual_subtitles">Subtítulos no automáticos</string><string name="preferred_auto_subtitles">Subtítulos automáticos: idiomas prioritarios</string>
+    <string name="other_auto_subtitles">Subtítulos automáticos: otros idiomas</string><string name="track_original">original</string><string name="track_combined">con vídeo</string>
+    <string name="track_auto">automático</string><string name="track_manual">no automático</string><string name="loading_section">Descarga</string>
+    <string name="temporary_files">Archivos temporales</string><string name="channel_limits">Límites por canal</string><string name="interface_section">Interfaz</string>
+    <string name="language">Idioma</string><string name="system_theme">Sistema</string><string name="light_theme">Claro</string><string name="dark_theme">Oscuro</string><string name="behavior">Comportamiento</string><string name="watch_clipboard">Vigilar portapapeles</string>
+    <string name="watch_clipboard_hint">Abrir la descarga rápida para enlaces nuevos mientras la aplicación está en pantalla</string>
+    <string name="system_notifications">Notificaciones del sistema</string>
+    <string name="quick_download">Descarga rápida</string><string name="app_shortcut">Acceso directo de la aplicación</string><string name="app_shortcut_hint">Añadir acceso directo de descarga rápida a la pantalla de inicio</string><string name="telegram">Telegram</string><string name="notifications">Notificaciones</string><string name="connection_settings">Ajustes de conexión</string>
+    <string name="updates">Actualizaciones</string><string name="embedded_auto_update">Integrado · actualización automática</string>
+    <string name="update_now">Actualizar</string><string name="ytdlp_updating">Actualizando…</string><string name="ytdlp_updated">yt-dlp actualizado: %1$s</string><string name="ytdlp_already_current">yt-dlp ya está actualizado: %1$s</string><string name="ytdlp_update_failed">No se pudo actualizar yt-dlp. Comprueba la conexión e inténtalo de nuevo.</string>
+    <string name="embedded_apk">Integrado en el APK</string><string name="embedded_apk_plural">Integrados en el APK</string><string name="data_diagnostics">Datos y diagnóstico</string><string name="clear_thumbnail_cache">Vaciar caché de miniaturas</string>
+    <string name="diagnostics">Diagnóstico</string><string name="system_components">Sistema y componentes</string><string name="terms">Condiciones de uso</string>
+    <string name="about">Acerca de</string><string name="development_build">Compilación de desarrollo para Android</string><string name="licenses">Licencias ↗</string>
+    <string name="save_settings">Guardar ajustes</string><string name="choose_folder">Elegir carpeta</string><string name="restore_default_folder">Restaurar Download/YTH</string>
+    <string name="downloads_folder_title">Carpeta de descargas</string><string name="folder_restriction">Android no permite seleccionar todo el almacenamiento ni la propia carpeta Download. El destino Download/YTH ya está disponible. Para otra ubicación, elige o crea una subcarpeta.</string>
+    <string name="choose_subfolder">Elegir subcarpeta</string><string name="folder_picker_hint">Abre o crea una subcarpeta, por ejemplo Download/YTH</string>
+    <string name="folder_access_failed">Android no concedió acceso permanente a la carpeta seleccionada</string><string name="folder_selection_restricted">Android no permite la raíz ni Download. Elige una subcarpeta.</string>
+    <string name="decrease">Disminuir</string><string name="increase">Aumentar</string>
+    <string name="status_queued">En cola</string><string name="status_initializing">Preparando motor</string><string name="status_downloading">Descargando</string>
+    <string name="status_publishing">Guardando archivo</string><string name="status_completed">Completado</string><string name="status_failed">Error</string><string name="status_cancelled">Cancelado</string>
+    <string name="invalid_channel_url">Introduce un canal de YouTube, un @usuario o un enlace de canal o programa de Rutube</string>
+    <string name="channel_already_added">Este canal ya está añadido</string>
+    <string name="channel_added">Canal añadido</string>
+    <string name="channel_removed">Canal eliminado</string>
+    <string name="channel_save_error">No se pudo guardar el canal</string>
+    <string name="channel_delete_error">No se pudo eliminar el canal</string>
+    <string name="channel_not_checked">Aún no comprobado</string>
+    <string name="channels_empty">Todavía no hay canales</string>
+    <string name="channels_empty_hint">Añade un canal de YouTube, un @usuario o un canal o programa de Rutube. Las preferencias de contenido se guardarán en este dispositivo.</string>
+    <string name="channel_scan_started">Comprobación de canales iniciada</string>
+    <string name="channel_scan_stopped">Comprobación de canales detenida</string>
+    <string name="channel_scan_completed">Comprobación completada. Añadidos a la cola: %1$d</string>
+    <string name="channel_scanning_section">Comprobando: %1$s%2$s</string>
+    <string name="channel_checked">Comprobación completada</string>
+    <string name="channel_check_failed">Error de comprobación</string>
+    <string name="service_preparing_queue">Preparando la cola de descargas</string>
+    <string name="service_download_channel_name">Descargas de vídeo</string>
+    <string name="service_download_channel_description">Progreso de descargas en segundo plano de YouTube Harvester</string>
+    <string name="service_cancel_action">Cancelar</string>
+    <string name="service_eta_remaining">quedan %1$s</string>
+    <string name="service_download_failed_title">Error de descarga</string>
+    <string name="service_download_completed_title">Descarga completada</string>
+    <string name="service_download_cancelled_title">Descarga cancelada</string>
+    <string name="service_saved_to">Guardado en: %1$s</string>
+    <string name="service_subtitles_unavailable_retry">Los subtítulos %1$s no están disponibles; reintentando sin ellos</string>
+    <string name="service_automatic_track">%1$s (automático)</string>
+    <string name="service_error_members_only">Este vídeo solo está disponible para miembros del canal</string>
+    <string name="service_error_private_video">Este vídeo es privado</string>
+    <string name="service_error_video_unavailable">Este vídeo no está disponible</string>
+    <string name="service_error_unknown_engine">Error desconocido del motor de descarga</string>
+    <string name="service_error_storage_full">El almacenamiento del dispositivo está lleno. Libera espacio y vuelve a intentarlo.</string>
+    <string name="service_error_prepare_temp">No se pudo preparar la carpeta temporal</string>
+    <string name="service_error_output_missing">yt-dlp terminó, pero no se encontró el archivo de vídeo final</string>
+    <string name="service_error_android_timeout">Android detuvo la descarga prolongada en segundo plano. Abre la aplicación y vuelve a intentarlo.</string>
+    <string name="invalid_media_link">No se encontró un enlace compatible de YouTube, VK o Rutube</string>
+    <string name="quick_link_ready">Descarga rápida abierta</string>
+    <string name="clipboard_empty">El portapapeles no contiene texto</string>
+    <string name="downloads_open_error">No se pudieron abrir las descargas del sistema</string>
+    <string name="temporary_cleaned">Carpetas temporales eliminadas: %1$d</string>
+    <string name="shortcut_requested">Solicitud de acceso directo enviada al lanzador</string>
+    <string name="shortcut_unsupported">El lanzador actual no admite accesos directos fijados</string>
+    <string name="shortcut_rejected">El lanzador rechazó la solicitud de acceso directo</string>
+    <string name="all_files">Todos los archivos</string>
+    <string name="available_files">Archivos disponibles</string>
+    <string name="missing_files">Archivos ausentes</string>
+    <string name="archive_refresh_result">Archivo comprobado: %1$d de %2$d archivos disponibles</string>
+    <string name="archive_delete_error">No se pudo eliminar la entrada del archivo</string>
+    <string name="archive_record_removed">Entrada eliminada del archivo; el vídeo se conservó</string>
+    <string name="archive_file_open_error">No se pudo abrir este archivo de vídeo</string>
+    <string name="archive_source_open_error">No se pudo abrir la página de origen</string>
+    <string name="archive_share_error">No se pudo compartir este archivo de vídeo</string>
+    <string name="remove_archive_record">¿Eliminar la entrada del archivo?</string>
+    <string name="remove_archive_record_hint">«%1$s» desaparecerá del archivo. El vídeo no se eliminará.</string>
+    <string name="remove_record">Eliminar entrada</string>
+    <string name="cancel">Cancelar</string>
+    <string name="share">Compartir</string>
+    <string name="share_video">Compartir vídeo</string>
+    <string name="close">Cerrar</string>
+    <string name="releases">Versiones</string>
+    <string name="open_link_error">No se pudo abrir el enlace</string>
+    <string name="telegram_configured">Conexión configurada</string>
+    <string name="telegram_not_configured">La conexión no está configurada</string>
+    <string name="telegram_connection_title">Conexión con Telegram</string>
+    <string name="bot_token">Token del bot</string>
+    <string name="channel_id">ID del canal</string>
+    <string name="proxy_url_optional">URL del proxy (opcional)</string>
+    <string name="proxy_url_hint">HTTP o SOCKS5, por ejemplo socks5://127.0.0.1:1080</string>
+    <string name="test_connection">Probar conexión</string>
+    <string name="telegram_testing">Probando la conexión con Telegram…</string>
+    <string name="telegram_test_message">La conexión de YouTube Harvester con Telegram funciona.</string>
+    <string name="telegram_test_success">Mensaje de prueba enviado a Telegram</string>
+    <string name="telegram_test_failed">No se pudo enviar el mensaje de prueba a Telegram</string>
+    <string name="telegram_settings_saved">Ajustes de Telegram guardados y notificaciones activadas</string>
+    <string name="telegram_credentials_required">Introduce el token del bot y el ID del canal</string>
+    <string name="telegram_credentials_invalid">Comprueba el token del bot, el ID del canal y la dirección del proxy</string>
+    <string name="thumbnail_cache_cleared">Caché de miniaturas borrada</string>
+    <string name="diagnostics_report">Informe de diagnóstico</string>
+    <string name="share_diagnostics">Compartir diagnóstico</string>
+    <string name="app_version">Versión de la aplicación</string>
+    <string name="android_version">Versión de Android</string>
+    <string name="device">Dispositivo</string>
+    <string name="supported_abis">ABI compatibles</string>
+    <string name="download_destination">Destino de descargas</string>
+    <string name="schedules_count">Programaciones</string>
+    <string name="licenses_title">Licencias de código abierto</string>
+    <string name="licenses_text">El puerto para Android incluye yt-dlp (Unlicense), youtubedl-android y su módulo FFmpeg (GPL-3.0), FFmpeg y las licencias de sus códecs, QuickJS (MIT), AndroidX, Jetpack Compose, Coil, Room, WorkManager y sus respectivas licencias. Una versión binaria pública requiere una licencia de proyecto compatible con GPL y avisos completos de terceros.</string>
+    <string name="settings_saved">Ajustes guardados</string>
+    <string name="settings_save_error">No se pudieron guardar los ajustes</string>
+    <string name="ready">Listo</string>
+    <string name="internal_app_cache">Caché interna de la aplicación</string>
+    <string name="data_migration_error">No se pudo completar la migración de datos locales</string>
+
+    <string name="preview_loaded">Vista previa cargada</string>
+    <string name="already_in_queue">Este vídeo ya está en la cola</string>
+    <string name="queue_item_added">Añadido a la cola</string>
+    <string name="queue_save_error">No se pudo guardar el elemento de la cola</string>
+    <string name="download_options_loaded">Opciones de descarga cargadas</string>
+    <string name="tracks_fallback_status">No se cargaron las pistas; sigue disponible el audio automático</string>
+    <string name="download_started">Vídeo enviado al descargador</string>
+    <string name="download_start_error">No se pudo iniciar la descarga</string>
+    <string name="select_downloads">Selecciona elementos para descargar</string>
+    <string name="downloads_started">Descargas iniciadas: %1$d</string>
+    <string name="downloads_already_running">Los elementos seleccionados ya se están descargando</string>
+    <string name="queue_start_error">No se pudo iniciar la cola</string>
+    <string name="download_cancelling">Cancelando descarga…</string>
+    <string name="queue_selection_save_error">No se pudo guardar la selección de la cola</string>
+    <string name="queue_items_removed">Elementos seleccionados eliminados</string>
+    <string name="queue_remove_error">No se pudieron eliminar los elementos seleccionados</string>
+    <string name="language_save_error">No se pudo guardar el idioma de la interfaz</string>
+    <string name="download_folder_selected">Carpeta de descargas seleccionada</string>
+    <string name="download_folder_save_error">No se pudo guardar la carpeta seleccionada</string>
+    <string name="default_download_folder">Los archivos se guardarán en Download/YTH</string>
+    <string name="download_folder_reset_error">No se pudo restaurar la carpeta de descargas predeterminada</string>
+    <string name="publisher_invalid_tree_uri">La dirección guardada de la carpeta no es válida; selecciona de nuevo la carpeta de descargas</string>
+    <string name="publisher_permission_revoked">Se revocó el acceso a la carpeta de descargas; selecciónala de nuevo en Ajustes</string>
+    <string name="publisher_directory_unavailable">La carpeta seleccionada ya no está disponible; selecciónala de nuevo</string>
+    <string name="publisher_create_file_error">Android no pudo crear el archivo en la carpeta seleccionada</string>
+    <string name="publisher_open_file_error">Android no permitió abrir el archivo de destino</string>
+    <string name="publisher_create_default_error">Android no pudo crear el archivo en Download/YTH</string>
+    <string name="publisher_storage_permission">Permite que la aplicación guarde archivos en el dispositivo</string>
+    <string name="publisher_create_default_directory_error">No se pudo crear la carpeta Download/YTH</string>
+    <string name="preview_access_restricted">El acceso a este vídeo está restringido</string>
+    <string name="preview_video_unavailable">Vídeo no encontrado o no disponible</string>
+    <string name="preview_rate_limited">El servicio limitó temporalmente las solicitudes</string>
+    <string name="preview_service_error">El servicio no pudo proporcionar una vista previa</string>
+    <string name="preview_incomplete_data">El servicio devolvió datos de vista previa incompletos</string>
+    <string name="preview_network_error">No se pudo cargar la vista previa. Comprueba Internet</string>
+    <string name="fallback_video_title">Vídeo %1$s %2$s</string>
+
+
+    <string name="metadata_tracks_error">No se pudieron obtener las pistas de audio y los subtítulos</string>
+    <string name="metadata_pending">Los metadatos se cargarán durante la descarga</string>
+    <string name="application_logs">Registro de la aplicación</string>
+    <plurals name="logs_retention_summary">
+        <item quantity="one">Conservación: %1$d día</item>
+        <item quantity="many">Conservación: %1$d días</item>
+        <item quantity="other">Conservación: %1$d días</item>
+    </plurals>
+    <plurals name="logs_retention_value">
+        <item quantity="one">%1$d día</item>
+        <item quantity="many">%1$d días</item>
+        <item quantity="other">%1$d días</item>
+    </plurals>
+    <string name="log_empty">El registro de la aplicación está vacío</string>
+    <string name="log_load_error">No se pudo leer el registro de la aplicación</string>
+    <string name="logs_cleared">Registro de la aplicación borrado</string>
+    <string name="logs_retention_saved">Conservación del registro actualizada</string>
+    <string name="clear_logs">Borrar registro</string>
+    <string name="clear_logs_confirm_title">¿Borrar el registro de la aplicación?</string>
+    <string name="clear_logs_confirm_message">El historial de diagnóstico se eliminará permanentemente. Las descargas y los ajustes no se verán afectados.</string>
+    <string name="share_logs">Compartir registro</string>
+    <string name="logs_private_hint">El registro se guarda de forma privada en UTF-8, se excluye de las copias de seguridad y nunca incluye el token del bot de Telegram.</string>
+    <string name="diagnostics_checking">Comprobando componentes…</string>
+    <string name="diagnostics_run_error">No se pudo completar el diagnóstico</string>
+    <string name="diagnostics_checked_at">Comprobado</string>
+    <string name="runtime_initialization">Inicialización del descargador</string>
+    <string name="network_status">Red</string>
+    <string name="connection_validated">Acceso a Internet confirmado</string>
+    <string name="connection_unvalidated">Conectado, pero el acceso a Internet no está confirmado</string>
+    <string name="diagnostic_unavailable">No disponible</string>
+    <string name="notifications_permission">Permiso de notificaciones</string>
+    <string name="download_folder_access">Acceso a la carpeta de descargas</string>
+    <string name="free_storage">Espacio compartido disponible</string>
+    <string name="battery_optimization">Optimización de batería</string>
+    <string name="battery_optimized">Activada; las comprobaciones en segundo plano pueden retrasarse</string>
+    <string name="battery_unrestricted">Sin restricciones</string>
+    <string name="diagnostic_attention">Requiere atención</string>
+    <string name="diagnostics_not_run">El diagnóstico aún no se ha ejecutado</string>
+    <string name="clear_filter">Restablecer filtro</string>
+    <string name="channel_filter_members">Contenido exclusivo para miembros encontrado</string>
+    <string name="channel_filter_free">No se encontró contenido exclusivo para miembros</string>
+    <string name="channel_filter_unknown_paid">Estado del contenido de pago desconocido</string>
+    <string name="channel_resolving">Obteniendo detalles del canal de Rutube…</string>
+    <string name="channel_mark_recent">Marcar los últimos…</string>
+    <string name="channel_mark_confirm">¿Marcar los últimos elementos de las secciones activadas de «%1$s» como ya procesados? Las comprobaciones de canales los omitirán. No aparecerán en el archivo de ficheros.</string>
+    <string name="channel_mark_result">Marcados: %1$d. Errores de comprobación: %2$d.</string>
+    <string name="channel_mark_stop_downloads">Primero detén las descargas y espera a que terminen.</string>
+    <string name="move_up">Mover arriba</string>
+    <string name="move_down">Mover abajo</string>
+    <string name="queue_active_items_kept">Las descargas activas permanecen en la cola</string>
+    <string name="app_update_available">Actualización disponible: %1$s</string>
+    <string name="app_update_confirmation">¿Descargar la actualización y abrir el instalador de Android?</string>
+    <string name="app_update_current">No se encontró una versión de Android compatible más reciente.</string>
+    <string name="app_update_failed">No se pudo verificar o instalar la actualización. Compruebe la conexión y la firma del APK.</string>
+    <string name="status_paused">En pausa</string>
+    <string name="status_processing">Procesando vídeo</string>
+    <string name="status_waiting_network">Esperando la red</string>
+    <string name="download_pause">Pausar</string>
+    <string name="download_resume">Continuar</string>
+    <string name="download_retry">Reintentar</string>
+    <string name="download_network_error">Conexión interrumpida. Se conserva la descarga parcial. Puedes reintentar.</string>
+    <string name="folder_open_fallback">Se ha abierto el explorador de archivos del sistema. Selecciona la carpeta de descargas si no se abrió automáticamente.</string>
+    <string name="harvest_start">Iniciar la cola y las descargas de canales</string>
+    <string name="harvest_queue_before">Descargando enlaces de la cola</string>
+    <string name="harvest_channels">Revisando y descargando canales</string>
+    <string name="harvest_queue_after">Revisando la cola de nuevo</string>
+    <string name="harvest_completed">Revisión completada. Descargas: %1$d · Errores: %2$d</string>
+    <string name="channel_validation_completed">Canales revisados: %1$d · Errores: %2$d</string>
+    <string name="overview_check_completed">Última comprobación finalizada</string>
+    <string name="overview_scanning">Comprobando</string>
+    <string name="overview_downloaded">Descargados: %1$d</string>
+    <string name="overview_no_new">No se encontraron vídeos nuevos</string>
+    <string name="overview_today">Descargados hoy: %1$d</string>
+    <string name="overview_checked">Canales comprobados: %1$d / %2$d</string>
+    <string name="overview_errors">Errores: %1$d</string>
+    <string name="overview_checking_channel">Comprobando canal</string>
+    <string name="clear_temporary_files">Eliminar archivos temporales</string>
+    <string name="engine_updates_with_app">yt-dlp se actualiza junto con la aplicación.</string>
+    <string name="downloads_short">Archivos</string>
+    <string name="service_subtitles_omitted">Vídeo guardado. Subtítulos no añadidos: %1$s</string>
+    <string name="download_recovery_title">Descargas interrumpidas</string>
+    <string name="download_recovery_text">Pulsa Reanudar para continuar las descargas después del reinicio.</string>
+    <string name="transfer_export">Exportar datos</string>
+    <string name="transfer_import">Importar datos</string>
+    <string name="transfer_export_warning">El archivo cifrado incluye credenciales de Telegram, pero no vídeos ni archivos temporales. Use una contraseña distinta de al menos 12 caracteres. Mantenga la beta hasta verificar la transferencia.</string>
+    <string name="transfer_import_warning">La importación requiere una base vacía y sustituye los ajustes. Las descargas se pausarán y los horarios se desactivarán. Seleccione de nuevo la carpeta y actualice la disponibilidad del archivo.</string>
+    <string name="transfer_password">Contraseña de transferencia (12+ caracteres)</string>
+    <string name="transfer_password_repeat">Repita la contraseña</string>
+    <string name="transfer_exported">Exportación guardada y lectura del archivo verificada</string>
+    <string name="transfer_imported">Datos importados. Seleccione la carpeta, actualice el archivo y active los horarios.</string>
+    <string name="transfer_not_empty">Importación rechazada: no se sobrescribirán los datos existentes</string>
+    <string name="transfer_stop_downloads">Detenga las descargas y comprobaciones de canales antes de transferir</string>
+    <string name="transfer_credentials_error">Restaure o borre las credenciales ilegibles de Telegram antes de exportar</string>
+    <string name="transfer_failed">Error de transferencia: compruebe la contraseña, el archivo y el acceso al almacenamiento</string>
+    <string name="transfer_archive_error">Restaure el acceso a los archivos o actualice su disponibilidad antes de exportar</string>
+    <string name="transfer_pending">Datos importados; reinicie la aplicación para completar los ajustes. No repita la importación.</string>
+</resources>

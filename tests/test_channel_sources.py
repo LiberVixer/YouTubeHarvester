@@ -12,15 +12,18 @@ from scripts.check_channel_sections import check_paid_content, check_section
 from scripts.downloader import Downloader
 from scripts.mark_channel_archived import append_archive, collect_ids, read_archive
 from yth_common import (
+    channel_recent_playlist_args,
     channel_section_url,
     channel_sections,
     channel_supports_paid_check,
+    is_rutube_collection,
     normalize_channel_url,
     rutube_channel_metadata,
 )
 
 
 RUTUBE = "https://rutube.ru/channel/23704195"
+COLLECTION = "https://rutube.ru/metainfo/tv/405933"
 YOUTUBE = "https://www.youtube.com/@example"
 VIDEO_ID = "d4f6c71ef692390960e4a3953fdc5be2"
 
@@ -31,6 +34,7 @@ class ChannelUrlTests(unittest.TestCase):
             " https://rutube.ru/channel/23704195/videos/?a=1#top ": RUTUBE,
             "http://www.rutube.ru/channel/023704195/shorts/": RUTUBE,
             "https://rutube.ru/u/rutube/videos/": "https://rutube.ru/u/rutube",
+            "http://www.rutube.ru/metainfo/tv/0405933/?utm_source=test#episodes": COLLECTION,
             "https://youtube.com/@example/streams?si=abc": YOUTUBE,
             "https://m.youtube.com/@example/shorts": YOUTUBE,
             "https://www.youtube.com/channel/UCexample/videos": "https://www.youtube.com/channel/UCexample",
@@ -47,6 +51,8 @@ class ChannelUrlTests(unittest.TestCase):
             f"https://rutube.ru/video/{VIDEO_ID}/", "https://rutube.ru/plst/1/",
             "https://rutube.ru/channel/1/playlists/", "https://rutube.ru/channel/1/streams/",
             "https://rutube.ru/channel/no/", "https://rutube.ru/u/", "https://rutube.ru/channel/1/unknown",
+            "https://rutube.ru/metainfo/tv/no/", "https://rutube.ru/metainfo/tv/405933/videos",
+            "https://rutube.ru/metainfo/tv/405933/../1", "https://evil.test/metainfo/tv/405933/",
             "https://youtube.com/watch?v=05h8f6kX6g8", "https://youtube.com/playlist?list=123",
             "https://youtube.com/@example/videos/extra", "https://vk.com/channel/1",
             "https://rutube.ru.evil.test/channel/1", "https://evil.test/@example",
@@ -66,6 +72,24 @@ class ChannelUrlTests(unittest.TestCase):
         self.assertEqual(channel_section_url(RUTUBE, "streams"), "")
         self.assertTrue(channel_supports_paid_check(YOUTUBE))
         self.assertFalse(channel_supports_paid_check(RUTUBE))
+
+    def test_collection_is_a_separate_video_only_source(self):
+        self.assertTrue(is_rutube_collection(COLLECTION + "/"))
+        self.assertFalse(is_rutube_collection(RUTUBE))
+        self.assertFalse(is_rutube_collection("https://evil.test/metainfo/tv/405933"))
+        self.assertEqual(channel_sections(COLLECTION), ("videos",))
+        self.assertEqual(channel_section_url(COLLECTION, "videos"), COLLECTION)
+        for section in ("shorts", "streams"):
+            self.assertEqual(channel_section_url(COLLECTION, section), "")
+        self.assertFalse(channel_supports_paid_check(COLLECTION))
+        self.assertNotEqual(normalize_channel_url(COLLECTION), "https://rutube.ru/channel/405933")
+
+    def test_recent_limits_select_the_end_of_show_playlists_only(self):
+        for limit in (1, 3, 20):
+            self.assertEqual(channel_recent_playlist_args(COLLECTION, limit),
+                             ["--playlist-items", f"-1:-{limit}:-1", "--no-lazy-playlist"])
+            for channel in (RUTUBE, YOUTUBE):
+                self.assertEqual(channel_recent_playlist_args(channel, limit), ["--playlist-items", f"1-{limit}"])
 
 
 class RutubeMetadataTests(unittest.TestCase):
@@ -117,7 +141,67 @@ class RutubeMetadataTests(unittest.TestCase):
         urlopen.assert_not_called()
 
 
+class RutubeCollectionMetadataTests(unittest.TestCase):
+    def playlist_result(self, collection_id="405933"):
+        return subprocess.CompletedProcess([], 0, json.dumps({
+            "id": collection_id, "title": "Titans", "entries": [{
+                "uploader": "TNT", "uploader_id": "23463954",
+                "thumbnail": "https://pic.rtbcdn.ru/video.jpg",
+            }],
+        }), "")
+
+    @patch("yth_common.urllib.request.urlopen")
+    @patch("yth_common.subprocess.run")
+    def test_show_uses_its_own_title_poster_and_url(self, run, urlopen):
+        run.return_value = self.playlist_result()
+        poster = "https://pic.rtbcdn.ru/show.jpg"
+        urlopen.return_value = io.BytesIO(json.dumps({"id": 405933, "name": "Titans", "picture": poster}).encode())
+        result = rutube_channel_metadata(COLLECTION + "/", ["yt-dlp"])
+        self.assertEqual(result, {"channel": COLLECTION, "title": "Titans", "thumbnail_url": poster})
+        self.assertEqual(run.call_args.args[0][-1], COLLECTION)
+        self.assertEqual(urlopen.call_args.args[0].full_url, "https://rutube.ru/api/metainfo/tv/405933/?format=json")
+
+    @patch("yth_common.urllib.request.urlopen", side_effect=OSError("offline"))
+    @patch("yth_common.subprocess.run")
+    def test_missing_poster_keeps_show_identity_not_author(self, run, urlopen):
+        run.return_value = self.playlist_result()
+        self.assertEqual(rutube_channel_metadata(COLLECTION, ["yt-dlp"]),
+                         {"channel": COLLECTION, "title": "Titans", "thumbnail_url": ""})
+
+    @patch("yth_common.urllib.request.urlopen")
+    @patch("yth_common.subprocess.run")
+    def test_ignores_wrong_show_artwork_and_untrusted_urls(self, run, urlopen):
+        run.return_value = self.playlist_result()
+        for data in (
+            {"id": 123, "name": "Wrong show", "picture": "https://pic.rtbcdn.ru/wrong.jpg"},
+            {"id": 405933, "picture": "https://pic.rtbcdn.ru.evil.test/wrong.jpg"},
+            {"id": 405933, "picture": "file:///tmp/wrong.jpg"},
+        ):
+            with self.subTest(data=data):
+                urlopen.return_value = io.BytesIO(json.dumps(data).encode())
+                self.assertEqual(rutube_channel_metadata(COLLECTION, ["yt-dlp"]),
+                                 {"channel": COLLECTION, "title": "Titans", "thumbnail_url": ""})
+
+    @patch("yth_common.urllib.request.urlopen")
+    @patch("yth_common.subprocess.run")
+    def test_rejects_playlist_with_different_show_id(self, run, urlopen):
+        run.return_value = self.playlist_result("123")
+        with self.assertRaises(ValueError):
+            rutube_channel_metadata(COLLECTION, ["yt-dlp"])
+        urlopen.assert_not_called()
+
+
 class ChannelProbeTests(unittest.TestCase):
+    @patch("scripts.check_channel_sections.subprocess.run")
+    def test_collection_probes_its_root_and_never_unsupported_sections(self, run):
+        run.return_value = subprocess.CompletedProcess([], 0, VIDEO_ID, "")
+        self.assertEqual(check_section(["yt-dlp"], COLLECTION, "videos", 5)["status"], "available")
+        self.assertEqual(run.call_args.args[0][-1], COLLECTION)
+        for section in ("shorts", "streams"):
+            self.assertEqual(check_section(["yt-dlp"], COLLECTION, section, 5)["status"], "unsupported")
+        self.assertEqual(check_paid_content(["yt-dlp"], COLLECTION, {}, 5), "unknown")
+        self.assertEqual(run.call_count, 1)
+
     @patch("scripts.check_channel_sections.subprocess.run")
     def test_no_network_for_unsupported_streams_and_paid_checks(self, run):
         self.assertEqual(check_section(["yt-dlp"], RUTUBE, "streams", 5)["status"], "unsupported")
@@ -138,6 +222,25 @@ class ChannelProbeTests(unittest.TestCase):
 
 
 class ChannelArchiveTests(unittest.TestCase):
+    @patch("scripts.mark_channel_archived.subprocess.run")
+    def test_partial_collection_is_not_accepted_even_with_printed_ids(self, run):
+        run.return_value = subprocess.CompletedProcess([], 1, VIDEO_ID + "\n", "page 3 timeout")
+        ids, error = collect_ids(["yt-dlp"], COLLECTION, "videos", 5)
+        self.assertEqual(ids, [])
+        self.assertIn("timeout", error)
+        self.assertIn("--abort-on-error", run.call_args.args[0])
+
+    @patch("scripts.mark_channel_archived.subprocess.run")
+    def test_collection_marks_recent_entries_from_the_same_end_as_downloads(self, run):
+        run.return_value = subprocess.CompletedProcess([], 0, VIDEO_ID + "\n", "")
+        self.assertEqual(collect_ids(["yt-dlp"], COLLECTION, "videos", 1), ([VIDEO_ID], ""))
+        command = run.call_args.args[0]
+        self.assertEqual(command[-1], COLLECTION)
+        self.assertEqual(command[command.index("--playlist-items") + 1], "-1:-1:-1")
+        self.assertIn("--no-lazy-playlist", command)
+        self.assertEqual(collect_ids(["yt-dlp"], COLLECTION, "shorts", 1), ([], ""))
+        self.assertEqual(run.call_count, 1)
+
     def test_append_preserves_archive_without_final_newline(self):
         with tempfile.TemporaryDirectory() as directory:
             archive = Path(directory) / "archive.txt"
@@ -232,6 +335,54 @@ class ChannelDownloaderTests(unittest.TestCase):
         d.run_yt_dlp.assert_not_called()
         sleep.assert_not_called()
         self.assertEqual(d.type_status, {"videos": "disabled", "shorts": "disabled", "streams": "disabled"})
+
+    @patch("scripts.downloader.time.sleep")
+    @patch("scripts.downloader.collect_ids", return_value=([VIDEO_ID], ""))
+    def test_collection_scans_only_recent_videos_and_preserves_its_identity(self, collect, sleep):
+        d = self.downloader
+        d.channels_file.write_text(COLLECTION + "/\n", encoding="utf-8")
+        d.channel_rules_file.write_text(json.dumps({COLLECTION: {"shorts": True, "streams": True}}), encoding="utf-8")
+        d.run_yt_dlp = Mock(return_value=[])
+        d.process_channels()
+        d.run_yt_dlp.assert_called_once()
+        command = d.run_yt_dlp.call_args.args[0]
+        self.assertEqual(command[-1], f"https://rutube.ru/video/{VIDEO_ID}/")
+        self.assertIn("--no-playlist", command)
+        self.assertEqual(collect.call_args.args[1:], (COLLECTION, "videos", 2))
+        self.assertEqual(d.channel_url, COLLECTION)
+        self.assertEqual(d.channels_checked, 1)
+        self.assertEqual(d.type_status, {"videos": "done", "shorts": "disabled", "streams": "disabled"})
+        sleep.assert_called_once_with(1)
+
+    @patch("scripts.downloader.time.sleep")
+    @patch("scripts.downloader.collect_ids")
+    def test_collection_never_downloads_partial_or_marked_entries(self, collect, sleep):
+        d = self.downloader
+        d.channels_file.write_text(COLLECTION, encoding="utf-8")
+        d.run_yt_dlp = Mock(return_value=[])
+        collect.return_value = ([VIDEO_ID], "page 3 timeout")
+        d.process_channels()
+        d.run_yt_dlp.assert_not_called()
+        self.assertEqual(d.failed_count, 1)
+        d.ensure_video_in_archive("rutube", VIDEO_ID)
+        collect.return_value = ([VIDEO_ID], "")
+        d.process_channels()
+        d.run_yt_dlp.assert_not_called()
+
+
+    @patch("scripts.downloader.time.sleep")
+    def test_collection_download_keeps_its_archive_link_and_rutube_video_id(self, sleep):
+        d = self.downloader
+        video = d.temp_dir / f"Episode - TNT [Rutube] [{VIDEO_ID}] [videos] [720p].mp4"
+        video.write_bytes(b"completed-test-video")
+        d.process_type_lines([f"[download] Destination: {video}"], COLLECTION, "Titans", "videos")
+        entry = json.loads(d.archive_details_file.read_text(encoding="utf-8"))
+        self.assertEqual(entry["channel_url"], COLLECTION)
+        self.assertEqual(entry["source"], "rutube")
+        self.assertEqual(entry["source_url"], f"https://rutube.ru/video/{VIDEO_ID}/")
+        self.assertTrue(Path(entry["file_path"]).is_file())
+        self.assertTrue(d.archive_has_video("rutube", VIDEO_ID))
+        self.assertFalse(video.exists())
 
     def test_rutube_does_not_get_youtube_paid_status(self):
         d = self.downloader

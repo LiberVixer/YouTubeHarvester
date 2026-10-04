@@ -15,9 +15,11 @@ import json
 import os
 import re
 import shutil
+import signal
 import stat
 import subprocess
 import sys
+import threading
 import time
 import urllib.request
 from collections.abc import Callable
@@ -34,11 +36,13 @@ from yth_common import (  # noqa: E402
     archive_entry_matches_variant,
     archive_entry_source,
     canonical_media_url,
+    channel_recent_playlist_args,
     channel_section_url,
     channel_sections,
     channel_supports_paid_check,
     extract_media_id,
     fix_mojibake,
+    is_rutube_collection,
     media_resolution_from_path,
     media_source_from_url,
     normalize_media_source,
@@ -50,6 +54,7 @@ from yth_common import (  # noqa: E402
     utf8_subprocess_env,
     yt_dlp_command,
 )
+from scripts.mark_channel_archived import collect_ids  # noqa: E402
 
 
 TYPE_LABELS = {
@@ -92,11 +97,19 @@ SUBTITLE_DOWNLOAD_ERROR_RE = re.compile(
     re.IGNORECASE,
 )
 VIDEO_DATA_HTTP_403_RE = re.compile(
-    r"unable to download video data: HTTP Error 403",
+    r"(?:unable to download video data:|Got error:)\s*HTTP Error 403",
+    re.IGNORECASE,
+)
+YOUTUBE_ACCESS_BLOCK_RE = re.compile(
+    r"sign in to confirm you(?:'|’|\s+)re not a bot|confirm you(?:'|’|\s+)re not a bot",
     re.IGNORECASE,
 )
 HTTP_403_URL_REFRESH_RETRIES = 3
 YOUTUBE_403_FALLBACK_CLIENT = "web_embedded"
+
+
+class YoutubeAccessBlocked(RuntimeError):
+    pass
 
 
 def short_channel_name(channel: str) -> str:
@@ -153,6 +166,9 @@ class Downloader:
         self.log_keep_count = positive_int(os.environ.get("YTD_LOG_KEEP_COUNT", env_values.get("LOG_KEEP_COUNT")), 3)
         self.cleanup_temp = truthy(os.environ.get("YTD_CLEANUP_TEMP", env_values.get("CLEANUP_TEMP", "1")))
         self.retry_failed_queue = truthy(os.environ.get("YTD_RETRY_FAILED_QUEUE", env_values.get("RETRY_FAILED_QUEUE", "1")))
+        self.socket_timeout = positive_int(os.environ.get("YTD_SOCKET_TIMEOUT"), 15)
+        self.download_retries = positive_int(os.environ.get("YTD_DOWNLOAD_RETRIES"), 5)
+        self.fragment_retries = positive_int(os.environ.get("YTD_FRAGMENT_RETRIES"), 3)
         self.max_resolution = os.environ.get("YTD_MAX_RESOLUTION", env_values.get("MAX_RESOLUTION", "1080")).strip()
         self.audio_tracks: list[dict] = []
         try:
@@ -241,25 +257,38 @@ class Downloader:
             audio_suffix = "+".join(audio_ids)
             if value in {"480", "720", "1080", "1440", "2160"}:
                 return (
+                    f"bestvideo[ext=mp4][protocol=https][height<={value}]+{audio_suffix}/"
                     f"bestvideo[ext=mp4][height<={value}]+{audio_suffix}/"
                     f"bestvideo[height<={value}]+{audio_suffix}"
                 )
             self.max_resolution = "best" if value.lower() == "best" else "1080"
             if self.max_resolution == "best":
-                return f"bestvideo[ext=mp4]+{audio_suffix}/bestvideo+{audio_suffix}"
+                return (
+                    f"bestvideo[ext=mp4][protocol=https]+{audio_suffix}/"
+                    f"bestvideo[ext=mp4]+{audio_suffix}/bestvideo+{audio_suffix}"
+                )
             return (
+                f"bestvideo[ext=mp4][protocol=https][height<=1080]+{audio_suffix}/"
                 f"bestvideo[ext=mp4][height<=1080]+{audio_suffix}/"
                 f"bestvideo[height<=1080]+{audio_suffix}"
             )
         if value in {"480", "720", "1080", "1440", "2160"}:
             return (
+                f"bestvideo[ext=mp4][protocol=https][height<={value}]+bestaudio[ext=m4a][protocol=https]/"
                 f"bestvideo[ext=mp4][height<={value}]+bestaudio[ext=m4a]/"
                 f"best[ext=mp4][height<={value}]/best[height<={value}]"
             )
         self.max_resolution = "best" if value.lower() == "best" else "1080"
         if self.max_resolution == "best":
-            return "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best"
-        return "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/best[ext=mp4][height<=1080]/best[height<=1080]"
+            return (
+                "bestvideo[ext=mp4][protocol=https]+bestaudio[ext=m4a][protocol=https]/"
+                "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best"
+            )
+        return (
+            "bestvideo[ext=mp4][protocol=https][height<=1080]+bestaudio[ext=m4a][protocol=https]/"
+            "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/"
+            "best[ext=mp4][height<=1080]/best[height<=1080]"
+        )
 
     def ordered_audio_tracks(self) -> list[dict]:
         combined = [track for track in self.audio_tracks if track.get("format_kind") == "combined"]
@@ -350,8 +379,6 @@ class Downloader:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.touch(exist_ok=True)
         self.ensure_temp_marker()
-        with contextlib.suppress(OSError):
-            self.stop_file.unlink(missing_ok=True)
 
     def human_size(self, size: int) -> str:
         value = float(max(0, int(size or 0)))
@@ -480,7 +507,15 @@ class Downloader:
         return [line.strip() for line in lines if line.strip() and not line.strip().startswith("#")]
 
     def save_queue(self, urls: list[str]) -> None:
-        self.queue_file.write_text("\n".join(urls) + ("\n" if urls else ""), encoding="utf-8")
+        pending = self.queue_file.with_suffix(self.queue_file.suffix + ".tmp")
+        pending.write_text("\n".join(urls) + ("\n" if urls else ""), encoding="utf-8")
+        pending.replace(self.queue_file)
+
+    def remove_queued_url(self, url: str) -> None:
+        pending = self.read_nonempty_lines(self.queue_file)
+        if url in pending:
+            pending.remove(url)
+            self.save_queue(pending)
 
     def load_channel_rules(self) -> dict:
         try:
@@ -961,6 +996,7 @@ class Downloader:
                 encoding="utf-8",
                 errors="replace",
                 bufsize=1,
+                start_new_session=os.name != "nt",
             )
         except FileNotFoundError:
             self.last_yt_dlp_return_code = 127
@@ -980,17 +1016,15 @@ class Downloader:
 
             if not self.stop_file.exists():
                 return
-            if proc.poll() is None:
-                with contextlib.suppress(OSError):
-                    proc.terminate()
-                try:
-                    proc.wait(timeout=10)
-                except subprocess.TimeoutExpired:
-                    with contextlib.suppress(OSError):
-                        proc.kill()
-                    with contextlib.suppress(OSError):
-                        proc.wait(timeout=5)
             raise KeyboardInterrupt
+
+        def stop_child(force: bool = False) -> None:
+            if os.name != "nt":
+                with contextlib.suppress(ProcessLookupError):
+                    os.killpg(proc.pid, signal.SIGKILL if force else signal.SIGTERM)
+            elif proc.poll() is None:
+                with contextlib.suppress(OSError):
+                    proc.kill() if force else proc.terminate()
 
         output = proc.stdout
         if output is None:
@@ -1002,33 +1036,61 @@ class Downloader:
                 self.failed_count += 1
             return lines
 
-        for raw_line in output:
-            line = fix_mojibake(raw_line.rstrip("\n"))
-            if item_completed is not None and PLAYLIST_ITEM_RE.match(line):
-                if playlist_item_started:
-                    finish_item(item_lines)
-                    item_lines = []
-                playlist_item_started = True
+        watcher_done = threading.Event()
 
-            self.update_status_from_line(line, type_name)
-            if not re.match(r"^\[download\]\s+[0-9]+(?:\.[0-9]+)?%", line):
-                if self.is_members_only_line(line):
-                    message = self.members_only_log_line(line)
-                    self.set_channel_paid_content_status(self.channel_url, PAID_CONTENT_HAS)
-                    self.log(message)
-                    lines.append(message)
+        def watch_stop() -> None:
+            while not watcher_done.wait(0.25):
+                if not self.stop_file.exists() or proc.poll() is not None:
+                    continue
+                stop_child()
+                if not watcher_done.wait(3) and proc.poll() is None:
+                    stop_child(force=True)
+                return
+
+        watcher = threading.Thread(target=watch_stop, daemon=True)
+        watcher.start()
+        try:
+            for raw_line in output:
+                line = fix_mojibake(raw_line.rstrip("\n"))
+                if item_completed is not None and PLAYLIST_ITEM_RE.match(line):
                     if playlist_item_started:
-                        item_lines.append(message)
-                else:
-                    if (
-                        not VIDEO_DATA_HTTP_403_RE.search(line)
-                        and (report_failure or not SUBTITLE_DOWNLOAD_ERROR_RE.search(line))
-                    ):
-                        self.log(line)
-                    lines.append(line)
-                    if playlist_item_started:
-                        item_lines.append(line)
-        return_code = proc.wait()
+                        finish_item(item_lines)
+                        item_lines = []
+                    playlist_item_started = True
+
+                self.update_status_from_line(line, type_name)
+                if not re.match(r"^\[download\]\s+[0-9]+(?:\.[0-9]+)?%", line):
+                    if self.is_members_only_line(line):
+                        message = self.members_only_log_line(line)
+                        self.set_channel_paid_content_status(self.channel_url, PAID_CONTENT_HAS)
+                        self.log(message)
+                        lines.append(message)
+                        if playlist_item_started:
+                            item_lines.append(message)
+                    else:
+                        if (
+                            not VIDEO_DATA_HTTP_403_RE.search(line)
+                            and (report_failure or not SUBTITLE_DOWNLOAD_ERROR_RE.search(line))
+                        ):
+                            self.log(line)
+                        lines.append(line)
+                        if playlist_item_started:
+                            item_lines.append(line)
+            return_code = proc.wait()
+        finally:
+            watcher_done.set()
+            watcher.join(timeout=4)
+            if proc.poll() is None:
+                stop_child()
+                try:
+                    proc.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    stop_child(force=True)
+                    proc.wait()
+            elif self.stop_file.exists():
+                stop_child()
+            output.close()
+        self.check_stop()
         self.last_yt_dlp_return_code = return_code
         command_source = media_source_from_url(command[-1] if command else "")
         if (
@@ -1405,6 +1467,7 @@ class Downloader:
                 self.log(f"   ❌ Видео не перемещено: {exc}")
                 self.failed_count += 1
                 self.remove_video_from_archive(source, video_id)
+                final_path = None
 
             archive_recorded = False
             if final_path is not None:
@@ -1467,10 +1530,13 @@ class Downloader:
             "--ignore-errors",
             "--no-abort-on-error",
             "--no-warnings",
+            "--socket-timeout",
+            str(self.socket_timeout),
             "--retries",
-            "20",
+            str(self.download_retries),
             "--fragment-retries",
-            "20",
+            str(self.fragment_retries),
+            "--abort-on-unavailable-fragments",
             "--no-cache-dir",
             "--js-runtimes",
             self.js_runtime_arg(),
@@ -1497,8 +1563,11 @@ class Downloader:
             command.append("--windows-filenames")
         return command
 
-    def process_queue_urls(self, queued_urls: list[str], retry_failed: bool, *, allow_variants: bool = False) -> None:
-        for url in queued_urls:
+    def process_queue_urls(
+        self, queued_urls: list[str], retry_failed: bool, *, allow_variants: bool = False,
+        manage_queue: bool = False,
+    ) -> None:
+        for queue_index, url in enumerate(queued_urls):
             self.check_stop()
             self.state = "searching"
             self.channel_url = url
@@ -1519,15 +1588,19 @@ class Downloader:
                         self.log(f"   🗃 Такой вариант уже есть в архиве, пропускаем: {video_id}")
                         self.state = "searching"
                         self.write_status()
+                        if manage_queue:
+                            self.remove_queued_url(url)
                         continue
                     bypass_service_archive = self.archive_has_video(source, video_id)
                 elif self.archive_has_video(source, video_id):
                     self.log(f"   🗃 Уже есть в архиве, пропускаем: {video_id}")
                     self.state = "searching"
                     self.write_status()
+                    if manage_queue:
+                        self.remove_queued_url(url)
                     continue
 
-            before = self.new_count
+            before = self.downloaded_counts["queue"]
             command = self.yt_dlp_base_command(str(
                 self.temp_dir
                 / "%(title).150s - %(uploader).80s [%(extractor_key)s] [%(id)s] [queue] [%(height)sp].%(ext)s"
@@ -1537,25 +1610,40 @@ class Downloader:
                 command.append("--no-download-archive")
             command.append(url)
             lines = self.run_yt_dlp_with_subtitle_fallback(command, "queue")
+            if any(YOUTUBE_ACCESS_BLOCK_RE.search(line) for line in lines):
+                if retry_failed and not manage_queue:
+                    current_queue = self.read_nonempty_lines(self.queue_file)
+                    remaining = queued_urls[queue_index:]
+                    self.save_queue(list(dict.fromkeys([*current_queue, *remaining])))
+                self.failed_count += 1
+                raise YoutubeAccessBlocked
             self.process_type_lines(lines, url, "Очередь", "queue")
-            if self.new_count == before and not any("has already been recorded in the archive" in line for line in lines):
+            if self.downloaded_counts["queue"] == before and not any(
+                "has already been recorded in the archive" in line for line in lines
+            ):
                 if self.output_has_members_only(lines):
                     self.log("   🔒 Ссылка из очереди закрыта для участников, повтор не нужен")
+                    if manage_queue:
+                        self.remove_queued_url(url)
                     continue
                 if retry_failed:
-                    with self.queue_file.open("a", encoding="utf-8") as queue:
-                        queue.write(url + "\n")
+                    if not manage_queue:
+                        with self.queue_file.open("a", encoding="utf-8") as queue:
+                            queue.write(url + "\n")
                     self.log("   ⚠️ Не скачано из очереди, оставлено для повтора")
                 else:
                     self.log("   ⚠️ Не скачано из очереди, повтор отключён")
+                    if manage_queue:
+                        self.remove_queued_url(url)
                 self.failed_count += 1
+            elif manage_queue:
+                self.remove_queued_url(url)
 
     def process_queue(self) -> None:
         queued_urls = self.read_nonempty_lines(self.queue_file)
         if not queued_urls:
             return
-        self.save_queue([])
-        self.process_queue_urls(queued_urls, self.retry_failed_queue)
+        self.process_queue_urls(queued_urls, self.retry_failed_queue, manage_queue=True)
 
     def process_channels(self) -> None:
         channels = self.read_nonempty_lines(self.channels_file)
@@ -1616,8 +1704,28 @@ class Downloader:
                     / f"%(title).150s - %(uploader).80s [%(extractor_key)s] [%(id)s] [{type_name}] [%(height)sp].%(ext)s"
                 )
                 command = self.yt_dlp_base_command(output_template)
-                command.extend(["--playlist-items", f"1-{self.type_limit(type_name)}",
-                                channel_section_url(channel, type_name)])
+                if is_rutube_collection(channel):
+                    ids, error = collect_ids(yt_dlp_command(), channel, type_name, self.type_limit(type_name))
+                    self.check_stop()
+                    if error:
+                        self.log(f"   ❌ Не удалось прочитать подборку полностью; скачивание пропущено: {error}")
+                        self.failed_count += 1
+                        self.set_type_status(type_name, "error")
+                        self.write_status()
+                        time.sleep(1)
+                        continue
+                    ids = [video_id for video_id in ids if not self.archive_has_video("rutube", video_id)]
+                    if not ids:
+                        self.log("   🗃 Новых видео в подборке нет: последние элементы уже в архиве или список пуст")
+                        self.set_type_status(type_name, "done")
+                        self.write_status()
+                        time.sleep(1)
+                        continue
+                    command.append("--no-playlist")
+                    command.extend(canonical_media_url("rutube", video_id) for video_id in ids)
+                else:
+                    command.extend(channel_recent_playlist_args(channel, self.type_limit(type_name)))
+                    command.append(channel_section_url(channel, type_name))
                 lines = self.run_yt_dlp(
                     command,
                     type_name,
@@ -1629,6 +1737,9 @@ class Downloader:
                         check_stop_after=False,
                     ),
                 )
+                if any(YOUTUBE_ACCESS_BLOCK_RE.search(line) for line in lines):
+                    self.failed_count += 1
+                    raise YoutubeAccessBlocked
 
                 if self.new_count == before:
                     if any(MISSING_PAGE_RE.search(line) for line in lines):
@@ -1780,6 +1891,10 @@ class Downloader:
                 if self.read_nonempty_lines(self.queue_file):
                     self.log("📥 Повторная обработка очереди после проверки каналов")
                     self.process_queue()
+        except YoutubeAccessBlocked:
+            self.log("   ❌ YouTube временно ограничил запросы с текущего IP")
+            self.log("   ⚠️ Проверка остановлена; смените VPN-сервер или дождитесь снятия ограничения")
+            return self.rotate_logs(1)
         except KeyboardInterrupt:
             return self.rotate_logs(0)
 

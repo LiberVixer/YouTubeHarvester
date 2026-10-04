@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="beta">БЕТА</string><string name="theme">Тема</string><string name="menu">Меню</string><string name="actions">Дії</string>
+    <string name="filter">Фільтр</string><string name="refresh">Оновити</string><string name="download">Завантажити</string>
+    <string name="add_to_queue">До черги</string><string name="queue_short">Черга</string><string name="archive">Архів</string><string name="overview">Огляд</string>
+    <string name="channels">Канали</string><string name="settings">Налаштування</string><string name="video">Відео</string><string name="shorts">Shorts</string>
+    <string name="streams">Трансляції</string><string name="none">Немає</string><string name="automatic">Автоматично</string>
+    <string name="best">Найкраща</string><string name="save">Зберегти</string><string name="add">Додати</string><string name="delete">Видалити</string>
+    <string name="folder">Папка</string><string name="file">Файл</string><string name="source">Джерело</string>
+    <string name="enabled">Увімкнено</string><string name="disabled">Вимкнено</string><string name="selected_count">Вибрано: %1$d</string>
+    <string name="url_hint">URL YouTube, VK або Rutube</string><string name="channels_count">Каналів: %1$d</string><string name="queue_count">Черга: %1$d</string>
+    <string name="archive_count">Архів: %1$d</string><string name="channel_check">Перевірка каналів</string>
+    <string name="start">Запустити</string>
+
+    <string name="downloaded_today">Завантажено сьогодні: Відео: %1$d · Shorts: %2$d · Трансляції: %3$d</string><string name="preview_loading">Завантаження перегляду…</string>
+    <string name="preview_unavailable">Попередній перегляд недоступний</string><string name="waiting_for_download">Очікування завантаження</string>
+    <string name="add_link_or_scan">Додайте посилання або запустіть перевірку каналів</string><string name="downloads">Завантаження</string>
+    <string name="quick">Швидко</string><string name="temporary_short">Тимч.</string><string name="stop_download">Зупинити завантаження</string>
+    <string name="download_progress">%1$s: %2$d%%</string><string name="add_channel">Додати канал</string><string name="search_channels">Пошук каналів</string>
+    <string name="check_channels">Перевірити канали</string><string name="stop_check">Зупинити перевірку</string><string name="check_paid_content">Перевіряти платний вміст</string>
+    <string name="youtube_channel_url">Посилання на канал YouTube / Rutube</string><string name="check_counter">Перевірка %1$d / %2$d</string><string name="queued_videos">Відео в черзі</string>
+    <string name="empty_queue">Черга порожня</string><string name="empty_queue_hint">Додайте посилання вище. Запис збережеться після перезапуску.</string>
+    <string name="preview">ПЕРЕГЛЯД</string><string name="preview_prompt">Введіть посилання для перегляду</string><string name="preview_title_hint">Назва, канал і обкладинка</string>
+    <string name="preview_metadata_hint">Назва й канал з’являться тут</string><string name="ready_to_add">Готово до додавання</string>
+    <string name="download_selected">Завантажити вибране</string><string name="delete_selected">Видалити вибране</string>
+    <string name="scheduler">Планувальник</string><string name="checks_schedule">Розклад перевірок</string>
+    <string name="add_time">Додати час</string><string name="enabled_of_total">Увімкнено: %1$d із %2$d</string><string name="loading_data">Отримання даних…</string>
+    <string name="scheduler_android_hint">Android виконує перевірку приблизно у вибраний час, коли доступні мережа й ресурси батареї.</string>
+    <string name="schedule_empty">Час перевірок ще не додано</string>
+    <string name="last_run_value">Останній запуск: %1$s</string>
+    <string name="never_run">Ще не запускалося</string>
+    <string name="delete_time">Видалити час</string>
+    <string name="schedule_save_error">Не вдалося зберегти розклад</string>
+    <string name="schedule_delete_error">Не вдалося видалити розклад</string>
+    <string name="schedule_time_exists">Цей час уже є в розкладі</string>
+    <string name="background_check_channel">Перевірки каналів за розкладом</string>
+    <string name="background_check_title">Перевіряємо канали</string>
+    <string name="background_check_text">Шукаємо нові відео у фоновому режимі</string>
+    <string name="archive_empty">Архів порожній</string><string name="archive_empty_hint">Тут з’являться завершені завантаження. Кожна роздільність зберігається окремо.</string>
+    <string name="nothing_found">Нічого не знайдено</string><string name="nothing_found_hint">Змініть пошук або фільтр джерела.</string><string name="search_archive">Пошук в архіві</string>
+    <string name="all">Усі</string><string name="audio_details">🎧 Аудіо: %1$s</string><string name="subtitle_details">▤ Субтитри: %1$s</string>
+    <string name="download_options">Параметри завантаження</string><string name="resolution">Роздільність</string><string name="loading_tracks">Отримання доріжок через yt-dlp…</string>
+    <string name="tracks_unavailable">Список доріжок недоступний</string><string name="tracks_fallback">Завантаження продовжиться з автоматичним аудіо й без субтитрів.</string>
+    <string name="audio_tracks">Аудіодоріжки</string><string name="audio_tracks_missing">Окремі аудіодоріжки не знайдено</string><string name="subtitles">Субтитри</string>
+    <string name="subtitles_not_selected">Не вибрано</string><string name="subtitles_missing">Субтитри не знайдено</string><string name="original_tracks">Оригінальні доріжки</string>
+    <string name="preferred_languages">Російська, англійська, українська та мови інтерфейсу</string><string name="other_languages">Інші мови</string>
+    <string name="manual_subtitles">Неавтоматичні субтитри</string><string name="preferred_auto_subtitles">Автосубтитри: пріоритетні мови</string>
+    <string name="other_auto_subtitles">Автосубтитри: інші мови</string><string name="track_original">оригінал</string><string name="track_combined">разом із відео</string>
+    <string name="track_auto">автоматично</string><string name="track_manual">не автоматично</string><string name="loading_section">Завантаження</string>
+    <string name="temporary_files">Тимчасові файли</string><string name="channel_limits">Обмеження на канал</string><string name="interface_section">Інтерфейс</string>
+    <string name="language">Мова</string><string name="system_theme">Система</string><string name="light_theme">Світла</string><string name="dark_theme">Темна</string><string name="behavior">Поведінка</string><string name="watch_clipboard">Стежити за буфером</string>
+    <string name="watch_clipboard_hint">Відкривати швидке завантаження для нових посилань, поки програма на екрані</string>
+    <string name="system_notifications">Системні сповіщення</string>
+    <string name="quick_download">Швидке завантаження</string><string name="app_shortcut">Ярлик програми</string><string name="app_shortcut_hint">Додати ярлик швидкого завантаження на головний екран</string><string name="telegram">Telegram</string><string name="notifications">Сповіщення</string>
+    <string name="connection_settings">Налаштування з’єднання</string><string name="updates">Оновлення</string>
+    <string name="embedded_auto_update">Вбудовано · автооновлення</string><string name="embedded_apk">Вбудовано в APK</string><string name="embedded_apk_plural">Вбудовано в APK</string>
+    <string name="update_now">Оновити</string><string name="ytdlp_updating">Оновлення…</string><string name="ytdlp_updated">yt-dlp оновлено: %1$s</string><string name="ytdlp_already_current">Установлено актуальну версію yt-dlp: %1$s</string><string name="ytdlp_update_failed">Не вдалося оновити yt-dlp. Перевірте з’єднання та повторіть спробу.</string>
+    <string name="data_diagnostics">Дані й діагностика</string>
+    <string name="clear_thumbnail_cache">Очистити кеш обкладинок</string><string name="diagnostics">Діагностика</string><string name="system_components">Система й компоненти</string>
+    <string name="terms">Умови використання</string><string name="about">Про програму</string><string name="development_build">Тестова збірка Android</string><string name="licenses">Ліцензії ↗</string>
+    <string name="save_settings">Зберегти налаштування</string><string name="choose_folder">Вибрати папку</string><string name="restore_default_folder">Повернути Download/YTH</string>
+    <string name="downloads_folder_title">Папка завантажень</string><string name="folder_restriction">Android не дозволяє вибрати все сховище або саму папку Download. Стандартна папка Download/YTH уже доступна. Для іншого місця виберіть або створіть вкладену папку.</string>
+    <string name="choose_subfolder">Вибрати вкладену папку</string><string name="folder_picker_hint">Відкрийте або створіть вкладену папку, наприклад Download/YTH</string>
+    <string name="folder_access_failed">Android не надав постійного доступу до вибраної папки</string><string name="folder_selection_restricted">Android забороняє корінь сховища й сам Download. Виберіть вкладену папку.</string>
+    <string name="decrease">Зменшити</string><string name="increase">Збільшити</string>
+    <string name="status_queued">У черзі</string><string name="status_initializing">Підготовка рушія</string><string name="status_downloading">Завантаження</string>
+    <string name="status_publishing">Збереження файла</string><string name="status_completed">Завершено</string><string name="status_failed">Помилка</string><string name="status_cancelled">Скасовано</string>
+    <string name="invalid_channel_url">Введіть посилання на канал YouTube, @ім’я, канал або добірку Rutube</string>
+    <string name="channel_already_added">Цей канал уже додано</string>
+    <string name="channel_added">Канал додано</string>
+    <string name="channel_removed">Канал видалено</string>
+    <string name="channel_save_error">Не вдалося зберегти канал</string>
+    <string name="channel_delete_error">Не вдалося видалити канал</string>
+    <string name="channel_not_checked">Ще не перевірявся</string>
+    <string name="channels_empty">Каналів поки немає</string>
+    <string name="channels_empty_hint">Додайте вище канал YouTube, @ім’я, канал або добірку Rutube. Вибір типів вмісту збережеться на цьому пристрої.</string>
+    <string name="channel_scan_started">Перевірку каналів розпочато</string>
+    <string name="channel_scan_stopped">Перевірку каналів зупинено</string>
+    <string name="channel_scan_completed">Перевірку завершено. Додано до черги: %1$d</string>
+    <string name="channel_scanning_section">Перевіряється: %1$s%2$s</string>
+    <string name="channel_checked">Перевірку завершено</string>
+    <string name="channel_check_failed">Помилка перевірки</string>
+    <string name="service_preparing_queue">Підготовка черги завантажень</string>
+    <string name="service_download_channel_name">Завантаження відео</string>
+    <string name="service_download_channel_description">Перебіг фонових завантажень YouTube Harvester</string>
+    <string name="service_cancel_action">Скасувати</string>
+    <string name="service_eta_remaining">залишилося %1$s</string>
+    <string name="service_download_failed_title">Помилка завантаження</string>
+    <string name="service_download_completed_title">Завантаження завершено</string>
+    <string name="service_download_cancelled_title">Завантаження скасовано</string>
+    <string name="service_saved_to">Збережено: %1$s</string>
+    <string name="service_subtitles_unavailable_retry">Субтитри %1$s недоступні; повторюємо без них</string>
+    <string name="service_automatic_track">%1$s (автоматично)</string>
+    <string name="service_error_members_only">Відео доступне лише учасникам каналу</string>
+    <string name="service_error_private_video">Це приватне відео</string>
+    <string name="service_error_video_unavailable">Відео недоступне</string>
+    <string name="service_error_unknown_engine">Невідома помилка завантажувача</string>
+    <string name="service_error_storage_full">Пам’ять пристрою заповнена. Звільніть місце й повторіть спробу.</string>
+    <string name="service_error_prepare_temp">Не вдалося підготувати тимчасову папку</string>
+    <string name="service_error_output_missing">yt-dlp завершив роботу, але готовий відеофайл не знайдено</string>
+    <string name="service_error_android_timeout">Android зупинив тривале фонове завантаження. Відкрийте застосунок і повторіть.</string>
+    <string name="invalid_media_link">Підтримуване посилання на відео YouTube, VK або Rutube не знайдено</string>
+    <string name="quick_link_ready">Відкрито швидке завантаження</string>
+    <string name="clipboard_empty">У буфері обміну немає тексту</string>
+    <string name="downloads_open_error">Не вдалося відкрити системні завантаження</string>
+    <string name="temporary_cleaned">Видалено тимчасових папок: %1$d</string>
+    <string name="shortcut_requested">Запит на додавання ярлика надіслано</string>
+    <string name="shortcut_unsupported">Поточний лаунчер не підтримує закріплені ярлики</string>
+    <string name="shortcut_rejected">Лаунчер відхилив додавання ярлика</string>
+    <string name="all_files">Усі файли</string>
+    <string name="available_files">Доступні файли</string>
+    <string name="missing_files">Відсутні файли</string>
+    <string name="archive_refresh_result">Архів перевірено: доступно %1$d із %2$d файлів</string>
+    <string name="archive_delete_error">Не вдалося видалити запис архіву</string>
+    <string name="archive_record_removed">Запис видалено з архіву, відеофайл збережено</string>
+    <string name="archive_file_open_error">Не вдалося відкрити цей відеофайл</string>
+    <string name="archive_source_open_error">Не вдалося відкрити сторінку джерела</string>
+    <string name="archive_share_error">Не вдалося надіслати цей відеофайл</string>
+    <string name="remove_archive_record">Видалити запис з архіву?</string>
+    <string name="remove_archive_record_hint">«%1$s» зникне з архіву. Сам відеофайл не буде видалено.</string>
+    <string name="remove_record">Видалити запис</string>
+    <string name="cancel">Скасувати</string>
+    <string name="share">Надіслати</string>
+    <string name="share_video">Надіслати відео</string>
+    <string name="close">Закрити</string>
+    <string name="releases">Релізи</string>
+    <string name="open_link_error">Не вдалося відкрити посилання</string>
+    <string name="telegram_configured">Підключення налаштовано</string>
+    <string name="telegram_not_configured">Підключення не налаштовано</string>
+    <string name="telegram_connection_title">Підключення Telegram</string>
+    <string name="bot_token">Токен бота</string>
+    <string name="channel_id">ID каналу</string>
+    <string name="proxy_url_optional">URL проксі (необов’язково)</string>
+    <string name="proxy_url_hint">HTTP або SOCKS5, наприклад socks5://127.0.0.1:1080</string>
+    <string name="test_connection">Перевірити підключення</string>
+    <string name="telegram_testing">Перевіряємо підключення Telegram…</string>
+    <string name="telegram_test_message">Підключення YouTube Harvester до Telegram працює.</string>
+    <string name="telegram_test_success">Тестове повідомлення надіслано в Telegram</string>
+    <string name="telegram_test_failed">Не вдалося надіслати тестове повідомлення в Telegram</string>
+    <string name="telegram_settings_saved">Налаштування Telegram збережено, сповіщення ввімкнено</string>
+    <string name="telegram_credentials_required">Введіть токен бота та ID каналу</string>
+    <string name="telegram_credentials_invalid">Перевірте токен бота, ID каналу та адресу проксі</string>
+    <string name="thumbnail_cache_cleared">Кеш мініатюр очищено</string>
+    <string name="diagnostics_report">Звіт діагностики</string>
+    <string name="share_diagnostics">Поділитися діагностикою</string>
+    <string name="app_version">Версія застосунку</string>
+    <string name="android_version">Версія Android</string>
+    <string name="device">Пристрій</string>
+    <string name="supported_abis">Підтримувані ABI</string>
+    <string name="download_destination">Папка завантажень</string>
+    <string name="schedules_count">Розклади</string>
+    <string name="licenses_title">Ліцензії відкритого ПЗ</string>
+    <string name="licenses_text">Android-порт містить yt-dlp (Unlicense), youtubedl-android і його модуль FFmpeg (GPL-3.0), FFmpeg та ліцензії кодеків, QuickJS (MIT), AndroidX, Jetpack Compose, Coil, Room, WorkManager і відповідні ліцензії цих проєктів. Для публічного випуску бінарних файлів потрібна GPL-сумісна ліцензія проєкту та повний перелік сторонніх компонентів.</string>
+    <string name="settings_saved">Налаштування збережено</string>
+    <string name="settings_save_error">Не вдалося зберегти налаштування</string>
+    <string name="ready">Готово</string>
+    <string name="internal_app_cache">Внутрішній кеш застосунку</string>
+    <string name="data_migration_error">Не вдалося завершити перенесення локальних даних</string>
+
+    <string name="preview_loaded">Попередній перегляд завантажено</string>
+    <string name="already_in_queue">Це відео вже є в черзі</string>
+    <string name="queue_item_added">Додано до черги</string>
+    <string name="queue_save_error">Не вдалося зберегти запис черги</string>
+    <string name="download_options_loaded">Параметри завантаження отримано</string>
+    <string name="tracks_fallback_status">Доріжки не завантажено; доступний автоматичний вибір звуку</string>
+    <string name="download_started">Відео передано завантажувачу</string>
+    <string name="download_start_error">Не вдалося почати завантаження</string>
+    <string name="select_downloads">Позначте записи для завантаження</string>
+    <string name="downloads_started">Запущено завантажень: %1$d</string>
+    <string name="downloads_already_running">Вибрані записи вже завантажуються</string>
+    <string name="queue_start_error">Не вдалося запустити чергу</string>
+    <string name="download_cancelling">Скасування завантаження…</string>
+    <string name="queue_selection_save_error">Не вдалося зберегти вибір черги</string>
+    <string name="queue_items_removed">Вибрані записи видалено</string>
+    <string name="queue_remove_error">Не вдалося видалити вибрані записи</string>
+    <string name="language_save_error">Не вдалося зберегти мову інтерфейсу</string>
+    <string name="download_folder_selected">Папку завантажень вибрано</string>
+    <string name="download_folder_save_error">Не вдалося зберегти вибрану папку</string>
+    <string name="default_download_folder">Файли зберігатимуться в Download/YTH</string>
+    <string name="download_folder_reset_error">Не вдалося відновити стандартну папку завантажень</string>
+    <string name="publisher_invalid_tree_uri">Збережена адреса папки пошкоджена; виберіть папку завантажень знову</string>
+    <string name="publisher_permission_revoked">Доступ до папки завантажень відкликано; виберіть її знову в налаштуваннях</string>
+    <string name="publisher_directory_unavailable">Вибрана папка більше недоступна; виберіть її знову</string>
+    <string name="publisher_create_file_error">Android не зміг створити файл у вибраній папці</string>
+    <string name="publisher_open_file_error">Android не дозволив відкрити кінцевий файл</string>
+    <string name="publisher_create_default_error">Android не зміг створити файл у Download/YTH</string>
+    <string name="publisher_storage_permission">Дозвольте застосунку зберігати файли в пам’ять пристрою</string>
+    <string name="publisher_create_default_directory_error">Не вдалося створити папку Download/YTH</string>
+    <string name="preview_access_restricted">Доступ до цього відео обмежено</string>
+    <string name="preview_video_unavailable">Відео не знайдено або недоступне</string>
+    <string name="preview_rate_limited">Сервіс тимчасово обмежив кількість запитів</string>
+    <string name="preview_service_error">Сервіс не зміг надати попередній перегляд</string>
+    <string name="preview_incomplete_data">Сервіс повернув неповні дані попереднього перегляду</string>
+    <string name="preview_network_error">Не вдалося завантажити перегляд. Перевірте інтернет</string>
+    <string name="fallback_video_title">Відео %1$s %2$s</string>
+
+
+    <string name="metadata_tracks_error">Не вдалося отримати аудіодоріжки та субтитри</string>
+    <string name="metadata_pending">Метадані буде завантажено під час скачування</string>
+    <string name="application_logs">Журнал програми</string>
+    <plurals name="logs_retention_summary">
+        <item quantity="one">Зберігання: %1$d день</item>
+        <item quantity="few">Зберігання: %1$d дні</item>
+        <item quantity="many">Зберігання: %1$d днів</item>
+        <item quantity="other">Зберігання: %1$d дня</item>
+    </plurals>
+    <plurals name="logs_retention_value">
+        <item quantity="one">%1$d день</item>
+        <item quantity="few">%1$d дні</item>
+        <item quantity="many">%1$d днів</item>
+        <item quantity="other">%1$d дня</item>
+    </plurals>
+    <string name="log_empty">Журнал програми порожній</string>
+    <string name="log_load_error">Не вдалося прочитати журнал програми</string>
+    <string name="logs_cleared">Журнал програми очищено</string>
+    <string name="logs_retention_saved">Термін зберігання журналу змінено</string>
+    <string name="clear_logs">Очистити журнал</string>
+    <string name="clear_logs_confirm_title">Очистити журнал програми?</string>
+    <string name="clear_logs_confirm_message">Історію діагностики буде видалено назавжди. Завантаження й налаштування не зміняться.</string>
+    <string name="share_logs">Поділитися журналом</string>
+    <string name="logs_private_hint">Журнал зберігається приватно в UTF-8, не входить до резервної копії й ніколи не містить токен Telegram-бота.</string>
+    <string name="diagnostics_checking">Перевіряємо компоненти…</string>
+    <string name="diagnostics_run_error">Не вдалося виконати діагностику</string>
+    <string name="diagnostics_checked_at">Перевірено</string>
+    <string name="runtime_initialization">Ініціалізація завантажувача</string>
+    <string name="network_status">Мережа</string>
+    <string name="connection_validated">Доступ до інтернету підтверджено</string>
+    <string name="connection_unvalidated">Підключено, але доступ до інтернету не підтверджено</string>
+    <string name="diagnostic_unavailable">Недоступно</string>
+    <string name="notifications_permission">Дозвіл на сповіщення</string>
+    <string name="download_folder_access">Доступ до папки завантажень</string>
+    <string name="free_storage">Вільно у спільній пам’яті</string>
+    <string name="battery_optimization">Оптимізація батареї</string>
+    <string name="battery_optimized">Увімкнена; фонові перевірки можуть затримуватися</string>
+    <string name="battery_unrestricted">Без обмежень</string>
+    <string name="diagnostic_attention">Потребує уваги</string>
+    <string name="diagnostics_not_run">Діагностику ще не запускали</string>
+    <string name="clear_filter">Скинути фільтр</string>
+    <string name="channel_filter_members">Є платний контент</string>
+    <string name="channel_filter_free">Платний контент не знайдено</string>
+    <string name="channel_filter_unknown_paid">Платний контент: невідомо</string>
+    <string name="channel_resolving">Отримуємо дані каналу Rutube…</string>
+    <string name="channel_mark_recent">Позначити останні…</string>
+    <string name="channel_mark_confirm">Позначити останні елементи ввімкнених розділів «%1$s» як уже враховані? Перевірка каналів пропускатиме їх. Вони не з’являться в архіві файлів.</string>
+    <string name="channel_mark_result">Позначено: %1$d. Помилок перевірки: %2$d.</string>
+    <string name="channel_mark_stop_downloads">Спочатку зупиніть завантаження та дочекайтеся їх завершення.</string>
+    <string name="move_up">Перемістити вгору</string>
+    <string name="move_down">Перемістити вниз</string>
+    <string name="queue_active_items_kept">Активні завантаження залишилися в черзі</string>
+    <string name="app_update_available">Доступне оновлення: %1$s</string>
+    <string name="app_update_confirmation">Завантажити оновлення та відкрити інсталятор Android?</string>
+    <string name="app_update_current">Нової сумісної версії Android не знайдено.</string>
+    <string name="app_update_failed">Не вдалося перевірити або встановити оновлення. Перевірте з’єднання та підпис APK.</string>
+    <string name="status_paused">Призупинено</string>
+    <string name="status_processing">Обробка відео</string>
+    <string name="status_waiting_network">Очікування мережі</string>
+    <string name="download_pause">Пауза</string>
+    <string name="download_resume">Продовжити</string>
+    <string name="download_retry">Повторити</string>
+    <string name="download_network_error">З’єднання перервано. Частково завантажені дані збережено. Можна повторити завантаження.</string>
+    <string name="folder_open_fallback">Відкрито системний файловий менеджер. Вибери папку завантаження, якщо вона не відкрилася автоматично.</string>
+    <string name="harvest_start">Запустити чергу та завантаження каналів</string>
+    <string name="harvest_queue_before">Завантаження посилань із черги</string>
+    <string name="harvest_channels">Перевірка та завантаження каналів</string>
+    <string name="harvest_queue_after">Повторна перевірка черги</string>
+    <string name="harvest_completed">Перевірку завершено. Завантажено: %1$d · Помилок: %2$d</string>
+    <string name="channel_validation_completed">Перевірено каналів: %1$d · Помилок: %2$d</string>
+    <string name="overview_check_completed">Останню перевірку завершено</string>
+    <string name="overview_scanning">Перевірка</string>
+    <string name="overview_downloaded">Завантажено: %1$d</string>
+    <string name="overview_no_new">Нових відео не знайдено</string>
+    <string name="overview_today">Завантажено за сьогодні: %1$d</string>
+    <string name="overview_checked">Перевірено каналів: %1$d / %2$d</string>
+    <string name="overview_errors">Помилок: %1$d</string>
+    <string name="overview_checking_channel">Перевіряється канал</string>
+    <string name="clear_temporary_files">Очистити тимчасові файли</string>
+    <string name="engine_updates_with_app">yt-dlp оновлюється разом із застосунком.</string>
+    <string name="downloads_short">Файли</string>
+    <string name="service_subtitles_omitted">Відео збережено. Субтитри не додано: %1$s</string>
+    <string name="download_recovery_title">Завантаження перервано</string>
+    <string name="download_recovery_text">Натисніть «Продовжити», щоб відновити завантаження після перезавантаження.</string>
+    <string name="transfer_export">Експорт даних</string>
+    <string name="transfer_import">Імпорт даних</string>
+    <string name="transfer_export_warning">Зашифрований файл містить реквізити Telegram, але не відео й тимчасові файли. Використовуйте окремий пароль від 12 символів. Не видаляйте beta до перевірки перенесення.</string>
+    <string name="transfer_import_warning">Імпорт потребує порожньої бази; налаштування буде замінено. Завантаження призупиняться, розклади вимкнуться. Знову виберіть папку й оновіть доступність архіву.</string>
+    <string name="transfer_password">Пароль перенесення (від 12 символів)</string>
+    <string name="transfer_password_repeat">Повторіть пароль</string>
+    <string name="transfer_exported">Експорт збережено; повторне читання файлу перевірено</string>
+    <string name="transfer_imported">Дані перенесено. Виберіть папку, оновіть архів і тоді ввімкніть розклади.</string>
+    <string name="transfer_not_empty">Імпорт відхилено: наявні дані не буде перезаписано</string>
+    <string name="transfer_stop_downloads">Зупиніть завантаження й перевірки каналів перед перенесенням</string>
+    <string name="transfer_credentials_error">Відновіть або очистьте нечитабельні реквізити Telegram перед експортом</string>
+    <string name="transfer_failed">Перенесення не вдалося: перевірте пароль, файл і доступ до сховища</string>
+    <string name="transfer_archive_error">Відновіть доступ до файлів архіву або оновіть їхню доступність перед експортом</string>
+    <string name="transfer_pending">Записи перенесено; перезапустіть застосунок для завершення відновлення налаштувань. Не повторюйте імпорт.</string>
+</resources>

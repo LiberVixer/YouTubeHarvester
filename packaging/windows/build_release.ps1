@@ -1,13 +1,13 @@
 param(
-    [string]$Version = "1.2.0-beta",
-    [string]$MsiVersion = "1.2.0",
+    [string]$Version = "1.2.1",
+    [string]$MsiVersion = "1.2.1",
     [switch]$Offline,
     [string]$Wheelhouse = "",
     [string]$FfmpegDir = "",
-    [string]$FfmpegUrl = "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-9.0.1-essentials_build.zip",
+    [string]$FfmpegUrl = "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-9.0.2-essentials_build.zip",
     [switch]$SkipFfmpegDownload,
     [string]$DenoDir = "",
-    [string]$DenoUrl = "https://github.com/denoland/deno/releases/download/v2.9.6/deno-x86_64-pc-windows-msvc.zip",
+    [string]$DenoUrl = "https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-pc-windows-msvc.zip",
     [switch]$SkipDenoDownload,
     [switch]$SkipMsi
 )

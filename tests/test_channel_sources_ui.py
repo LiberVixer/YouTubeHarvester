@@ -10,10 +10,11 @@ try:
 except ImportError:
     MainWindow = None
 else:
-    from tray_launcher import MainWindow, ui_text
+    from tray_launcher import ArchiveWindow, MainWindow, ui_text
 
 
 RUTUBE = "https://rutube.ru/channel/23704195"
+COLLECTION = "https://rutube.ru/metainfo/tv/405933"
 
 
 @unittest.skipIf(MainWindow is None, "PyQt5 desktop dependencies unavailable")
@@ -68,6 +69,49 @@ class ChannelCardTests(unittest.TestCase):
         card = self.window.create_channel_card(channel)
         card.setParent(self.window)
         self.assertTrue(all(button.isEnabled() and button.isChecked() for button in card.type_buttons.values()))
+
+    def test_archive_keeps_manually_marked_entries_hidden(self):
+        import json
+        root = Path(self.directory.name)
+        launcher = SimpleNamespace(archive_file=root / "archive.txt", archive_details_file=root / "details.jsonl")
+        launcher.archive_file.write_text("rutube abc\nrutube def\nrutube abc\n", encoding="utf-8")
+        reader = SimpleNamespace(launcher=launcher)
+        entries = ArchiveWindow.read_entries(reader)
+        self.assertEqual(entries, [])
+        launcher.archive_details_file.write_text(json.dumps({"source": "rutube", "video_id": "abc", "title": "Downloaded"}) + "\n", encoding="utf-8")
+        entries = ArchiveWindow.read_entries(reader)
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0]["title"], "Downloaded")
+
+    def test_collection_card_only_enables_video_in_all_languages(self):
+        w = self.window
+        for language in ("en", "ru", "uk", "be", "fr", "es", "hi", "zh", "ja", "ar"):
+            with self.subTest(language=language):
+                w.language = language
+                card = w.create_channel_card(COLLECTION)
+                card.setParent(w)
+                w.apply_channel_section_result(COLLECTION, card)
+                self.assertTrue(card.type_buttons["videos"].isEnabled())
+                for section in ("shorts", "streams"):
+                    button = card.type_buttons[section]
+                    self.assertFalse(button.isEnabled())
+                    self.assertFalse(button.isChecked())
+                    self.assertEqual(button.toolTip(), ui_text(language, "channels.rutube_collection_video_only"))
+                    self.assertIn("Rutube", button.toolTip())
+
+    @patch("tray_launcher.QMessageBox.information")
+    def test_collection_can_be_added_beside_its_owner_without_duplicates(self, information):
+        w = self.window
+        w.refresh_channels = Mock()
+        w.refresh_overview = Mock()
+        w.check_channel_sections = Mock()
+        w.save_channel_urls(["https://rutube.ru/channel/23463954"])
+        w.pending_channel_additions = {COLLECTION}
+        w.on_channel_add_resolved({"requested_channel": COLLECTION, "channel": COLLECTION})
+        w._add_resolved_channel(COLLECTION + "/?utm_source=test")
+        self.assertEqual(w._read_channels(), ["https://rutube.ru/channel/23463954", COLLECTION])
+        w.check_channel_sections.assert_called_once_with(COLLECTION)
+        information.assert_called_once()
 
     def test_worker_never_animates_or_probes_unsupported_types(self):
         w = self.window

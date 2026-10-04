@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import os
 from pathlib import Path
@@ -23,6 +24,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--channels", type=Path, default=root / "channels.txt")
     parser.add_argument("--channel-rules", type=Path, default=root / "channel_rules.json")
     parser.add_argument("--channel-cache", type=Path, default=Path.home() / ".cache" / "YTD")
+    parser.add_argument("--width", type=int, default=1200)
+    parser.add_argument("--height", type=int, default=820)
+    parser.add_argument("--preview-metadata", type=Path)
     parser.add_argument(
         "--preview",
         type=Path,
@@ -43,6 +47,11 @@ def prepare_fixture(root: Path, source_root: Path, args: argparse.Namespace) -> 
     config_dir.mkdir(parents=True)
 
     shutil.copy2(args.channels, data_dir / "channels.txt")
+    channels = [line for line in args.channels.read_text(encoding="utf-8").splitlines()
+                if line.strip() and not line.lstrip().startswith("#")]
+    channel_count = len(channels)
+    cache_dir = root / "cache"
+    shutil.copytree(args.channel_cache / "channels", cache_dir / "channels")
     if args.channel_rules.is_file():
         shutil.copy2(args.channel_rules, config_dir / "channel_rules.json")
 
@@ -78,8 +87,8 @@ def prepare_fixture(root: Path, source_root: Path, args: argparse.Namespace) -> 
         data_dir / "status.json",
         {
             "state": "sleep",
-            "channels_total": 19,
-            "channels_checked": 19,
+            "channels_total": channel_count,
+            "channels_checked": channel_count,
             "last_run_completed_at": now - 420,
             "last_run_stopped": False,
             "last_run_new_count": 4,
@@ -88,14 +97,19 @@ def prepare_fixture(root: Path, source_root: Path, args: argparse.Namespace) -> 
             "last_run_shorts": 1,
             "last_run_streams": 1,
             "last_run_queue": 0,
-            "last_run_channels_total": 19,
-            "last_run_channels_checked": 19,
+            "last_run_channels_total": channel_count,
+            "last_run_channels_checked": channel_count,
             "last_download_at": str(now - 420),
         },
     )
     (data_dir / "last_download_at.txt").write_text(str(now - 420) + "\n", encoding="ascii")
+    module = ast.parse((source_root / "tray_launcher.py").read_text(encoding="utf-8"))
+    version = next(ast.literal_eval(node.value) for node in module.body
+                   if isinstance(node, ast.Assign)
+                   and any(isinstance(target, ast.Name) and target.id == "APP_VERSION"
+                           for target in node.targets))
     (data_dir / "download.log").write_text(
-        "[info] YouTube Harvester 1.2.0 Beta\n"
+        f"[info] YouTube Harvester {version}\n"
         "[info] Channel scan completed\n"
         "[info] Downloaded 2 videos, 1 Short and 1 stream\n"
         "[info] Queue will be checked again after all channels\n"
@@ -145,7 +159,7 @@ def prepare_fixture(root: Path, source_root: Path, args: argparse.Namespace) -> 
             "YTD_APP_DIR": str(source_root),
             "YTD_DATA_DIR": str(data_dir),
             "YTD_CONFIG_DIR": str(config_dir),
-            "YTD_CACHE_DIR": str(args.channel_cache),
+            "YTD_CACHE_DIR": str(cache_dir),
             "YTD_SETTINGS_FILE": str(config_dir / "settings.json"),
             "YTD_SCHEDULES_FILE": str(config_dir / "schedules.json"),
             "YTD_CHANNEL_RULES_FILE": str(config_dir / "channel_rules.json"),
@@ -157,9 +171,9 @@ def prepare_fixture(root: Path, source_root: Path, args: argparse.Namespace) -> 
     return data_dir, config_dir
 
 
-def set_queue_preview(window, preview_path: Path) -> None:
-    title = "Every Ultimate in Unreal Tournament 2004"
-    uploader = "ROCKY VIII"
+def set_queue_preview(window, preview_path: Path, metadata: dict) -> None:
+    title = metadata.get("title", "Documentation sample")
+    uploader = metadata.get("author_name", "YouTube Harvester")
     url = "https://www.youtube.com/watch?v=tYh-7USx09E"
     window.preview_timer.stop()
     window.video_url_input.blockSignals(True)
@@ -196,6 +210,7 @@ def main() -> int:
         raise SystemExit(f"Channel list not found: {args.channels}")
     if not (args.channel_cache / "channels").is_dir():
         raise SystemExit(f"Channel cache not found: {args.channel_cache / 'channels'}")
+    metadata = json.loads(args.preview_metadata.read_text(encoding="utf-8")) if args.preview_metadata else {}
 
     with tempfile.TemporaryDirectory(prefix="yth-readme-") as temp_name:
         prepare_fixture(Path(temp_name), source_root, args)
@@ -205,7 +220,7 @@ def main() -> int:
         launcher = yth.TrayLauncher()
         window = yth.MainWindow(launcher)
         launcher.main_window = window
-        window.setFixedSize(900, 620)
+        window.setFixedSize(args.width, args.height)
 
         for language in LANGUAGES:
             launcher.language = language
@@ -213,7 +228,7 @@ def main() -> int:
             window.ui_settings["language"] = language
             window.apply_language()
             window.refresh_all()
-            set_queue_preview(window, args.preview)
+            set_queue_preview(window, args.preview, metadata)
             window.refresh_overview()
 
             destination = args.output / language

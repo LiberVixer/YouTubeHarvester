@@ -302,7 +302,7 @@ def normalize_media_source(value: str | None, url: str = "") -> str:
 
 
 def normalize_channel_url(url: str) -> str:
-    """Validate channel links separately from single-video and playlist links."""
+    """Validate tracked channels and Rutube shows separately from video links."""
     text = str(url or "").strip()
     if re.search(r"[\s\x00-\x1f\x7f]", text):
         return ""
@@ -322,6 +322,9 @@ def normalize_channel_url(url: str) -> str:
             )
             return f"https://www.youtube.com/{match[1]}" if match else ""
         if host in {"rutube.ru", "www.rutube.ru"}:
+            show = re.fullmatch(r"/metainfo/tv/([0-9]+)", path)
+            if show:
+                return f"https://rutube.ru/metainfo/tv/{int(show[1])}"
             match = re.fullmatch(r"/(channel/[0-9]+|u/\w+)(?:/(?:videos|shorts))?", path)
             if match:
                 root = match[1]
@@ -333,12 +336,16 @@ def normalize_channel_url(url: str) -> str:
     return ""
 
 
+def is_rutube_collection(channel: str) -> bool:
+    return normalize_channel_url(channel).startswith("https://rutube.ru/metainfo/tv/")
+
+
 def channel_sections(channel: str) -> tuple[str, ...]:
     source = media_source_from_url(normalize_channel_url(channel))
     if source == "youtube":
         return ("videos", "shorts", "streams")
     if source == "rutube":
-        return ("videos", "shorts")
+        return ("videos",) if is_rutube_collection(channel) else ("videos", "shorts")
     return ()
 
 
@@ -346,15 +353,38 @@ def channel_section_url(channel: str, section: str) -> str:
     normalized = normalize_channel_url(channel)
     if section not in channel_sections(normalized):
         return ""
+    if is_rutube_collection(normalized):
+        return normalized
     return f"{normalized}/{section}"
+
+
+def channel_recent_playlist_args(channel: str, limit: int) -> list[str]:
+    if is_rutube_collection(channel):
+        # Rutube show playlists run oldest-first; yt-dlp's range end is inclusive.
+        return ["--playlist-items", f"-1:-{limit}:-1", "--no-lazy-playlist"]
+    return ["--playlist-items", f"1-{limit}"]
 
 
 def channel_supports_paid_check(channel: str) -> bool:
     return media_source_from_url(normalize_channel_url(channel)) == "youtube"
 
 
+def _rutube_artwork_url(candidate: str) -> str:
+    try:
+        image_url = urllib.parse.urlsplit(candidate)
+        host = (image_url.hostname or "").lower()
+        if (image_url.scheme == "https" and image_url.username is None
+                and image_url.password is None and image_url.port is None
+                and any(host == domain or host.endswith("." + domain)
+                        for domain in ("rutube.ru", "rtbcdn.ru", "rutubelist.ru"))):
+            return candidate
+    except ValueError:
+        pass
+    return ""
+
+
 def rutube_channel_metadata(channel: str, command: list[str], *, env=None) -> dict:
-    """Resolve aliases with yt-dlp; fetch the avatar from the public author data."""
+    """Resolve tracked Rutube sources and fetch their own public artwork."""
     normalized = normalize_channel_url(channel)
     if media_source_from_url(normalized) != "rutube":
         raise ValueError("Invalid Rutube channel URL")
@@ -371,13 +401,18 @@ def rutube_channel_metadata(channel: str, command: list[str], *, env=None) -> di
     channel_id = str(data.get("id") or "") if isinstance(data, dict) else ""
     if not re.fullmatch(r"[0-9]+", channel_id):
         raise ValueError("Rutube did not return a channel ID")
-    canonical = f"https://rutube.ru/channel/{int(channel_id)}"
+    collection = is_rutube_collection(normalized)
+    if collection and int(channel_id) != int(normalized.rsplit("/", 1)[1]):
+        raise ValueError("Rutube returned a different collection ID")
+    canonical = normalized if collection else f"https://rutube.ru/channel/{int(channel_id)}"
     entry = next((e for e in (data.get("entries") or []) if isinstance(e, dict)), {})
-    title = str(entry.get("uploader") or f"Rutube {channel_id}")
+    title = str((data.get("title") if collection else entry.get("uploader")) or f"Rutube {channel_id}")
     thumbnail = ""
-    # yt-dlp's flat playlist exposes author names, but not channel avatars.
+    # Flat playlists omit channel avatars and show posters.
+    metadata_url = (f"https://rutube.ru/api/metainfo/tv/{channel_id}/?format=json" if collection
+                    else f"https://rutube.ru/api/video/person/{channel_id}/?page=1&format=json")
     request = urllib.request.Request(
-        f"https://rutube.ru/api/video/person/{channel_id}/?page=1&format=json",
+        metadata_url,
         headers={"User-Agent": "Mozilla/5.0", "Referer": "https://rutube.ru/"},
     )
     try:
@@ -385,18 +420,15 @@ def rutube_channel_metadata(channel: str, command: list[str], *, env=None) -> di
             raw = response.read(2 * 1024 * 1024 + 1)
         if len(raw) <= 2 * 1024 * 1024:
             page = json.loads(raw)
-            for video in page.get("results", []):
+            if collection and str(page.get("id")) == channel_id:
+                title = str(page.get("name") or title)
+                thumbnail = next((url for field in ("picture", "poster_url", "vertical_poster_url")
+                                  if (url := _rutube_artwork_url(str(page.get(field) or "")))), "")
+            for video in ([] if collection else page.get("results", [])):
                 author = video.get("author") or {}
                 if str(author.get("id")) == channel_id:
                     title = str(author.get("name") or title)
-                    candidate = str(author.get("avatar_url") or "")
-                    image_url = urllib.parse.urlsplit(candidate)
-                    host = (image_url.hostname or "").lower()
-                    if image_url.scheme == "https" and any(
-                        host == domain or host.endswith("." + domain)
-                        for domain in ("rutube.ru", "rtbcdn.ru", "rutubelist.ru")
-                    ):
-                        thumbnail = candidate
+                    thumbnail = _rutube_artwork_url(str(author.get("avatar_url") or ""))
                     break
     except (OSError, ValueError, TypeError, AttributeError):
         pass  # Missing artwork must not prevent adding or scanning a channel.

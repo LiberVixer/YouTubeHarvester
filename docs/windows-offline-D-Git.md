@@ -10,8 +10,8 @@
 
 ```text
 YouTubeHarvester-offline\
-  deno\        Deno 2.9.6 for Windows x64 (`deno.exe`)
-  ffmpeg\      FFmpeg/FFprobe 9.0.1 essentials for Windows x64
+  deno\        Deno 2.9.7 for Windows x64 (`deno.exe`)
+  ffmpeg\      FFmpeg/FFprobe 9.0.2 essentials for Windows x64
   source\       исходники проекта
   wheelhouse\   Python wheel-зависимости для Windows x64
 ```
@@ -92,9 +92,9 @@ BUILD_WINDOWS_OFFLINE.cmd
 Ожидаемые файлы:
 
 ```text
-YouTubeHarvester_1.2.0-beta_windows_portable.zip
-YouTubeHarvester_1.2.0-beta_windows_setup.exe
-YouTubeHarvester_1.2.0-beta_windows_x64.msi
+YouTubeHarvester_1.2.1_windows_portable.zip
+YouTubeHarvester_1.2.1_windows_setup.exe
+YouTubeHarvester_1.2.1_windows_x64.msi
 SHA256SUMS-windows.txt
 ```
 
@@ -107,7 +107,7 @@ Set-Location "<offline-bundle>\source\dist\windows\YouTubeHarvester"
 .\YouTubeHarvester.exe
 ```
 
-Должно открыться приложение **YouTube Harvester 1.2.0 Beta**.
+Должно открыться приложение **YouTube Harvester 1.2.1**.
 
 Потом можно проверить installer EXE и MSI из папки:
 
