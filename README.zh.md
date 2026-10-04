@@ -274,7 +274,7 @@ python3 -m unittest discover -s scripts -p 'test_*.py' -v
 
 ## 验证与限制
 
-最近本地检查：**88 项桌面 Python**、**35 项 Android Python**、**149 项 Android JVM** 测试，以及 50 张 Android 截图成功捕获。版本统一时还通过 **80 项 Windows 测试**（跳过两项 POSIX）及 **36 项精选 LDPlayer 测试**，Android 14/API 34 x86_64。
+最近本地检查：**89 项桌面 Python**、**39 项 Android Python**、**149 项 Android JVM** 测试，以及 50 张 Android 截图成功捕获。版本统一时还通过 **80 项 Windows 测试**（跳过两项 POSIX）及 **36 项精选 LDPlayer 测试**，Android 14/API 34 x86_64。
 
 桌面工具及真实本地 H.264/AAC 下载/remux 已验证。四种 APK 通过清单/证书/ZIP 及适用 64 位原生对齐检查。这不证明 ARM、所有设备后台行为或新 Windows 安装器的安装/卸载。文档更新不等于重新构建或发布已安装副本。
 

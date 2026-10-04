@@ -307,7 +307,7 @@ python3 -m unittest discover -s scripts -p 'test_*.py' -v
 
 ## 検証と制限
 
-最新ローカル検査：**PC Python 88 件**、**Android Python 35 件**、**Android JVM 149 件**、Android 50 画面の撮影成功。版統一時には **Windows 80 件**（POSIX 二件省略）と **選択 LDPlayer 36 件**、Android 14/API 34 x86_64、も通過しました。
+最新ローカル検査：**PC Python 89 件**、**Android Python 39 件**、**Android JVM 149 件**、Android 50 画面の撮影成功。版統一時には **Windows 80 件**（POSIX 二件省略）と **選択 LDPlayer 36 件**、Android 14/API 34 x86_64、も通過しました。
 
 PC ツールと実際のローカル H.264/AAC ダウンロード/remux を確認。四 APK のマニフェスト/証明書/ZIP、対象 64 ビット配置検査も通過。ただし ARM、全機種のバックグラウンド、新 Windows インストーラーの導入/削除は証明していません。文書更新は既存コピーの再ビルドや公開ではありません。
 

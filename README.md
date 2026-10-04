@@ -309,7 +309,7 @@ python3 -m unittest discover -s scripts -p 'test_*.py' -v
 
 ## Verification and Limits
 
-Latest local checks: **88 desktop Python tests**, **35 Android Python tests**, **149 Android JVM tests**, and successful capture of 50 Android screenshots. The version-alignment pass also completed **80 Windows tests** (two POSIX-only skips) and **36 selected LDPlayer device tests** on Android 14/API 34 x86_64.
+Latest local checks: **89 desktop Python tests**, **39 Android Python tests**, **149 Android JVM tests**, and successful capture of 50 Android screenshots. The version-alignment pass also completed **80 Windows tests** (two POSIX-only skips) and **36 selected LDPlayer device tests** on Android 14/API 34 x86_64.
 
 Desktop tools and a real local H.264/AAC download/remux were verified. Four Android APKs passed manifest/certificate/ZIP checks and applicable 64-bit native alignment checks. ARM execution, all-device background behavior, and installation/uninstallation of the new Windows installers are not established by these passes. Fresh documentation is not a rebuild or publication of installed copies.
 

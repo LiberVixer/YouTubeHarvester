@@ -2,10 +2,10 @@ name: Android validation and release
 
 on:
   pull_request:
-    paths: ['android/**', '.github/workflows/android.yml']
+    paths: ['android/**', '.github/workflows/android.yml', '.github/scripts/install_android_sdk.sh']
   push:
     branches: [main]
-    paths: ['android/**', '.github/workflows/android.yml']
+    paths: ['android/**', '.github/workflows/android.yml', '.github/scripts/install_android_sdk.sh']
     tags: ['android-v*']
   workflow_dispatch:
 
@@ -22,7 +22,7 @@ jobs:
           distribution: temurin
           java-version: '17'
       - name: Install Android SDK
-        run: sdkmanager 'platforms;android-37.0' 'build-tools;36.0.0'
+        run: bash .github/scripts/install_android_sdk.sh 'platforms;android-37.0' 'build-tools;36.0.0'
       - name: Validate and assemble all ABIs
         working-directory: android
         run: |
@@ -53,7 +53,7 @@ jobs:
         run: |
           sudo chmod 666 /dev/kvm
       - name: Install compile SDK
-        run: sdkmanager 'platforms;android-37.0' 'build-tools;36.0.0'
+        run: bash .github/scripts/install_android_sdk.sh 'platforms;android-37.0' 'build-tools;36.0.0'
       - name: Run on Android emulator
         uses: ReactiveCircus/android-emulator-runner@4c44018e59b437e86cdfc41da381398f93ed8808
         with:
@@ -89,7 +89,7 @@ jobs:
           umask 077
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/yth-release.jks"
       - name: Install compile SDK
-        run: sdkmanager 'platforms;android-37.0' 'build-tools;36.0.0'
+        run: bash .github/scripts/install_android_sdk.sh 'platforms;android-37.0' 'build-tools;36.0.0'
       - name: Fetch reviewed runtime sources
         env:
           SOURCE_URL: ${{ vars.ANDROID_SOURCE_URL }}

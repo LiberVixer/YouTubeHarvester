@@ -32,6 +32,14 @@ TOOLS = {
 }
 
 
+def sha256_file(path):
+    digest = hashlib.sha256()
+    with path.open('rb') as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b''):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def unpack(archive, directory, wanted):
     found = set()
     if zipfile.is_zipfile(archive):
@@ -74,15 +82,13 @@ def fetch(platform, output, cache):
             temporary = archive.with_suffix(archive.suffix + '.part')
             subprocess.run(['curl', '-fLSs', '--retry', '4', '--connect-timeout', '20',
                             '--max-time', '1200', url, '-o', str(temporary)], check=True)
-            with temporary.open('rb') as inp:
-                actual = hashlib.file_digest(inp, 'sha256').hexdigest()
+            actual = sha256_file(temporary)
             if actual != expected:
                 temporary.unlink()
                 raise ValueError("Downloaded archive SHA-256 mismatch")
             temporary.replace(archive)
-        with archive.open('rb') as inp:
-            if hashlib.file_digest(inp, 'sha256').hexdigest() != expected:
-                raise ValueError("Cached archive SHA-256 mismatch")
+        if sha256_file(archive) != expected:
+            raise ValueError("Cached archive SHA-256 mismatch")
         with tempfile.TemporaryDirectory(prefix=tool + '-', dir=output) as staging:
             staging = Path(staging)
             unpack(archive, staging, names)

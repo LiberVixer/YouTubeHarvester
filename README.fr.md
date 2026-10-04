@@ -284,7 +284,7 @@ python3 -m unittest discover -s scripts -p 'test_*.py' -v
 
 ## Vérifications et Limites
 
-Derniers essais locaux : **88 tests Python PC**, **35 Python Android**, **149 JVM Android**, 50 captures Android réussies. L'alignement de version a aussi validé **80 tests Windows** (deux POSIX ignorés) et **36 tests LDPlayer sélectionnés**, Android 14/API 34 x86_64.
+Derniers essais locaux : **89 tests Python PC**, **39 Python Android**, **149 JVM Android**, 50 captures Android réussies. L'alignement de version a aussi validé **80 tests Windows** (deux POSIX ignorés) et **36 tests LDPlayer sélectionnés**, Android 14/API 34 x86_64.
 
 Outils PC et téléchargement/remux local H.264/AAC vérifiés. Quatre APK validés pour manifeste/certificat/ZIP et alignement natif 64 bits applicable. Ces passages ne prouvent pas ARM, l'arrière-plan de tous les appareils ni installation/désinstallation des nouveaux installateurs Windows. La documentation ne reconstruit ni ne publie les copies installées.
 

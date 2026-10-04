@@ -6,7 +6,7 @@ import unittest
 import zipfile
 from unittest.mock import patch
 
-from scripts.fetch_desktop_tools import fetch, unpack
+from scripts.fetch_desktop_tools import fetch, sha256_file, unpack
 
 try:
     from tray_launcher import TrayLauncher
@@ -15,6 +15,14 @@ except ImportError:
 
 
 class DesktopToolsTest(unittest.TestCase):
+    def test_sha256_empty_and_multiple_chunks(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'archive'
+            for content in (b'', b'archive bytes' * 100000):
+                with self.subTest(size=len(content)):
+                    path.write_bytes(content)
+                    self.assertEqual(sha256_file(path), hashlib.sha256(content).hexdigest())
+
     def test_extracts_only_selected_names_without_archive_paths(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
