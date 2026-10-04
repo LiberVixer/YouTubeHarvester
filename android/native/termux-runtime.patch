@@ -105,3 +105,9 @@ diff --git a/packages/liblzo/build.sh b/packages/liblzo/build.sh
 -TERMUX_PKG_SHA256=37ed4369e45944c53306b0d6a36b66f03e5b6aede8849c9b6388f4b62b20b443
 +TERMUX_PKG_SRCURL=https://www.oberhumer.com/opensource/lzo/download/lzo-$TERMUX_PKG_VERSION.tar.gz
 +TERMUX_PKG_SHA256=c0f892943208266f9b6543b3ae308fab6284c5c90e627931446fb49b4221a072
+diff --git a/packages/libgraphite/build.sh b/packages/libgraphite/build.sh
+--- a/packages/libgraphite/build.sh
++++ b/packages/libgraphite/build.sh
+@@ -13,1 +13,2 @@
+ TERMUX_PKG_RM_AFTER_INSTALL="bin/gr2fonttest"
++TERMUX_PKG_EXTRA_CONFIGURE_ARGS="-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
