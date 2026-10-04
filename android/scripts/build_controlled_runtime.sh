@@ -42,6 +42,7 @@ docker run --rm --init \
   --env "YTH_ARCH=$arch" \
   --env TERMUX_PKG_API_LEVEL=26 \
   --env TERMUX_PKG_MAKE_PROCESSES=2 \
+  --env "CMAKE_POLICY_VERSION_MINIMUM=$(jq -r .cmakePolicyVersionMinimum "$lock")" \
   --env TERMUX_NDK_VERSION_NUM=28 \
   --env TERMUX_NDK_REVISION=c \
   --env NDK=/home/builder/lib/android-ndk-r28c \

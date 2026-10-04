@@ -4,6 +4,7 @@
   "builderImage": "yth-controlled-runtime-builder:termux-7c74f85",
   "builderBaseImage": "ubuntu:24.04@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55",
   "builderHostPython": "3.12",
+  "cmakePolicyVersionMinimum": "3.5",
   "ndkVersion": "28.2.13676358",
   "ndkArchiveSha256": "dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f",
   "apiLevel": 26,
@@ -29,7 +30,8 @@
     "libunboundOverride": "declare and link libandroid-shmem, and use SWIG's supported $action exception placeholder instead of $function in the Python bindings",
     "texinfoOverride": "fetch texinfo_7.2-2.debian.tar.xz from the official Debian snapshot dated 20250119T025721Z because the live Debian pool returns 404; original recipe SHA256 is unchanged",
     "texinfoDebianArchiveSha256": "8654692fcc7f8b4bb042a3412ca3c9fa862ff65482896ef1ea50d59d08934824",
-    "libsoxrOverride": "set CMAKE_POLICY_VERSION_MINIMUM=3.5 for compatibility with pinned CMake 4.0.3, preserving the OpenMP configuration"
+    "libsoxrOverride": "set CMAKE_POLICY_VERSION_MINIMUM=3.5 for compatibility with pinned CMake 4.0.3, preserving the OpenMP configuration",
+    "cmakeCompatibilityOverride": "set CMAKE_POLICY_VERSION_MINIMUM=3.5 in the runtime build container environment for legacy dependencies, including libsrt; newer project policy versions remain unchanged"
   },
   "publicReleaseReady": false
 }
