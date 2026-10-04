@@ -20,7 +20,7 @@ index 82b1e6edca..5edf660fab 100644
  # Default value: `/data/data/com.termux`
  ##
 -TERMUX_APP__DATA_DIR="/data/data/$TERMUX_APP__PACKAGE_NAME"
-+TERMUX_APP__DATA_DIR="/data/youtubedl-android"
++TERMUX_APP__DATA_DIR="/data/data/com.liberivixer.youtubeharvester"
  __termux_build_props__add_variables_validator_actions "TERMUX_APP__DATA_DIR" "safe_absolute_path"
  
  ##

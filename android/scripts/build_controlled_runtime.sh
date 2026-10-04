@@ -38,8 +38,8 @@ docker run --rm --init \
   --user root \
   "$image" bash -c '
     set -euo pipefail
-    mkdir -p /data/youtubedl-android /data/data/.built-packages
-    chown -R builder:builder /data/youtubedl-android /data/data/.built-packages /output
+    mkdir -p /data/data/com.liberivixer.youtubeharvester /data/data/.built-packages
+    chown -R builder:builder /data/data/com.liberivixer.youtubeharvester /data/data/.built-packages /output
     cd /home/builder/termux-packages
     git config --global --add safe.directory /home/builder/termux-packages
     trap '\''tar --exclude="./_cache" --exclude="./*/build" --exclude="./*/host-build" \
