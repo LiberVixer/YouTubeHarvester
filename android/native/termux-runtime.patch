@@ -87,3 +87,13 @@ diff --git a/packages/ncurses/build.sh b/packages/ncurses/build.sh
 -	sed 's/@default_terminfo@/foot/g' "$TERMUX_PKG_SRCDIR/foot/foot.info" | \
 -	tic -x -e foot,foot-direct -o "$TI" -
  }
+diff --git a/packages/libx11/build.sh b/packages/libx11/build.sh
+--- a/packages/libx11/build.sh
++++ b/packages/libx11/build.sh
+@@ -11,1 +11,1 @@
+-TERMUX_PKG_DEPENDS="libandroid-support, libxcb"
++TERMUX_PKG_DEPENDS="libandroid-shmem, libandroid-support, libxcb"
+@@ -15,2 +15,3 @@
+ ac_cv_path_RAWCPP=/usr/bin/cpp
++LIBS=-landroid-shmem
+ --enable-malloc0returnsnull

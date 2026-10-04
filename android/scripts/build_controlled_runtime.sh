@@ -28,6 +28,7 @@ docker build --build-arg "BASE_IMAGE=$base_image" \
 git -C "$repo" apply --check --recount --unidiff-zero "$app/android/native/termux-runtime.patch"
 git -C "$repo" apply --recount --unidiff-zero "$app/android/native/termux-runtime.patch"
 bash -n "$repo/packages/ncurses/build.sh"
+bash -n "$repo/packages/libx11/build.sh"
 
 # Source-build dependencies too: do not use Termux's prebuilt-dependency switch.
 docker image inspect "$image" > "$output/builder-image.json"
@@ -68,6 +69,10 @@ docker run --rm --init \
 result="${PIPESTATUS[0]}"
 set -e
 printf '%s\n' "$result" > "$output/build-exit-code.txt"
+if [[ -d "$output/packages" ]]; then
+  # Keep Debian epoch colons inside tar: GitHub rejects them as artifact paths.
+  tar -czf "$output/runtime-packages.tar.gz" -C "$output" packages
+fi
 python3 "$app/android/scripts/record_runtime_build.py" \
   --folder "$output" --architecture "$arch" --application "$app"
 exit "$result"

@@ -21,7 +21,8 @@
   "recipeOverrides": {
     "foot-1.23.1-sha256": "b3fa774983abb5f95aecca4557d146091d8666bc65fb310d4d3e38327357ade9",
     "footOverrideReason": "Pinned Termux recipe hash no longer matched the archive served by Codeberg; archive was downloaded twice and verified before pinning the observed SHA256.",
-    "ncursesOverride": "omit unrelated kitty, Alacritty and foot terminfo sources from the runtime dependency build"
+    "ncursesOverride": "omit unrelated kitty, Alacritty and foot terminfo sources from the runtime dependency build",
+    "libx11Override": "declare and link libandroid-shmem; Termux removes the NDK sys/shm.h in favor of this compatibility library"
   },
   "publicReleaseReady": false
 }
