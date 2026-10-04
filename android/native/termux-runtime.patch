@@ -1,0 +1,35 @@
+diff --git a/scripts/build/toolchain/termux_setup_toolchain_28c.sh b/scripts/build/toolchain/termux_setup_toolchain_28c.sh
+index 829e429464..6b062a647e 100644
+--- a/scripts/build/toolchain/termux_setup_toolchain_28c.sh
++++ b/scripts/build/toolchain/termux_setup_toolchain_28c.sh
+@@ -1,7 +1,7 @@
+ termux_setup_toolchain_28c() {
+ 	export CFLAGS=""
+ 	export CPPFLAGS=""
+-	export LDFLAGS="-L${TERMUX__PREFIX__LIB_DIR}"
++	export LDFLAGS="-L${TERMUX__PREFIX__LIB_DIR} -Wl,-z,max-page-size=16384"
+ 
+ 	export AS=$TERMUX_HOST_PLATFORM-clang
+ 	export CC=$TERMUX_HOST_PLATFORM-clang
+diff --git a/scripts/properties.sh b/scripts/properties.sh
+index 82b1e6edca..5edf660fab 100644
+--- a/scripts/properties.sh
++++ b/scripts/properties.sh
+@@ -485,7 +485,7 @@ __termux_build_props__add_variables_validator_actions "TERMUX_APP__PACKAGE_NAME"
+ #
+ # Default value: `/data/data/com.termux`
+ ##
+-TERMUX_APP__DATA_DIR="/data/data/$TERMUX_APP__PACKAGE_NAME"
++TERMUX_APP__DATA_DIR="/data/youtubedl-android"
+ __termux_build_props__add_variables_validator_actions "TERMUX_APP__DATA_DIR" "safe_absolute_path"
+ 
+ ##
+@@ -743,7 +743,7 @@ __termux_build_props__add_variables_validator_actions "TERMUX__ROOTFS_ID" "unsig
+ #
+ # Default value: `files`
+ ##
+-TERMUX__ROOTFS_SUBDIR="files"
++TERMUX__ROOTFS_SUBDIR=""
+ __termux_build_props__add_variables_validator_actions "TERMUX__ROOTFS_SUBDIR" "allow_unset_value safe_relative_path"
+ 
+ ###########

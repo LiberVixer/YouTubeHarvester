@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "termuxCommit": "7c74f85f3b36991d07d4cfb0d1be458c1b4f0896",
+  "builderImage": "ghcr.io/termux/package-builder@sha256:44999857244619e25bc8e3427904a16d36cc0c0e087704af039e5bdf94814ac9",
+  "ndkVersion": "28.2.13676358",
+  "ndkArchiveSha256": "dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f",
+  "apiLevel": 26,
+  "prefix": "/data/youtubedl-android/usr",
+  "pythonVersion": "3.12.11",
+  "ffmpegVersion": "7.1.1",
+  "architectures": {
+    "arm64-v8a": "aarch64",
+    "armeabi-v7a": "arm",
+    "x86": "i686",
+    "x86_64": "x86_64"
+  },
+  "targets": ["python", "ffmpeg", "ca-certificates"],
+  "sourceCorrespondence": "new controlled rebuild; not an attestation for previous upstream binaries",
+  "publicReleaseReady": false
+}

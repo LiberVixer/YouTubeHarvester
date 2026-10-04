@@ -1,0 +1,39 @@
+name: Controlled Android native runtime rebuild
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        architecture: [aarch64, arm, i686, x86_64]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          path: application
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: termux/termux-packages
+          ref: 7c74f85f3b36991d07d4cfb0d1be458c1b4f0896
+          path: termux-packages
+          persist-credentials: false
+      - name: Rebuild Python, FFmpeg and dependencies from pinned recipes
+        run: |
+          bash application/android/scripts/build_controlled_runtime.sh \
+            '${{ matrix.architecture }}' "$PWD/termux-packages" "$PWD/application" \
+            "$PWD/runtime-output"
+      - name: Preserve native packages, sources and build diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: controlled-runtime-${{ matrix.architecture }}
+          path: runtime-output/
+          retention-days: 14
+          if-no-files-found: error
