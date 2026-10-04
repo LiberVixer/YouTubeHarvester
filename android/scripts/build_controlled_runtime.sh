@@ -31,6 +31,7 @@ bash -n "$repo/packages/ncurses/build.sh"
 bash -n "$repo/packages/libx11/build.sh"
 bash -n "$repo/packages/libunbound/build.sh"
 bash -n "$repo/packages/texinfo/build.sh"
+bash -n "$repo/packages/libsoxr/build.sh"
 
 # Source-build dependencies too: do not use Termux's prebuilt-dependency switch.
 docker image inspect "$image" > "$output/builder-image.json"

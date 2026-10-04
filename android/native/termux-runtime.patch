@@ -132,3 +132,9 @@ diff --git a/packages/texinfo/build.sh b/packages/texinfo/build.sh
 @@ -10,1 +10,1 @@
 -	https://deb.debian.org/debian/pool/main/t/texinfo/texinfo_${TERMUX_PKG_VERSION}${_DEBIAN_REVISION}.debian.tar.xz
 +	https://snapshot.debian.org/archive/debian/20250119T025721Z/pool/main/t/texinfo/texinfo_${TERMUX_PKG_VERSION}${_DEBIAN_REVISION}.debian.tar.xz
+diff --git a/packages/libsoxr/build.sh b/packages/libsoxr/build.sh
+--- a/packages/libsoxr/build.sh
++++ b/packages/libsoxr/build.sh
+@@ -10,1 +10,2 @@
+ TERMUX_PKG_REPLACES="libsoxr-dev"
++TERMUX_PKG_EXTRA_CONFIGURE_ARGS="-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
