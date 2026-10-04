@@ -22,7 +22,9 @@
     "foot-1.23.1-sha256": "b3fa774983abb5f95aecca4557d146091d8666bc65fb310d4d3e38327357ade9",
     "footOverrideReason": "Pinned Termux recipe hash no longer matched the archive served by Codeberg; archive was downloaded twice and verified before pinning the observed SHA256.",
     "ncursesOverride": "omit unrelated kitty, Alacritty and foot terminfo sources from the runtime dependency build",
-    "libx11Override": "declare and link libandroid-shmem; Termux removes the NDK sys/shm.h in favor of this compatibility library"
+    "libx11Override": "declare and link libandroid-shmem; Termux removes the NDK sys/shm.h in favor of this compatibility library",
+    "liblzoOverride": "use the upstream lzo-2.10.tar.gz archive because the Fossies tar.xz URL returns 404; SHA256 matches downloads from upstream, MacPorts and Buildroot",
+    "liblzoArchiveSha256": "c0f892943208266f9b6543b3ae308fab6284c5c90e627931446fb49b4221a072"
   },
   "publicReleaseReady": false
 }
