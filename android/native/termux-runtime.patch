@@ -144,3 +144,11 @@ diff --git a/packages/libsoxr/build.sh b/packages/libsoxr/build.sh
 @@ -10,1 +10,2 @@
  TERMUX_PKG_REPLACES="libsoxr-dev"
 +TERMUX_PKG_EXTRA_CONFIGURE_ARGS="-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+diff --git a/packages/libx265/build.sh b/packages/libx265/build.sh
+--- a/packages/libx265/build.sh
++++ b/packages/libx265/build.sh
+@@ -36,0 +37,4 @@
++	sed -i \
++		-e 's/cmake_policy(SET CMP0025 OLD).*$/cmake_policy(SET CMP0025 NEW)/' \
++		-e 's/cmake_policy(SET CMP0054 OLD).*$/cmake_policy(SET CMP0054 NEW)/' \
++		"$TERMUX_PKG_SRCDIR/CMakeLists.txt"

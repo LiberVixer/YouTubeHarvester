@@ -33,7 +33,8 @@
     "libsoxrOverride": "set CMAKE_POLICY_VERSION_MINIMUM=3.5 for compatibility with pinned CMake 4.0.3, preserving the OpenMP configuration",
     "cmakeCompatibilityOverride": "set CMAKE_POLICY_VERSION_MINIMUM=3.5 in the runtime build container environment for legacy dependencies, including libsrt; newer project policy versions remain unchanged",
     "giflibOverride": "fetch the unchanged giflib 5.2.2 upstream tarball from the official Debian snapshot dated 20240226T213049Z because SourceForge returns 404; original recipe SHA256 is unchanged",
-    "giflibArchiveSha256": "be7ffbd057cadebe2aa144542fd90c6838c6a083b5e8a9048b8ee3b66b29d5fb"
+    "giflibArchiveSha256": "be7ffbd057cadebe2aa144542fd90c6838c6a083b5e8a9048b8ee3b66b29d5fb",
+    "libx265Override": "use NEW behavior for CMP0025 and CMP0054 because CMake 4 removed OLD behavior; preserve SOVERSION, architecture and assembly guards"
   },
   "publicReleaseReady": false
 }
