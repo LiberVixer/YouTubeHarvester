@@ -31,7 +31,10 @@ destination is a VirtualBox host shared folder (`vboxsf`), not a verified
 independent external drive. It exposes mode 0777; host access restrictions and
 an independent offline copy still need confirmation. The PKCS12 remains
 password-protected, and no password was copied. Do not mark protected independent
-backup readiness complete yet. Store the password separately from the key;
+backup readiness complete solely from the shared-folder check. On 2026-10-04,
+the owner confirmed that the independent backup has already been completed;
+backup readiness is therefore recorded as owner-confirmed, not independently
+inspected by the agent. Store the password separately from the key;
 never place either in release files or commit a private keystore. Data
 export/import from beta must still be accepted on the exact public candidate.
 
