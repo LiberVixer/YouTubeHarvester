@@ -18,8 +18,8 @@ test ! -e "$output"
 mkdir -p "$output"
 git -C "$repo" archive --format=tar.gz --output="$output/termux-recipes.tar.gz" HEAD
 cp "$lock" "$app/android/native/termux-runtime.patch" "$output/"
-git -C "$repo" apply --check "$app/android/native/termux-runtime.patch"
-git -C "$repo" apply "$app/android/native/termux-runtime.patch"
+git -C "$repo" apply --check --recount "$app/android/native/termux-runtime.patch"
+git -C "$repo" apply --recount "$app/android/native/termux-runtime.patch"
 
 # Source-build dependencies too: do not use Termux's prebuilt-dependency switch.
 docker pull "$image"
