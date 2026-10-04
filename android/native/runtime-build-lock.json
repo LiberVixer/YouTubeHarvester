@@ -25,7 +25,8 @@
     "libx11Override": "declare and link libandroid-shmem; Termux removes the NDK sys/shm.h in favor of this compatibility library",
     "liblzoOverride": "use the upstream lzo-2.10.tar.gz archive because the Fossies tar.xz URL returns 404; SHA256 matches downloads from upstream, MacPorts and Buildroot",
     "liblzoArchiveSha256": "c0f892943208266f9b6543b3ae308fab6284c5c90e627931446fb49b4221a072",
-    "libgraphiteOverride": "set CMAKE_POLICY_VERSION_MINIMUM=3.5 for compatibility with pinned CMake 4.0.3"
+    "libgraphiteOverride": "set CMAKE_POLICY_VERSION_MINIMUM=3.5 for compatibility with pinned CMake 4.0.3",
+    "libunboundOverride": "declare and link libandroid-shmem, and use SWIG's supported $action exception placeholder instead of $function in the Python bindings"
   },
   "publicReleaseReady": false
 }

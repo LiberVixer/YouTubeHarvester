@@ -111,3 +111,18 @@ diff --git a/packages/libgraphite/build.sh b/packages/libgraphite/build.sh
 @@ -13,1 +13,2 @@
  TERMUX_PKG_RM_AFTER_INSTALL="bin/gr2fonttest"
 +TERMUX_PKG_EXTRA_CONFIGURE_ARGS="-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+diff --git a/packages/libunbound/build.sh b/packages/libunbound/build.sh
+--- a/packages/libunbound/build.sh
++++ b/packages/libunbound/build.sh
+@@ -10,1 +10,1 @@
+-TERMUX_PKG_DEPENDS="libevent, libnghttp2, openssl, resolv-conf"
++TERMUX_PKG_DEPENDS="libandroid-shmem, libevent, libnghttp2, openssl, resolv-conf"
+@@ -20,1 +20,2 @@
+ ac_cv_func_chown=no
++LIBS=-landroid-shmem
+@@ -40,1 +41,5 @@
++termux_step_pre_configure() {
++	sed -i 's/\$function/\$action/' "$TERMUX_PKG_SRCDIR/libunbound/python/libunbound.i"
++}
++
+ termux_step_post_massage() {

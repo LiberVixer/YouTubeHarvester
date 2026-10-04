@@ -29,6 +29,7 @@ git -C "$repo" apply --check --recount --unidiff-zero "$app/android/native/termu
 git -C "$repo" apply --recount --unidiff-zero "$app/android/native/termux-runtime.patch"
 bash -n "$repo/packages/ncurses/build.sh"
 bash -n "$repo/packages/libx11/build.sh"
+bash -n "$repo/packages/libunbound/build.sh"
 
 # Source-build dependencies too: do not use Termux's prebuilt-dependency switch.
 docker image inspect "$image" > "$output/builder-image.json"
