@@ -36,6 +36,11 @@ CI uses the `android-release` environment and secrets `ANDROID_KEYSTORE_BASE64`,
 No signing key or password belongs in Git or release artifacts.
 Configure `ANDROID_CERT_SHA256` in the release environment variables as well.
 
+For interactive local candidate signing, set `JAVA_HOME` to JDK 17 in the
+terminal running `scripts/sign_release_candidate.py`; the GUI terminal may not
+inherit the build shell's environment. The helper verifies Java availability
+before requesting the key password. Use a new output directory for each attempt.
+
 ### Existing development installations
 
 From dev31, `debug` uses `com.liberivixer.youtubeharvester.debug`; it deliberately

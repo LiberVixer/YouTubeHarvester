@@ -6,10 +6,28 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-from sign_release_candidate import validate_inputs
+from sign_release_candidate import validate_inputs, validate_java
 
 
 class ReleaseCandidateSigningTest(unittest.TestCase):
+    def test_rejects_missing_java(self):
+        with patch.dict("os.environ", {}, clear=True), patch("shutil.which", return_value=None):
+            with self.assertRaisesRegex(ValueError, "Java is unavailable"):
+                validate_java()
+
+    def test_java_home_takes_precedence_over_path(self):
+        with patch.dict("os.environ", {"JAVA_HOME": "/approved/jdk"}, clear=True), \
+                patch("os.access", return_value=True), patch("subprocess.run") as run:
+            validate_java()
+            run.assert_called_once_with(["/approved/jdk/bin/java", "-version"],
+                                        check=True, capture_output=True)
+
+    def test_rejects_broken_java_home_even_if_path_has_java(self):
+        with patch.dict("os.environ", {"JAVA_HOME": "/missing/jdk"}, clear=True), \
+                patch("os.access", return_value=False), patch("shutil.which", return_value="/bin/java"):
+            with self.assertRaisesRegex(ValueError, "Java is unavailable"):
+                validate_java()
+
     def arguments(self, root):
         key = root / "key.p12"
         key.write_bytes(b"not a real key")

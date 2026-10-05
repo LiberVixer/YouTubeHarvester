@@ -16,6 +16,14 @@ from verify_apk import check_manifest, verify
 ABIS = ("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
 
 
+def validate_java():
+    java_home = os.environ.get("JAVA_HOME")
+    java = str(Path(java_home) / "bin" / "java") if java_home else shutil.which("java")
+    if not java or not os.access(java, os.X_OK):
+        raise ValueError("Java is unavailable; configure JAVA_HOME before signing")
+    subprocess.run([java, "-version"], check=True, capture_output=True)
+
+
 def validate_inputs(args):
     if not sys.stdin.isatty():
         raise ValueError("Use a local interactive terminal, not chat or redirected input")
@@ -28,6 +36,7 @@ def validate_inputs(args):
     sources = [args.apk_dir / f"app-{abi}-release-unsigned.apk" for abi in ABIS]
     if not all(path.is_file() for path in sources) or not args.keytool.is_file():
         raise ValueError("Required unsigned release APKs or keytool are missing")
+    validate_java()
     for source in sources:
         check_manifest(manifest(source, args.build_tools), args.version, args.version_code)
     return sources
