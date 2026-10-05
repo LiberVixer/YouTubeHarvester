@@ -12,21 +12,28 @@ Runtime:
   https://github.com/yt-dlp/yt-dlp/releases/tag/2026.08.19
 - Python: Python Software Foundation License.
   https://www.python.org/psf/license/
-- PyCryptodome (Cryptodome namespace), observed 3.23.0 on x86_64:
+- PyCryptodome (Cryptodome namespace) 3.23.0, source-built for all four ABIs:
   BSD-2-Clause and public-domain portions; preserve the upstream license text.
   https://github.com/Legrandin/pycryptodome/blob/v3.23.0/LICENSE.rst
+- Mutagen 1.47.0: GPL-2.0-or-later; source distribution and COPYING preserved.
+  https://github.com/quodlibet/mutagen
 - OpenSSL, observed 3.5.2 through Python ssl on x86_64: Apache-2.0.
   https://github.com/openssl/openssl/blob/openssl-3.5.2/LICENSE.txt
-- FFmpeg and the codecs in the upstream Android runtime: respective LGPL/GPL
+- FFmpeg 7.1.1 and source-built codec/support dependencies: respective LGPL/GPL
   licenses, including GPL components. https://ffmpeg.org/legal.html
 - libwebp 1.6.0 (including SharpYUV): BSD-style license and patent grant.
-  Five libraries per ABI replace the upstream FFmpeg runtime copies to support
-  16 KB pages. Exact source, COPYING/PATENTS/AUTHORS and build instructions are
-  included under native/. https://chromium.googlesource.com/webm/libwebp/
+  The current FFmpeg payload is replaced in full from pinned Termux recipes.
+  Exact sources and license notices are retained in the runtime source set.
+  https://chromium.googlesource.com/webm/libwebp/
 - QuickJS 2026-06-04: MIT. Rebuilt for four Android ABIs from the pinned source
-  under native/; scripts/rebuild_quickjs.py and scripts/patch_quickjs.py preserve
-  the license and replace only the upstream QuickJS executables.
+  under native/; scripts/rebuild_quickjs.py preserves the license, and the
+  controlled payload bundle includes these executables unchanged.
   https://bellard.org/quickjs/
+- NDK libc++, libc++abi, libunwind/compiler-rt: LLVM license notices, including
+  applicable Apache-2.0 WITH LLVM-exception and legacy notices. Matching LLVM
+  and Android patch/build sources and NDK NOTICE are preserved; see
+  legal/NDK-SOURCE-EVIDENCE-20261005.md. The Termux recipe's generic NCSA
+  declaration is not a replacement for these producing-source notices.
 
 Application libraries:
 - AndroidX / Compose / Room / WorkManager / DataStore: Apache-2.0.

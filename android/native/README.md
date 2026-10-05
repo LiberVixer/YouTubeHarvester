@@ -1,6 +1,44 @@
-# FFmpeg WebP runtime repair
+# Controlled Runtime Payloads
 
-The upstream `ffmpeg:0.18.1` AAR is unchanged except for five WebP libraries per ABI.
+The Gradle build retains the upstream 0.18.1 wrapper classes but replaces every
+native entry of the library and FFmpeg AARs. No upstream Python/FFmpeg payload
+is retained. `controlled-artifacts.json` pins the producing build inventories;
+`controlled-payloads.properties` pins the resulting replacement bundle.
+
+With the downloaded and verified core/extension artifacts retained in their
+recorded `android/build` locations, run from the repository root:
+
+```sh
+python3 android/scripts/package_controlled_payloads.py --android android \
+  --inputs android/native/controlled-artifacts.json \
+  --output android/build/controlled-payloads-20261005/runtime-replacements.zip
+```
+
+The output directory must not already contain the target ZIP. Payload assembly
+checks package hashes, ELF architecture, non-system dependency closure and
+64-bit 16 KB alignment. It includes Cryptodome 3.23.0 and Mutagen 1.47.0 and
+records each packaged file's producing package and hash in the adjacent JSON.
+All payload symlinks are relative and remain inside `usr/`.
+
+For a fresh checkout with GitHub access, restore the pinned prepared bundle:
+
+```sh
+python3 android/scripts/fetch_controlled_payloads.py --android android
+```
+
+Until publication it is a draft-release asset and requires authenticated read
+access. CI uses its read-only GitHub token. A missing asset or mismatched hash
+stops the build; no old runtime fallback is used. Existing local bundle files
+are checked and never silently replaced.
+
+For a source rebuild, download artifacts from the run IDs in `controlled-artifacts.json`;
+unpack their `runtime-packages.tar.gz` before assembling. They are intermediate
+build inputs, not APKs or proof of a complete corresponding-source bundle.
+The exact replacement APKs still need signing and device acceptance.
+
+## Previous WebP Repair
+
+Earlier candidates changed the upstream `ffmpeg:0.18.1` AAR only for five WebP libraries per ABI.
 `scripts/patch_ffmpeg.py` replaces those ELF payloads during the Gradle build;
 the upstream AAR remains covered by Gradle dependency verification.
 

@@ -14,33 +14,40 @@ val ytDlp = Properties().apply {
 
 val upstreamFfmpeg = configurations.create("upstreamFfmpeg") { isTransitive = false }
 val upstreamLibrary = configurations.create("upstreamLibrary") { isTransitive = false }
-val patchedLibrary = layout.buildDirectory.file("runtime/library-0.18.1-quickjs-2026-06-04.aar")
+val controlledRuntime = Properties().apply {
+    rootProject.file("native/controlled-payloads.properties").inputStream().use { load(it) }
+}
+val controlledBundle = rootProject.file(controlledRuntime.getProperty("bundle"))
+val patchedLibrary = layout.buildDirectory.file("runtime/library-0.18.1-controlled.aar")
 val prepareLibrary = tasks.register<Exec>("prepareLibrary") {
     inputs.files(upstreamLibrary)
-    inputs.file(rootProject.file("native/quickjs-2026-06-04-16k.zip"))
-    inputs.file(rootProject.file("scripts/patch_quickjs.py"))
-    inputs.file(rootProject.file("scripts/rebuild_quickjs.py"))
+    inputs.file(controlledBundle)
+    inputs.file(rootProject.file("native/controlled-payloads.properties"))
+    inputs.files(listOf("patch_controlled_runtime.py", "package_controlled_payloads.py",
+        "runtime_inventory.py", "elf_alignment.py").map { rootProject.file("scripts/$it") })
     outputs.file(patchedLibrary)
     doFirst {
-        commandLine("python3", rootProject.file("scripts/patch_quickjs.py"),
+        commandLine("python3", rootProject.file("scripts/patch_controlled_runtime.py"),
             "--upstream", upstreamLibrary.singleFile,
-            "--replacements", rootProject.file("native/quickjs-2026-06-04-16k.zip"),
+            "--replacements", controlledBundle,
             "--output", patchedLibrary.get().asFile,
-            "--sha256", "1d12127c7fdbaafa64fe01ad1b1380179c777d9e6c4abe8b8b912e88074a10df")
+            "--component", "library", "--sha256", controlledRuntime.getProperty("sha256"))
     }
 }
-val patchedFfmpeg = layout.buildDirectory.file("runtime/ffmpeg-0.18.1-16k.aar")
+val patchedFfmpeg = layout.buildDirectory.file("runtime/ffmpeg-0.18.1-controlled.aar")
 val prepareFfmpeg = tasks.register<Exec>("prepareFfmpeg") {
     inputs.files(upstreamFfmpeg)
-    inputs.file(rootProject.file("native/webp-1.6.0-16k.zip"))
-    inputs.file(rootProject.file("scripts/patch_ffmpeg.py"))
+    inputs.file(controlledBundle)
+    inputs.file(rootProject.file("native/controlled-payloads.properties"))
+    inputs.files(listOf("patch_controlled_runtime.py", "package_controlled_payloads.py",
+        "runtime_inventory.py", "elf_alignment.py").map { rootProject.file("scripts/$it") })
     outputs.file(patchedFfmpeg)
     doFirst {
-        commandLine("python3", rootProject.file("scripts/patch_ffmpeg.py"),
+        commandLine("python3", rootProject.file("scripts/patch_controlled_runtime.py"),
             "--upstream", upstreamFfmpeg.singleFile,
-            "--replacements", rootProject.file("native/webp-1.6.0-16k.zip"),
+            "--replacements", controlledBundle,
             "--output", patchedFfmpeg.get().asFile,
-            "--sha256", "cc5adfc8ac62b4213f044c931f55d4275a4c3f69e24240a19ef8a93c7a477162")
+            "--component", "ffmpeg", "--sha256", controlledRuntime.getProperty("sha256"))
     }
 }
 

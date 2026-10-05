@@ -91,8 +91,22 @@ design; downloading hashes alongside executable code is not sufficient.
 
 ## Sources and notices
 
-Since dev32 the five WebP/SharpYUV shared libraries per ABI are replaced during
-the build, using the pinned source/binary bundle under `native/`. Include the
+The current build replaces all upstream native payload entries from controlled
+Python/FFmpeg and extension builds. See `native/controlled-artifacts.json`,
+`native/controlled-payloads.properties`, `native/README.md` and
+`legal/CONTROLLED-SOURCE-AUDIT-20261005.md`. Download the recorded artifacts and
+assemble the pinned replacement bundle before Gradle runs. The local
+`build/controlled-payloads-20261005/runtime-replacements.json` records every
+packaged file's producing package and hash. This supersedes the earlier
+partial WebP-only replacement, without changing wrapper classes.
+
+`scripts/collect_controlled_sources.py` prepares preserved native source archives,
+custom-fetch source trees, NDK sources/notices and the package mapping. Its output
+is explicitly NOT approved for public packaging until exact APK source/notice
+coverage, application/JVM dependency coverage and device acceptance are reviewed.
+
+Earlier dev32 candidates replaced five WebP/SharpYUV shared libraries per ABI,
+using the pinned source/binary bundle under `native/`. Include the
 source archive, licenses and `scripts/rebuild_webp.py` in corresponding sources.
 This supplements, rather than replaces, the complete FFmpeg/runtime source bundle.
 

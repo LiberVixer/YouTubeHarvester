@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "architectures": {
+    "aarch64": {
+      "core": "build/controlled-runtime-37253987803/aarch64",
+      "coreInfoSha256": "04d7b3bbd373ce0734ff83b78aeaea40ae9fb430d5b4a3c280ec9a6c5ea5cc59",
+      "extensions": "build/controlled-extensions-37265901720/aarch64",
+      "extensionsInfoSha256": "ef49d40729f51d79193cdefdc5dcc2f65f964ead3d74282554dfe6ce8fde65ec"
+    },
+    "arm": {
+      "core": "build/controlled-runtime-37253992814/arm",
+      "coreInfoSha256": "73927b1b15b4c3ccae522144c2c7e7f72b92aca11ae196743683de31befb2dbf",
+      "extensions": "build/controlled-extensions-37265901720/arm",
+      "extensionsInfoSha256": "af1eaa724caa3cf4ac53d893a51b6a53f11aa43484fc3d527278c7cd41293b63"
+    },
+    "i686": {
+      "core": "build/controlled-runtime-37253997563/i686",
+      "coreInfoSha256": "b1cb8c58eed55fc9d7296e89d016dc2d91f1945bd63c95f454757c5ac68b4ba3",
+      "extensions": "build/controlled-extensions-37265901720/i686",
+      "extensionsInfoSha256": "974eb717a2bf5e11c365740e099f9f858810562cdae78f40cf651f518b74e005"
+    },
+    "x86_64": {
+      "core": "build/controlled-runtime-37222732575/x86_64",
+      "coreInfoSha256": "a3aec15e3b0116e45a2355e532474a2d6222c00e0789bd16d98aaa18d76c8e95",
+      "extensions": "build/controlled-extensions-37265901720/x86_64",
+      "extensionsInfoSha256": "6f4860dc063b9958d002d181ad66f655898af6da5bdd53da37c77f3f8ac2f007"
+    }
+  }
+}

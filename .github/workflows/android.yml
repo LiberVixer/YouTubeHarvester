@@ -23,6 +23,10 @@ jobs:
           java-version: '17'
       - name: Install Android SDK
         run: bash .github/scripts/install_android_sdk.sh 'platforms;android-37.0' 'build-tools;36.0.0'
+      - name: Restore pinned controlled runtime payload
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 android/scripts/fetch_controlled_payloads.py --android android
       - name: Validate and assemble all ABIs
         working-directory: android
         run: |
@@ -54,6 +58,10 @@ jobs:
           sudo chmod 666 /dev/kvm
       - name: Install compile SDK
         run: bash .github/scripts/install_android_sdk.sh 'platforms;android-37.0' 'build-tools;36.0.0'
+      - name: Restore pinned controlled runtime payload
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 android/scripts/fetch_controlled_payloads.py --android android
       - name: Run on Android emulator
         uses: ReactiveCircus/android-emulator-runner@4c44018e59b437e86cdfc41da381398f93ed8808
         with:
@@ -95,6 +103,10 @@ jobs:
           SOURCE_URL: ${{ vars.ANDROID_SOURCE_URL }}
           SOURCE_SHA256: ${{ vars.ANDROID_SOURCE_SHA256 }}
         run: python3 android/scripts/fetch_runtime_sources.py --output "$RUNNER_TEMP/runtime-sources.tar.gz"
+      - name: Restore pinned controlled runtime payload
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 android/scripts/fetch_controlled_payloads.py --android android
       - name: Build signed release
         working-directory: android
         env:

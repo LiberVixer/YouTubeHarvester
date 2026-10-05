@@ -78,8 +78,10 @@ read successfully and their ELF architecture was checked independently.
   source bundle; absence of a source worktree
   is not treated as evidence of missing C source code.
 - `libc++` copies `libc++_shared.so` from the pinned NDK instead of compiling it.
-  Preserve matching NDK/LLVM source and notices, or rebuild this library from
-  corresponding source. Its preserved ELF is not source code. The recipe's
+  Matching LLVM/builder archives, 51 applied patches and NDK notices have now
+  been preserved; see [NDK evidence](NDK-SOURCE-EVIDENCE-20261005.md). Include
+  them in the reviewed final source bundle. Its preserved ELF is not source
+  code. The recipe's
   generic NCSA text alone is not a complete notice/provenance review.
 - Some compatibility/generated packages have their source in the recipe tree
   or custom source-fetch hooks. Include those recipes and local C/header files,
@@ -99,3 +101,28 @@ read successfully and their ELF architecture was checked independently.
 - Assemble and independently check the final corresponding-source bundle,
   notices, rebuild instructions and exact signed APK acceptance. The public
   packaging gate remains enabled; nothing has been published.
+
+## Replacement APK Preparation
+
+All six native entries per ABI (Python executable/payload, FFmpeg executable/
+payload, FFprobe and QuickJS) have been replaced. The replacement bundle SHA256
+is `cb247989fdeeb7a553da97796d42da0a579e8d089b211fa82097c3d3e4d03833`.
+The adjacent JSON preserves the producing package and file hash for each payload
+entry. Non-system ELF dependency closure was checked for all four ABIs before
+packaging. Dynamic plugin loading still needs device acceptance; static NEEDED
+closure alone is not a full runtime test.
+
+`assembleRelease` and its vital lint checks passed. All four resulting unsigned
+1.2.1 / 120100 APKs passed packaged manifest and ZIP alignment checks. Every
+replacement native entry is byte-identical to the pinned bundle after Gradle
+packaging. The two 64-bit APKs passed 216 and 218 ELF alignment checks respectively.
+Signing and acceptance of these new exact artifacts remain pending. Old signed
+candidates under `build/release-candidate-20261004` were preserved.
+
+The source preparation archive under `build/controlled-payloads-20261005`
+retains 151 checked original upstream archives, the two custom-fetch Git source
+trees, recipe/override archives, all producing build inventories, NDK sources
+and notices, wrapper sources and the payload package mapping. Its 3189-entry
+file inventory was independently checked after packaging. It remains marked
+incomplete pending exact source/notice coverage review and application/JVM
+dependency source coverage; it is not configured as the reviewed public bundle.
