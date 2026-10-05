@@ -74,6 +74,13 @@ def validate_recipes(recipes, lock):
     return sources
 
 
+def validate_extension_recipe(recipe, lock):
+    require(recipe["version"] == lock["pycryptodomexVersion"], "PyCryptodomex version differs from extension lock")
+    require(recipe["urls"] == ["https://github.com/Legrandin/pycryptodome/archive/refs/tags/v" + lock["pycryptodomexVersion"] + "x.tar.gz"],
+            "PyCryptodomex producing source changed")
+    require(recipe["hashes"] == [lock["pycryptodomexSourceSha256"]], "PyCryptodomex source checksum changed")
+
+
 def check_hooks(repo, arch):
     # Exercise the real recipe hooks on small source fixtures, without cross-compiling.
     with tempfile.TemporaryDirectory(prefix="yth-runtime-hooks-") as directory:
@@ -142,6 +149,7 @@ def main():
     parser.add_argument("--lock", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--download-sources", action="store_true")
+    parser.add_argument("--extensions-lock", type=Path)
     args = parser.parse_args()
     repo = args.repo.resolve()
     lock = json.loads(args.lock.read_text())
@@ -154,6 +162,11 @@ def main():
     for arch in architectures:
         recipes = {package: read_recipe(repo, package, arch, lock["prefix"]) for package in PACKAGES}
         sources = validate_recipes(recipes, lock)
+        if args.extensions_lock:
+            extensions = json.loads(args.extensions_lock.read_text())
+            require(extensions["termuxCommit"] == lock["termuxCommit"] and
+                    extensions["pythonVersion"] == lock["pythonVersion"], "Extension build base changed")
+            validate_extension_recipe(read_recipe(repo, "python-pycryptodomex", arch, lock["prefix"]), extensions)
         check_hooks(repo, arch)
     if args.download_sources:
         download_sources(repo, sources, args.output / "preflight-sources")

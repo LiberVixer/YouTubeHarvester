@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "termuxCommit": "7c74f85f3b36991d07d4cfb0d1be458c1b4f0896",
+  "targets": ["python-pycryptodomex"],
+  "pythonVersion": "3.12.11",
+  "pycryptodomexVersion": "3.23.0",
+  "pycryptodomexSourceSha256": "d3e12d349f62a8c3bd2e7056e2eea925abcfcdd9e2b07bff091bcc05837ac869",
+  "mutagenVersion": "1.47.0",
+  "mutagenSourceUrl": "https://files.pythonhosted.org/packages/81/e6/64bc71b74eef4b68e61eb921dcf72dabd9e4ec4af1e11891bbd312ccbb77/mutagen-1.47.0.tar.gz",
+  "mutagenSourceSha256": "719fadef0a978c31b4cf3c956261b3c58b6948b32023078a2117b1de09f0fc99",
+  "publicReleaseReady": false
+}

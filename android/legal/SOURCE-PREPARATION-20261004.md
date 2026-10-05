@@ -3,6 +3,11 @@
 The owner requested preparation of Android corresponding sources on 2026-10-04.
 This is a work-in-progress inventory, not a complete-source attestation.
 
+Update 2026-10-05: four controlled core runtime builds and their checksum
+inventories passed. The initial corresponding-source audit and remaining
+extension/NDK/integration requirements are recorded in
+[controlled source audit](CONTROLLED-SOURCE-AUDIT-20261005.md).
+
 ## Confirmed Sources
 
 - youtubedl-android 0.18.1: tag resolves to commit

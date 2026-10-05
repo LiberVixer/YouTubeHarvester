@@ -6,6 +6,8 @@ case "$arch" in aarch64|arm|i686|x86_64) ;; *) exit 2 ;; esac
 repo="${2:?Specify the pinned Termux checkout}"
 app="${3:?Specify the Harvester checkout}"
 output="${4:?Specify an empty output directory}"
+component="${5:-runtime}"
+case "$component" in runtime|extensions) ;; *) exit 2 ;; esac
 repo="$(realpath "$repo")"
 app="$(realpath "$app")"
 output="$(realpath -m "$output")"
@@ -13,10 +15,26 @@ lock="$app/android/native/runtime-build-lock.json"
 commit="$(jq -r .termuxCommit "$lock")"
 image="$(jq -r .builderImage "$lock")"
 base_image="$(jq -r .builderBaseImage "$lock")"
+targets=(python ffmpeg ca-certificates)
+if [[ "$component" = extensions ]]; then
+  extensions_lock="$app/android/native/python-extensions-lock.json"
+  test "$(jq -r .termuxCommit "$extensions_lock")" = "$commit"
+  test "$(jq -r .pythonVersion "$extensions_lock")" = "$(jq -r .pythonVersion "$lock")"
+  mapfile -t targets < <(jq -r '.targets[]' "$extensions_lock")
+  test "${targets[*]}" = python-pycryptodomex
+fi
 test "$(git -C "$repo" rev-parse HEAD)" = "$commit"
 test -z "$(git -C "$repo" status --porcelain)"
 test ! -e "$output"
 mkdir -p "$output"
+jq -n --arg component "$component" --args '$ARGS.positional as $targets | {component:$component,targets:$targets}' \
+  "${targets[@]}" > "$output/BUILD-COMPONENT.json"
+if [[ "$component" = extensions ]]; then
+  cp "$extensions_lock" "$output/"
+  mutagen_source="$app/android/native/mutagen-$(jq -r .mutagenVersion "$extensions_lock").tar.gz"
+  printf '%s  %s\n' "$(jq -r .mutagenSourceSha256 "$extensions_lock")" "$mutagen_source" | sha256sum --check --status
+  cp "$mutagen_source" "$output/"
+fi
 git -C "$repo" archive --format=tar.gz --output="$output/termux-recipes.tar.gz" HEAD
 cp "$lock" "$app/android/native/termux-runtime.patch" "$output/"
 cp "$app/android/native/RuntimeBuilder.Dockerfile" "$output/"
@@ -30,8 +48,10 @@ preflight_recipe_tree() (
   trap 'rm -rf -- "$preview"' EXIT
   git -C "$repo" archive HEAD | tar -xf - -C "$preview"
   git -C "$preview" apply --recount --unidiff-zero "$app/android/native/termux-runtime.patch"
+  extra_args=()
+  if [[ "$component" = extensions ]]; then extra_args=(--extensions-lock "$extensions_lock"); fi
   python3 "$app/android/scripts/preflight_controlled_runtime.py" \
-    --repo "$preview" --lock "$lock" --output "$output" --download-sources
+    --repo "$preview" --lock "$lock" --output "$output" --download-sources "${extra_args[@]}"
 )
 preflight_recipe_tree 2>&1 | tee "$output/preflight.log"
 # Build the host tools from the same snapshot before applying runtime paths.
@@ -48,6 +68,7 @@ docker run --rm --init \
   --volume "$repo:/home/builder/termux-packages" \
   --volume "$output:/output" \
   --env "YTH_ARCH=$arch" \
+  --env "YTH_TARGETS=${targets[*]}" \
   --env TERMUX_PKG_API_LEVEL=26 \
   --env TERMUX_PKG_MAKE_PROCESSES=2 \
   --env "CMAKE_POLICY_VERSION_MINIMUM=$(jq -r .cmakePolicyVersionMinimum "$lock")" \
@@ -80,7 +101,7 @@ docker run --rm --init \
     if [[ ! -d "$NDK" ]]; then
       su -m builder -c "HOME=/home/builder ./scripts/setup-android-sdk.sh"
     fi
-    su -m builder -c "HOME=/home/builder ./build-package.sh -a $YTH_ARCH -F -o /output/packages python ffmpeg ca-certificates"
+    su -m builder -c "HOME=/home/builder ./build-package.sh -a $YTH_ARCH -F -o /output/packages $YTH_TARGETS"
   ' 2>&1 | tee "$output/build.log"
 result="${PIPESTATUS[0]}"
 set -e

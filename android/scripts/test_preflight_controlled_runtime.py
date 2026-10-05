@@ -5,7 +5,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from preflight_controlled_runtime import check_hooks, download_sources, read_recipe, validate_paths, validate_recipes
+from preflight_controlled_runtime import check_hooks, download_sources, read_recipe, validate_extension_recipe, validate_paths, validate_recipes
 
 
 LOCK = Path(__file__).resolve().parents[1] / "native/runtime-build-lock.json"
@@ -50,6 +50,15 @@ class RuntimePreflightTest(unittest.TestCase):
 
     def test_valid_overrides_return_three_checked_sources(self):
         self.assertEqual(3, len(validate_recipes(self.recipes, self.lock)))
+
+    def test_native_extension_source_is_locked(self):
+        lock = json.loads(LOCK.with_name("python-extensions-lock.json").read_text())
+        recipe = {"version": "3.23.0", "urls": ["https://github.com/Legrandin/pycryptodome/archive/refs/tags/v3.23.0x.tar.gz"],
+                  "hashes": [lock["pycryptodomexSourceSha256"]]}
+        validate_extension_recipe(recipe, lock)
+        for field, value in (("version", "3.22.0"), ("urls", ["https://example.org/unreviewed.tar.gz"]), ("hashes", ["0" * 64])):
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                validate_extension_recipe({**recipe, field: value}, lock)
 
     def test_runtime_path_and_alignment_regressions_are_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
