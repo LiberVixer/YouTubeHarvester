@@ -35,6 +35,41 @@ This checks certificate data integrity, not the final APK source bundle.
 Local detailed report: `android/build/controlled-source-audit-20261005.json`.
 It deliberately records `completeCorrespondingSourcesVerified=false`.
 
+## Python Extension Builds
+
+Run `37265901720`, application commit
+`8f468ecc3cb80355407e1ab7abce0646831e8c79`, completed successfully for all
+four ABIs. Every final log records 43 unique completed packages, ending with
+`python-pycryptodomex`. Downloaded artifacts are retained under
+`android/build/controlled-extensions-37265901720/ARCH` with per-ABI
+`VERIFIED-extensions.json` reports.
+
+| Architecture | Completed packages | Verified SHA256 entries | Cryptodome native modules |
+| --- | --- | --- | --- |
+| aarch64 | 43 | 105 | 40 |
+| arm | 43 | 105 | 40 |
+| i686 | 43 | 105 | 42 |
+| x86_64 | 43 | 105 | 42 |
+
+For each artifact, every inventory entry including the unpacked raw packages
+matches its hash and size. Architecture, application commit, exit code zero,
+runtime lock, extension lock and `BUILD-COMPONENT.json` were checked.
+The `python-pycryptodomex` package is version 3.23.0 and all its native modules
+have the expected ELF machine type. All 82 native modules across the two
+64-bit ABIs pass the existing 16 KB LOAD-segment alignment check.
+
+Each source worktree archive retains the original Cryptodome source tarball
+with SHA256 matching the pinned extension lock, 1420 source files and both
+`LICENSE.rst` notices. The retained Mutagen source archive also matches its
+pinned hash. These checks establish preserved source evidence, not final APK
+runtime acceptance or a complete corresponding-source attestation.
+
+Final logs have no GitHub fatal-error annotations. Python's test-file
+`compileall` diagnostic (`ValueError: field 'value' is required for Constant`)
+occurs once per ABI and does not stop these builds. Debian's package reader
+warns about Termux's `x86_64` architecture spelling; the package contents were
+read successfully and their ELF architecture was checked independently.
+
 ## Remaining Before Publication
 
 - `ca-certificates` downloads a PEM data file without an unpacked source tree.
@@ -50,9 +85,10 @@ It deliberately records `completeCorrespondingSourcesVerified=false`.
   or custom source-fetch hooks. Include those recipes and local C/header files,
   not only cached upstream archives.
 - Existing APKs contain `Cryptodome 3.23.0` and `mutagen 1.47.0`; the initial
-  core targets did not include them. A separate source-built extension target
-  is now pinned in `native/python-extensions-lock.json`. Its artifact must be
-  checked before replacing the old runtime; do not reuse old extension ELFs.
+  core targets did not include them. The separate source-built Cryptodome
+  artifacts pinned in `native/python-extensions-lock.json` are now verified
+  for all four ABIs. Integrate these replacements rather than old extension
+  ELFs; exact APK imports and download acceptance remain unverified.
 - Mutagen's source distribution is retained as `native/mutagen-1.47.0.tar.gz`,
   SHA256 `719fadef0a978c31b4cf3c956261b3c58b6948b32023078a2117b1de09f0fc99`.
   It contains its GPL-2.0-or-later COPYING file and package metadata. The version
