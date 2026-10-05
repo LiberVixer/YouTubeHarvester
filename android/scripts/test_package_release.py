@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import patch
 import zipfile
 
-from package_release import ABIS, check_apk_abi, check_source_review, digest, main
+from package_release import ABIS, check_apk_abi, check_source_review, digest, main, package_original_notices
 
 
 class SourceReviewTests(unittest.TestCase):
@@ -23,6 +23,7 @@ class SourceReviewTests(unittest.TestCase):
         self.archive = self.folder / "sources.tar.gz"
         with tarfile.open(self.archive, "w:gz") as archive:
             archive.add(source, arcname="source.txt")
+            archive.add(source, arcname="source-notice-audit/notices/example/LICENSE")
         self.apks = {}
         for abi in ABIS:
             apk = self.folder / (abi + ".apk")
@@ -93,6 +94,25 @@ class SourceReviewTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.check()
 
+    def test_original_notices_keep_exact_bytes(self):
+        output = self.folder / "notices.zip"
+        result = package_original_notices(self.archive, output)
+        self.assertEqual(result["files"], 1)
+        with zipfile.ZipFile(output) as archive:
+            self.assertEqual(archive.read("source-notice-audit/notices/example/LICENSE"), b"source")
+
+    def test_missing_or_escaping_original_notices_are_rejected(self):
+        for name in ("source.txt", "source-notice-audit/notices/../../escape"):
+            with self.subTest(name=name):
+                archive_path = self.folder / "invalid.tar.gz"
+                with tarfile.open(archive_path, "w:gz") as archive:
+                    member = tarfile.TarInfo(name)
+                    member.size = 6
+                    archive.addfile(member, io.BytesIO(b"source"))
+                output = self.folder / (str(len(name)) + ".zip")
+                with self.assertRaises(ValueError):
+                    package_original_notices(archive_path, output)
+
     def run_packager(self, failure=None):
         android = self.folder / "android"
         (android / "app").mkdir(parents=True)
@@ -152,6 +172,7 @@ class SourceReviewTests(unittest.TestCase):
             self.assertEqual(digest(candidates / name), self.review["apkSha256"][abi])
         self.assertEqual((output / "LICENSE-android.txt").read_text(), "approved")
         self.assertEqual((output / "NOTICE-android.txt").read_text(), "third-party notices")
+        self.assertEqual(json.loads((output / "BUILD-INFO-android.json").read_text())["originalNotices"]["files"], 1)
         checksums = (output / "SHA256SUMS-android.txt").read_text()
         for name in ("LICENSE-android.txt", "NOTICE-android.txt"):
             self.assertIn(f"{digest(output / name)}  {name}\n", checksums)

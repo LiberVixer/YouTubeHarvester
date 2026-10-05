@@ -325,3 +325,27 @@ it has not been replaced by a publicly approved release. The completed substanti
 review binding the final source bundle and exact APKs, followed by final draft
 artifact/metadata replacement, is still required before publication. No true
 source-approval flag or public tag was created in this preparation step.
+
+## Final Combined Decision
+
+The combined engineering source/build/notices review for the exact four signed
+R2 APKs is recorded in `SOURCE-REVIEW-1.2.1.json`. It binds their SHA256 values
+to R5's immutable source hash and the accepted application snapshot, and closes
+the source omissions described in the historical sections above. All 11393
+initially unmatched AndroidX generated files are accounted for by the retained
+icon/service probes, including their explicitly limited comparison modes.
+
+This decision is based on the preferred sources, build/assembly inputs,
+component mapping, original notices and transformation evidence together;
+the 6571-file integrity check alone is not the approval. In particular,
+source-identical snapshot selection is not silently called producing-commit
+attestation, and documentation-stub or whole-APK byte reproducibility is not
+claimed. Historical preparation reports remain unchanged and false for their
+original narrower scope. The completed distribution report additionally binds
+this decision to the final packaging commit.
+
+The public packager preserves the R2 APK bytes and distributes original notices
+in a separate `THIRD-PARTY-NOTICES-android.zip`, copied byte-for-byte from the
+reviewed bundle. Its focused regression run passed 14 tests. Device acceptance
+remains limited to LDPlayer x86_64/API 34; deferred device checks are not passing
+checks. The report approves source packaging, not public release publication.

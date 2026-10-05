@@ -1,5 +1,18 @@
 # Android 1.2.1 Release Candidate
 
+## Final Source Packaging Decision
+
+The final combined source/build/notices review is complete for the exact R2
+hashes below. See [the decision](legal/SOURCE-REVIEW-1.2.1.json) and
+[scope and limitations](legal/FINAL-SOURCE-REVIEW-20261005.md).
+R5 SHA256: `c6b90687e95251082a1a261053aa4ba2bfcb302edd2099261c45868877cf907f`.
+Earlier source-blocker paragraphs below are historical and superseded by this
+combined review; they are not evidence that the old incomplete source asset can
+be used. The draft must contain the accepted R2 APKs and matching final sources,
+review, provenance, checksums and original notices. No APK rebuild is required.
+Full device acceptance remains false, with additional device tests explicitly
+deferred by the owner. Source approval does not authorize public publication.
+
 ## Current Controlled Candidate: R2, 2026-10-05
 
 The initial controlled candidate below was superseded after a real LDPlayer

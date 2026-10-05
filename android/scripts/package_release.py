@@ -11,9 +11,35 @@ import tarfile
 import tempfile
 import zipfile
 from verify_apk import verify
+from package_controlled_payloads import safe_name
 
 
 ABIS = ("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
+
+
+def package_original_notices(sources, output):
+    prefixes = ("source-notice-audit/notices/", "rust-notice-sources/notices/")
+    seen, total = set(), 0
+    with tarfile.open(sources, "r|gz") as archive, zipfile.ZipFile(output, "x", zipfile.ZIP_DEFLATED) as notices:
+        for member in archive:
+            name = safe_name(member.name)
+            if not name.startswith(prefixes) or member.isdir():
+                continue
+            if not member.isfile() or member.size > 16 * 1024**2:
+                raise ValueError("Unsupported or oversized original notice: " + name)
+            if name in seen:
+                raise ValueError("Duplicate original notice: " + name)
+            seen.add(name)
+            total += member.size
+            if total > 64 * 1024**2:
+                raise ValueError("Original notice set exceeds size limit")
+            data = archive.extractfile(member).read()
+            info = zipfile.ZipInfo(name, (1980, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            notices.writestr(info, data)
+        if not seen:
+            raise ValueError("Reviewed source bundle has no original component notices")
+    return {"files": len(seen), "originalBytes": total, "sha256": digest(output)}
 
 
 def digest(path):
@@ -122,6 +148,9 @@ def main():
         source_review = stage / "SOURCE-REVIEW-android.json"
         source_review.write_text(json.dumps(review, indent=2) + "\n", encoding="utf-8")
         packaged.append(source_review)
+        original_notices = stage / "THIRD-PARTY-NOTICES-android.zip"
+        notice_info = package_original_notices(args.sources, original_notices)
+        packaged.append(original_notices)
         for source_name, target_name in (("LICENSE", "LICENSE-android.txt"), ("NOTICE", "NOTICE-android.txt")):
             target = stage / target_name
             shutil.copy2(android / source_name, target)
@@ -131,6 +160,7 @@ def main():
             "version": version, "versionCode": version_code, "commit": commit, "tag": args.tag,
             "buildTask": "assembleRelease", "reusedSignedCandidates": args.candidate_dir is not None,
             "artifacts": verified, "sourceReviewSha256": digest(source_review),
+            "originalNotices": notice_info,
             "runtime": dict(line.split("=", 1) for line in
                             (android / "runtime.properties").read_text().splitlines() if "=" in line),
         }, indent=2) + "\n", encoding="utf-8")

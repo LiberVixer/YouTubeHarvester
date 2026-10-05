@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "version": "1.2.1",
+  "versionCode": 120100,
+  "reviewedApplicationCommit": "7248c82",
+  "sourceArchiveSha256": "c6b90687e95251082a1a261053aa4ba2bfcb302edd2099261c45868877cf907f",
+  "sourceArchiveBytes": 1745961172,
+  "apkSha256": {
+    "arm64-v8a": "daa78e484fa2c32f850d988094782e325544524fe6dce12377b6d8afc1a758ef",
+    "armeabi-v7a": "6a184ab1cb59d82aa404bb547280513a7d72132eeffd102cab082ee90dac2faf",
+    "x86": "43361145aa4f1b9bc5ffecb9eb8ed646a7f24c511a41fff520ede796fcf839f9",
+    "x86_64": "807ec7b2da0298c7169f68ee18b58f39d1ce23aaba602f439d2dbc557cd752ec"
+  },
+  "completeCorrespondingSourcesVerified": true,
+  "remaining": [],
+  "scope": "Combined preferred-source, producing/assembly-input and original-notice coverage for these exact four R2 APKs; not whole-source byte reproducibility or full device acceptance",
+  "closedSourceItems": [
+    {
+      "item": "Controlled runtime, Python modules and native launchers",
+      "resolution": "All four producing core/extension manifests, 151 original archives, recipe patch, source locks, package-to-payload map and launcher/QuickJS assembly sources are retained. The six payload entries per ABI were byte-matched to these exact APKs. Cryptodome and Mutagen source distributions and notices are retained."
+    },
+    {
+      "item": "NDK libc++ and CA certificate data",
+      "resolution": "Matching NDK r28c build IDs for all ABIs, LLVM and Android builder sources, 51 applied patches and original notices are retained. The original CA PEM matches its producing recipe SHA256; its MPL-2.0 text is retained."
+    },
+    {
+      "item": "Application and all 130 Maven producer mappings",
+      "resolution": "Application snapshot 7248c82 and its build inputs match the accepted APK inputs. All 130 source JAR/POM artifacts are retained, with 19 JVM producer trees/ten parent POMs covering 38 artifacts, 91 AndroidX mappings and the common wrapper's two exact Kotlin sources. The two local controlled AARs use the separately retained wrapper/runtime producer sources."
+    },
+    {
+      "item": "AndroidX preferred inputs, generated sources and publication versions",
+      "resolution": "41 selected module trees at 32 immutable commits, 424 root/build inputs and 1163 published resource/metadata/notice inputs are retained. All initially unmatched generated files are classified by the icon/service probes. Original generators, raw XML/AIDL/proto/resource inputs and build logic are preserved; five explicit version-only patches cover six source-identical publication-version differences."
+    },
+    {
+      "item": "Protobuf, yt-dlp and EJS",
+      "resolution": "Protobuf preferred sources/build generators and relocation recipe are retained; all 523 remapped class bytes match. The bundled 1043 yt-dlp sources and six EJS distribution files match their preserved distributions; npm dependency archives match locked SHA512."
+    },
+    {
+      "item": "Rust source/notice omissions and original attribution",
+      "resolution": "All 227 locked crate distributions and Rust toolchain sources are preserved. Eight omitted crate notices are supplied from six immutable source-matched repository snapshots, with 67 exact Rust file comparisons. Original libcrypt attribution is preserved from crypt3.c rather than relying on its placeholder license template. Original component notices remain separate from abbreviated recipe declarations and accompany distribution."
+    }
+  ],
+  "limitations": [
+    "The source-identical AndroidX commits are preferred-input evidence, not producing-commit attestations where no publication receipt exists.",
+    "Material icon comparison allows only the upstream generator's initial build-year difference. AIDL comparison allows only its host-command receipt line.",
+    "AppCompat public R declarations and documentation-only tails were checked; full documentation-stub generation and APK class-byte reproduction are not claimed. Preferred XML, symbol inputs and upstream build logic are retained.",
+    "General-purpose toolchains and upstream repository downloads may be required. A fully offline or byte-identical whole-upstream rebuild is not claimed.",
+    "Individual historical preparation reports remain false because their scope was incomplete at that stage; this combined decision does not rewrite them.",
+    "This is an engineering source-coverage decision, not a warranty about patent rights or a general legal certification."
+  ],
+  "deviceAcceptanceComplete": false,
+  "deviceAcceptance": "Exact signed x86_64 R2 APK accepted on LDPlayer Android 14/API 34: download, FFmpeg merge/publication and archive persistence",
+  "deferredDeviceChecks": ["Physical ARM devices", "API 26/35 devices", "16 KB device", "Full beta migration", "TalkBack"],
+  "publicationAuthorizedByThisReport": false
+}

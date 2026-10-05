@@ -160,6 +160,13 @@ rebuild patches. Use a new output archive and independently verify it. See
 `legal/SOURCE-REBUILD.md`; neither source counts nor an empty automated finding
 list replaces a substantive completed exact-APK review.
 
+The combined R2/R5 source decision is `legal/SOURCE-REVIEW-1.2.1.json`; preserve
+its exact APK/source hashes and explicit limitations. Final distribution review
+also binds the packaging commit. The packager includes a small
+`THIRD-PARTY-NOTICES-android.zip` containing the original notices from the reviewed
+source bundle, without editing their text or the accepted signed APKs. Updating
+a draft is not authorization to publish it or push a release-triggering tag.
+
 Earlier dev32 candidates replaced five WebP/SharpYUV shared libraries per ABI,
 using the pinned source/binary bundle under `native/`. Include the
 source archive, licenses and `scripts/rebuild_webp.py` in corresponding sources.
