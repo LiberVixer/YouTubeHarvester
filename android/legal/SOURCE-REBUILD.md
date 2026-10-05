@@ -110,3 +110,57 @@ framework JAR. It regenerates PreferencesProto and Room RPC sources and checks
 the inspector template and public R sources. AppCompat documentation-stub tails
 are checked explicitly, not claimed as fully regenerated. Neither probe produces
 replacement APKs or a completed corresponding-source approval.
+
+## Explicit AndroidX Publication Versions
+
+Six source-identical artifact snapshots have a different root version-table
+entry. Do not silently build their RC/next version or change the saved trees.
+`scripts/prepare_androidx_version_overrides.py` validates the module/root
+inventories and creates five version-only patches in a new output directory:
+
+```sh
+python3 scripts/prepare_androidx_version_overrides.py --sources /path/to/androidx-release-sources --builds /path/to/androidx-build-inputs --output /path/to/new-version-overrides
+```
+
+The corrections are annotation-experimental 1.5.0, core-viewtree 1.0.0,
+customview-poolingcontainer 1.0.0, Fragment 1.5.4, and tracing/tracing-ktx 1.2.0.
+`ANDROIDX-VERSION-OVERRIDES.json` identifies each immutable root commit,
+original/revised table hashes and affected Maven coordinate. After restoring
+that commit's root and selected module tree into a NEW rebuild directory, run
+`git apply --check /path/to/COMMIT-versions.patch` and then `git apply` there.
+The script parses TOML before and after each change and rejects unexpected
+versions, ambiguous assignments or changes to unrelated settings. These patches
+are explicit rebuild inputs, not proof that these snapshots produced the
+published binary or a byte-reproducibility claim.
+
+## Original Notices
+
+`scripts/audit_source_notices.py --archive PREPARATION --output NEW-AUDIT`
+first verifies every source-preparation inventory entry, then retains original
+component notices, source declarations and their hashes. A generic recipe
+license name does not substitute for original copyright/notice text.
+In particular, libcrypt's generic BSD template contains placeholders; its
+actual FreeBSD copyright and conditions are retained from `crypt3.c` as well.
+
+Eight pinned Rust distributions omit separate license files. Collect their
+matching repository notices with `scripts/collect_rust_notice_sources.py --rust
+/path/to/rust-sources --output NEW-RUST-NOTICES`, then pass that directory as
+`--rust-supplement` to the notice audit. All Rust code files must match at the
+recorded subtree, not just the package name/version. simd_helpers' retained
+notice snapshot is the later LICENSE-addition commit with identical Rust code;
+its original Cargo VCS commit remains in the unmodified crate. The Windows
+import-library crates are Cargo-lock inputs, not Android runtime libraries.
+
+Supply the completed inventories to the preparation collector as
+`--notice-audit`, `--version-overrides` and `--rust-notices`. It checks their
+file hashes before inclusion. All these reports remain preparation evidence:
+an empty automated finding list does not itself approve the final exact-APK
+source/build/notices review or publication.
+
+AndroidX settings can force `:lint-checks` into a prefix-filtered build. The
+expanded root inventory also retains that tree at each selected commit where
+present, plus root Groovy scripts. Restore these alongside buildSrc, inspection
+and settings tooling; filtering to a library prefix does not remove this input.
+Public repository access uses the upstream settings' `ALLOW_PUBLIC_REPOS`
+switch where supported. The source bundle does not claim to contain Google's
+private prebuilts or to support a completely offline upstream AndroidX build.

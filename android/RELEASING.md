@@ -149,6 +149,17 @@ icon/service generators as documented in `legal/SOURCE-REBUILD.md`, then supply
 `--androidx-sources` and `--androidx-published` to the consolidated collector.
 Their source/build/resource reports are preparation evidence, not release approval.
 
+Before final consolidation, preserve the original notice inventory with
+`audit_source_notices.py`, supplemental Rust notices with
+`collect_rust_notice_sources.py`, and explicit AndroidX version corrections with
+`prepare_androidx_version_overrides.py`. The notice audit's `--rust-supplement`
+links the eight crate omissions to exact source-matched repository notices.
+The preparation collector accepts `--notice-audit`, `--version-overrides` and
+`--rust-notices`, verifies their inventories and keeps their original texts and
+rebuild patches. Use a new output archive and independently verify it. See
+`legal/SOURCE-REBUILD.md`; neither source counts nor an empty automated finding
+list replaces a substantive completed exact-APK review.
+
 Earlier dev32 candidates replaced five WebP/SharpYUV shared libraries per ABI,
 using the pinned source/binary bundle under `native/`. Include the
 source archive, licenses and `scripts/rebuild_webp.py` in corresponding sources.

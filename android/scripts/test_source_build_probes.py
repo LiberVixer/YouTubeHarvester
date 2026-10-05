@@ -23,6 +23,8 @@ class BuildInputTests(unittest.TestCase):
                 "files": [], "artifacts": [{"commit": "a" * 40}]}))
             entries = {"entries": [{"name": "buildSrc", "type": "tree"},
                                    {"name": "inspection", "type": "tree"},
+                                   {"name": "lint-checks", "type": "tree"},
+                                   {"name": "root-helper.groovy", "type": "blob"},
                                    {"name": "settings.gradle", "type": "blob"},
                                    {"name": "LICENSE.txt", "type": "blob"}]}
 
@@ -39,7 +41,9 @@ class BuildInputTests(unittest.TestCase):
             with patch("collect_androidx_release_sources.gitiles_json", return_value=entries), \
                     patch("collect_androidx_build_inputs.download", side_effect=save):
                 first = collect_release_inputs(output, sources)
-            self.assertEqual(len(first["files"]), 5)
+            self.assertEqual(len(first["files"]), 7)
+            self.assertIn("lint-checks", first["snapshots"][0]["retainedRootEntries"])
+            self.assertIn("root-helper.groovy", first["snapshots"][0]["retainedRootEntries"])
             self.assertFalse(first["completeCorrespondingSourcesVerified"])
             with patch("collect_androidx_release_sources.gitiles_json") as network, \
                     patch("collect_androidx_build_inputs.download") as download:

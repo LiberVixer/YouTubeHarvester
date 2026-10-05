@@ -241,3 +241,87 @@ release-gate regression tests without skips. All four accepted R2 APK checksums
 were checked again and match. No runtime or APK was rebuilt; no release was
 published. Integrity verification remains distinct from final substantive
 source/build/notices approval, which is not recorded as complete.
+
+## Original Notice And Version-Input Review
+
+The additional notice inventory identifies 74 native/launcher/wrapper component
+records, the 130 Maven artifacts and two local controlled AAR records, all 227
+locked Rust distributions, and eight supplemental yt-dlp/EJS/npm/Protobuf source
+archives. It preserves 948 original notice files (6,747,291 bytes) separately
+from abbreviated recipe declarations. Its initial empty component-location
+finding list was not treated as approval: eight Rust crates required additional
+notice evidence outside their published crate archives.
+
+The supplemental Rust collector closes those eight original-notice omissions
+with six immutable repository snapshots and exact comparisons of all 67 Rust
+files. It covers anes, difflib, profiling/profiling-procmacros, simd_helpers,
+valuable and both winapi Windows import-library crates. A later simd_helpers
+LICENSE-addition commit is explicitly distinguished from the crate's Cargo VCS
+commit; its two Rust files are identical. The Windows crates are preserved
+Cargo-lock inputs, not claimed as libraries linked into the Android APKs.
+Reports: `rust-notice-sources-r3/RUST-NOTICE-SOURCES.json` and the subsequent
+`source-notice-audit-r3/SOURCE-NOTICE-AUDIT.json` in the local review directory.
+
+The common wrapper module's two published Kotlin files match the preserved
+0.18.1 wrapper sources exactly. Together with the 38 expanded JVM producer
+artifacts and 91 AndroidX mappings, this covers all 130 Maven producer mappings.
+The two local controlled AARs retain their separately audited wrapper/runtime
+source mapping; they are not counted as downloaded Maven sources.
+
+libcrypt's recipe LICENSE is a generic BSD template with placeholder attribution.
+The actual FreeBSD 2011 copyright, conditions and disclaimer are also preserved
+from its original `crypt3.c`; the generic template is not used as a substitute.
+Original source declarations for FFTW, x264, x265, vid.stab, Rubber Band and Xvid
+explicitly allow GPL version 2 or later. FreeType's previously reviewed original
+license supplies its own later-version permission. These findings distinguish
+the short recipe labels from upstream grants; they do not relabel all source
+components as the application's GPL-3.0-only license.
+
+Five explicit version-only patches cover six AndroidX artifact snapshots whose
+version table differs from the published coordinate. All five patches were
+successfully checked and applied to temporary copies, with exact revised TOML
+hashes; the saved source trees remain unchanged. See
+`androidx-version-overrides-r1/ANDROIDX-VERSION-OVERRIDES.json` and
+`SOURCE-REBUILD.md` for the restore/apply procedure and limits.
+
+The focused regression run passed 70 tests without skips. All four accepted R2
+signed APK hashes still match, and application/build/runtime inputs are unchanged
+from the accepted application snapshot. These notice/version inputs are included
+in a new R5 preparation, without overwriting R4 or the accepted APKs. Final
+substantive exact-APK source/build/notices approval remains separate; no public
+tag or release is created by these collectors.
+
+The final settings-script read-through found a concrete additional build input:
+AndroidX includes `:lint-checks` even when PROJECT_PREFIX filters the requested
+libraries. The root-input collector now retains that project tree when present,
+as well as root Groovy scripts. The expanded collection uses a NEW
+`androidx-build-inputs-r4` directory, preserving r3. The unfinished initial R5
+packaging was interrupted and its temporary output removed before consolidating
+these inputs; no finished preparation archive or accepted binary was replaced.
+The regression fixture now requires the lint tree and root Groovy input to
+survive collection and cached-root resumption.
+
+## R5 Preparation Verified
+
+Local archive: `build/controlled-payloads-20261005-r2/source-preparation-combined-r5.tar.gz`.
+Size: 1,745,961,172 bytes. SHA256:
+`c6b90687e95251082a1a261053aa4ba2bfcb302edd2099261c45868877cf907f`.
+All 6571 inventoried files, sizes and links passed the independent streaming
+verification recorded in `SOURCE-PREPARATION-R5-VERIFIED.json` under the local
+review directory. The archive retains the original 151 native source archives,
+notice evidence, six supplemental Rust repository snapshots and five explicit
+AndroidX version patches. Earlier preparations and the accepted APKs are intact.
+
+The expanded AndroidX root collection has 424 inventoried files/archives over
+32 selected commits. lint-checks exists at 28 of these roots; the four historical
+roots have no such directory, as recorded in their immutable root receipts.
+The notice audit is bound to the R4 preparation it inspected; R5 additionally
+preserves that audit and the newly retained lint trees. Neither report is
+misrepresented as a byte-identical whole-upstream rebuild or release approval.
+
+The final 70-test run passed without skips after the root-input fix. GitHub's
+Android 1.2.1 release remains a draft containing an older INCOMPLETE source asset;
+it has not been replaced by a publicly approved release. The completed substantive
+review binding the final source bundle and exact APKs, followed by final draft
+artifact/metadata replacement, is still required before publication. No true
+source-approval flag or public tag was created in this preparation step.

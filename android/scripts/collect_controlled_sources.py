@@ -94,7 +94,7 @@ def runtime_source_coverage(mapping, packages, recipes):
 
 def collect(android, audit_path, ndk, wrapper, payload, output, jvm=None, additional=None, application=None,
             rust=None, jvm_builds=None, androidx_builds=None, review_evidence=None,
-            androidx_sources=None, androidx_published=None):
+            androidx_sources=None, androidx_published=None, notice_audit=None, version_overrides=None, rust_notices=None):
     if output.exists():
         raise ValueError("Source output already exists")
     audit = json.loads(audit_path.read_text())
@@ -197,6 +197,14 @@ def collect(android, audit_path, ndk, wrapper, payload, output, jvm=None, additi
             published_report = json.loads((androidx_published / "ANDROIDX-PUBLISHED-INPUTS.json").read_text())
             validate_file_inventory(androidx_published, published_report)
             shutil.copytree(androidx_published, stage / "androidx-published-inputs")
+        for folder, report_name, destination in (
+                (notice_audit, "SOURCE-NOTICE-AUDIT.json", "source-notice-audit"),
+                (version_overrides, "ANDROIDX-VERSION-OVERRIDES.json", "androidx-version-overrides"),
+                (rust_notices, "RUST-NOTICE-SOURCES.json", "rust-notice-sources")):
+            if folder is not None:
+                report = json.loads((folder / report_name).read_text())
+                validate_file_inventory(folder, report)
+                shutil.copytree(folder, stage / destination)
         if review_evidence is not None:
             evidence = stage / "source-review-evidence"
             evidence.mkdir()
@@ -231,6 +239,9 @@ def collect(android, audit_path, ndk, wrapper, payload, output, jvm=None, additi
                   "androidxSettingsBuildInputsIncluded": androidx_builds is not None,
                   "androidxReleaseSourcesIncluded": androidx_sources is not None,
                   "androidxPublishedInputsIncluded": androidx_published is not None,
+                  "originalNoticeAuditIncluded": notice_audit is not None,
+                  "androidxVersionOverridesIncluded": version_overrides is not None,
+                  "rustSupplementalNoticesIncluded": rust_notices is not None,
                   "remaining": ["Review combined package/source/notices/rebuild coverage",
                                 "Device acceptance is limited to LDPlayer x86_64; other device checks are deferred"]}
         (stage / "SOURCE-INVENTORY.json").write_text(json.dumps(report, indent=2) + "\n")
@@ -251,10 +262,10 @@ if __name__ == "__main__":
     for name in ("android", "audit", "ndk", "wrapper", "payload", "output"):
         parser.add_argument("--" + name, type=Path, required=True)
     for name in ("jvm", "additional", "application", "rust", "jvm-builds", "androidx-builds",
-                 "androidx-sources", "androidx-published", "review-evidence"):
+                 "androidx-sources", "androidx-published", "review-evidence", "notice-audit", "version-overrides", "rust-notices"):
         parser.add_argument("--" + name, type=Path)
     args = parser.parse_args()
     collect(args.android, args.audit, args.ndk, args.wrapper, args.payload, args.output,
             args.jvm, args.additional, args.application, args.rust,
             args.jvm_builds, args.androidx_builds, args.review_evidence,
-            args.androidx_sources, args.androidx_published)
+            args.androidx_sources, args.androidx_published, args.notice_audit, args.version_overrides, args.rust_notices)

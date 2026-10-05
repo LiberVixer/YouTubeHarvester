@@ -79,7 +79,7 @@ def collect_release_inputs(output, release_sources, resume=False):
     output.mkdir(parents=True, exist_ok=resume)
     commits = sorted({r["commit"] for r in source_report["artifacts"]})
     records, snapshots = [], []
-    build_trees = {"buildSrc", "gradle", "androidx-settings-plugins", "placeholder", "inspection"}
+    build_trees = {"buildSrc", "gradle", "androidx-settings-plugins", "placeholder", "inspection", "lint-checks"}
     for commit in commits:
         folder = output / commit
         folder.mkdir(exist_ok=True)
@@ -101,7 +101,7 @@ def collect_release_inputs(output, release_sources, resume=False):
         for entry in root["entries"]:
             name, kind = entry["name"], entry["type"]
             tree = kind == "tree" and name in build_trees
-            blob = kind == "blob" and (name.endswith((".gradle", ".gradle.kts", ".properties", ".toml")) or
+            blob = kind == "blob" and (name.endswith((".gradle", ".gradle.kts", ".properties", ".toml", ".groovy")) or
                                        name in {"LICENSE.txt", "NOTICE", "NOTICE.txt", "README.md", "gradlew", "gradlew.bat"})
             if not tree and not blob:
                 continue
