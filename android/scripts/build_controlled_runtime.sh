@@ -20,20 +20,26 @@ mkdir -p "$output"
 git -C "$repo" archive --format=tar.gz --output="$output/termux-recipes.tar.gz" HEAD
 cp "$lock" "$app/android/native/termux-runtime.patch" "$output/"
 cp "$app/android/native/RuntimeBuilder.Dockerfile" "$output/"
-cp "$app/android/scripts/build_controlled_runtime.sh" "$app/android/scripts/record_runtime_build.py" "$output/"
+cp "$app/android/scripts/build_controlled_runtime.sh" "$app/android/scripts/record_runtime_build.py" \
+  "$app/android/scripts/preflight_controlled_runtime.py" "$output/"
+# Reject broken patches before the expensive host-tool installation.
+git -C "$repo" apply --check --recount --unidiff-zero "$app/android/native/termux-runtime.patch"
+# Use a disposable recipe tree so the host builder still sees unmodified properties.
+preflight_recipe_tree() (
+  preview="$(mktemp -d)"
+  trap 'rm -rf -- "$preview"' EXIT
+  git -C "$repo" archive HEAD | tar -xf - -C "$preview"
+  git -C "$preview" apply --recount --unidiff-zero "$app/android/native/termux-runtime.patch"
+  python3 "$app/android/scripts/preflight_controlled_runtime.py" \
+    --repo "$preview" --lock "$lock" --output "$output" --download-sources
+)
+preflight_recipe_tree 2>&1 | tee "$output/preflight.log"
 # Build the host tools from the same snapshot before applying runtime paths.
 docker build --build-arg "BASE_IMAGE=$base_image" \
   --file "$app/android/native/RuntimeBuilder.Dockerfile" \
   --tag "$image" "$repo/scripts" 2>&1 | tee "$output/builder-build.log"
 git -C "$repo" apply --check --recount --unidiff-zero "$app/android/native/termux-runtime.patch"
 git -C "$repo" apply --recount --unidiff-zero "$app/android/native/termux-runtime.patch"
-bash -n "$repo/packages/ncurses/build.sh"
-bash -n "$repo/packages/libx11/build.sh"
-bash -n "$repo/packages/libunbound/build.sh"
-bash -n "$repo/packages/texinfo/build.sh"
-bash -n "$repo/packages/libsoxr/build.sh"
-bash -n "$repo/packages/giflib/build.sh"
-bash -n "$repo/packages/libx265/build.sh"
 
 # Source-build dependencies too: do not use Termux's prebuilt-dependency switch.
 docker image inspect "$image" > "$output/builder-image.json"
@@ -57,7 +63,11 @@ docker run --rm --init \
     cd /home/builder/termux-packages
     git config --global --add safe.directory /home/builder/termux-packages
     /usr/bin/python3.12 -c "import sys; assert sys.version_info[:2] == (3, 12); print(sys.version)"
+    test "$CMAKE_POLICY_VERSION_MINIMUM" = 3.5
     dpkg-query -W > /output/builder-packages.txt
+    mkdir -p /home/builder/.termux-build
+    cp -a /output/preflight-sources/. /home/builder/.termux-build/
+    chown -R builder:builder /home/builder/.termux-build
     mkdir -p /output/packages
     chown builder:builder /output/packages
     # Recursive dependency builds use the default output directory.

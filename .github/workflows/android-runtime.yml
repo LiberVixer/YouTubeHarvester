@@ -24,6 +24,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           path: application
+      - name: Check runtime preflight regressions
+        run: python3 -m unittest discover -s application/android/scripts -p test_preflight_controlled_runtime.py
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: termux/termux-packages
