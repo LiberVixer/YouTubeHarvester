@@ -98,6 +98,7 @@ class SourceReviewTests(unittest.TestCase):
         (android / "app").mkdir(parents=True)
         (android / "app/build.gradle.kts").write_text('versionName = "1.2.1"\nversionCode = 120100\n')
         (android / "LICENSE").write_text("approved")
+        (android / "NOTICE").write_text("third-party notices")
         (android / "runtime.properties").write_text("version=1\n")
         sdk = self.folder / "sdk"
         tools = sdk / "build-tools/36.0.0"
@@ -149,6 +150,11 @@ class SourceReviewTests(unittest.TestCase):
             name = "YouTubeHarvester-1.2.1-" + abi + "-release.apk"
             self.assertEqual(digest(output / name), self.review["apkSha256"][abi])
             self.assertEqual(digest(candidates / name), self.review["apkSha256"][abi])
+        self.assertEqual((output / "LICENSE-android.txt").read_text(), "approved")
+        self.assertEqual((output / "NOTICE-android.txt").read_text(), "third-party notices")
+        checksums = (output / "SHA256SUMS-android.txt").read_text()
+        for name in ("LICENSE-android.txt", "NOTICE-android.txt"):
+            self.assertIn(f"{digest(output / name)}  {name}\n", checksums)
         self.assertFalse(list(self.folder.glob("yth-release-*")))
 
     def test_signature_failure_leaves_no_release_directory(self):

@@ -130,6 +130,13 @@ preserve the reviewed producer/settings trees and compilation/relocation reports
 See `scripts/collect_jvm_build_inputs.py`, `scripts/collect_androidx_build_inputs.py`
 and [the current review](legal/FINAL-SOURCE-REVIEW-20261005.md). Probe-generated
 ELF/class files are not copied into the source bundle or accepted APKs.
+`collect_jvm_build_inputs.py --reuse PREVIOUS` checks and copies a completed
+producer inventory into a new output directory. For an interrupted collection,
+use `--resume` with its existing output directory; producing tags and source
+matches are checked again. `--project` selects an explicit producer family.
+Run `verify_jvm_generated_sources.py` on the resulting producer inventory,
+then `verify_source_preparation.py ARCHIVE --output NEW-REPORT.json` on the
+consolidated preparation. Neither check creates a completed release approval.
 
 Earlier dev32 candidates replaced five WebP/SharpYUV shared libraries per ABI,
 using the pinned source/binary bundle under `native/`. Include the
@@ -159,6 +166,9 @@ than selecting unsigned or subsequently rebuilt Gradle outputs. The packager
 verifies all four before creating output, copies them without resigning, and
 publishes the output directory atomically only after all checks pass. It does not
 upload files or publish a GitHub release itself.
+The output includes separate `LICENSE-android.txt` and `NOTICE-android.txt`
+files covered by `SHA256SUMS-android.txt`; the complete component-specific
+license notices remain in the corresponding-source archive.
 
 ## Checks
 

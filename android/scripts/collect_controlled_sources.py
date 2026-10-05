@@ -191,7 +191,7 @@ def collect(android, audit_path, ndk, wrapper, payload, output, jvm=None, additi
         if review_evidence is not None:
             evidence = stage / "source-review-evidence"
             evidence.mkdir()
-            for name in ("PROTOBUF-RELOCATION.json", "JVM-GENERATED-SOURCES-recheck.json",
+            for name in ("PROTOBUF-RELOCATION.json", "JVM-GENERATED-SOURCES-recheck.json", "JVM-GENERATED-SOURCES-r3.json",
                          "protobuf-source-probe/PROTOBUF-SOURCE-PROBE.json",
                          "androidx-native-probe/ANDROIDX-NATIVE-SOURCE-PROBE.json"):
                 target = evidence / Path(name).name

@@ -76,8 +76,9 @@ def main():
     ).strip()
     if tagged_commit != commit:
         raise SystemExit("Release tag must point to the source commit being packaged")
-    if not (android / "LICENSE").is_file():
-        raise SystemExit("Android release license has not been approved")
+    for name in ("LICENSE", "NOTICE"):
+        if not (android / name).is_file() or (android / name).stat().st_size == 0:
+            raise SystemExit("Android release license/notice is missing: " + name)
     if not args.sources.is_file() or args.sources.stat().st_size == 0:
         raise SystemExit("A reviewed corresponding-source archive is required")
     if subprocess.check_output(["git", "status", "--porcelain", "--", "android"], cwd=repo).strip():
@@ -121,6 +122,10 @@ def main():
         source_review = stage / "SOURCE-REVIEW-android.json"
         source_review.write_text(json.dumps(review, indent=2) + "\n", encoding="utf-8")
         packaged.append(source_review)
+        for source_name, target_name in (("LICENSE", "LICENSE-android.txt"), ("NOTICE", "NOTICE-android.txt")):
+            target = stage / target_name
+            shutil.copy2(android / source_name, target)
+            packaged.append(target)
         provenance = stage / "BUILD-INFO-android.json"
         provenance.write_text(json.dumps({
             "version": version, "versionCode": version_code, "commit": commit, "tag": args.tag,

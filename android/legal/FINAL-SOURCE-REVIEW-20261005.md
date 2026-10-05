@@ -77,6 +77,9 @@ was created with an unjustified true approval flag.
 
 ## Concrete Remaining Source Gate
 
+This section records the gate before the expanded review below. Its listed
+non-AndroidX producer omissions are superseded by that review, not still pending.
+
 The current archive's Maven source JAR/POM collection is NOT a certified closure
 of the upstream JVM build inputs. In particular:
 
@@ -92,3 +95,74 @@ See `SOURCE-REBUILD.md` for the confirmed procedures and explicit limitations.
 The exact APK/source review remains incomplete until these build-input and
 consolidation items are resolved. Existing source preparation and device
 acceptance flags remain false; no public release or tag was created.
+
+## Expanded JVM Review
+
+The subsequent `jvm-build-inputs-r3` collection retains 19 versioned producer
+trees and ten recursive Maven parent POMs. It covers 38 resolved artifacts,
+including all six Coil artifacts, Accompanist, Okio, the four Apache Commons
+families, JetBrains annotations, Kotlin 2.4.20 and its 1.8.21 compatibility
+artifacts, coroutines, serialization, JSpecify and the JetBrains Compose
+Android redirects. Previously verified producer archives were preserved.
+
+- 2774 Java/Kotlin files match upstream sources byte for byte.
+- 30 annotation files differ only by CRLF/LF line endings. The verifier checks
+  all bytes after only that normalization; it does not ignore changed code.
+- 16 generated files match exactly: the three previously reviewed Jackson/
+  OkHttp files, Kotlin's current-version source and twelve Compose redirects.
+  Kotlin's producing `prepare/build.version/build.gradle.kts` and Compose's
+  `ArtifactRedirection.kt` are retained alongside their source trees.
+- The `listenablefuture:1.0` source and module POM match Guava v27.0's
+  `futures/listenablefuture1`, despite its parent being `26.0-android`.
+  The initially collected Guava v26.0 tree has the annotated general-purpose
+  interface instead and is retained only as historical investigation evidence.
+- Okio's POM points to `lysine-dev/okio`; its exact `parent-3.18.1` tag is used,
+  rather than assuming Square's repository produces this resolved artifact.
+- Compose's twelve Android source artifacts contain generated empty redirect
+  files, not the actual UI implementation. The latter is provided by the
+  resolved AndroidX artifacts already retained as source JARs/POMs. The pinned
+  `compose-multiplatform-core` tag message identifies the 1.12.0 publication.
+
+`JVM-GENERATED-SOURCES-r3.json` rechecks these source/tree matches independently
+of collection. No unknown difference is silently classified as generated.
+This closes the listed non-AndroidX JVM producer-family omissions, not an
+assertion that every AndroidX producer build has been reproduced or that the
+whole 130-artifact notice/build-input review is complete.
+
+The collector now selects JetBrains Compose by Maven group, avoiding its
+name collision with AndroidX, and supports explicit `--resume`. Resuming
+re-resolves producing tags, checks existing inventories when present, and
+recomputes source matches without re-downloading complete trees. Archives are
+indexed once per producer, including producers shared by multiple artifacts.
+
+The new combined preparation includes these trees, supplemental AndroidX build
+inputs and the source review reports. `verify_source_preparation.py` checks
+every inventoried member, rejects changed/missing/extra/duplicate files and
+escaping links, and does not convert integrity verification into release approval.
+The public packager now includes `LICENSE-android.txt` and `NOTICE-android.txt`
+as separate checksummed files beside the APKs and source archive.
+
+Remaining before a completed exact-APK source approval: review the AndroidX
+source/build-input and notice coverage together with the consolidated native,
+Rust, NDK and application inventories. Device checks outside LDPlayer remain
+explicitly deferred, not recorded as passing. No source approval flag has been
+changed to true and no accepted signed APK has been rebuilt or modified.
+
+## Consolidated Preparation Verified
+
+Local archive: `build/controlled-payloads-20261005-r2/source-preparation-combined-r3.tar.gz`.
+Size: 1,652,533,264 bytes. SHA256:
+`83aff4bd8378c1fa230aa4d7548aa98151e7177cf9c9dcf2ed149c784db6d6e4`.
+It preserves the 151 original native source archives, application snapshot
+`7248c82`, NDK/Rust/JVM sources, new producer/settings inputs and five source
+review reports. Older preparation archives remain unchanged.
+
+An independent streaming pass verified all 3822 inventoried files and sizes,
+including link handling, against the finished tar.gz. The report is
+`build/source-final-review-20261005/SOURCE-PREPARATION-R3-VERIFIED.json`.
+This is an integrity check, not a claim of whole-source rebuildability or
+permission to publish. Both approval flags remain false.
+
+The final focused regression run passed 65 tests without skips, including the
+JDK/ASM relocation fixture. All four accepted R2 signed APK checksums still
+match `SHA256SUMS-android.txt`. No full runtime compilation was restarted.
