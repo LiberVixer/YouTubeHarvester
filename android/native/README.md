@@ -38,10 +38,14 @@ access. CI uses its read-only GitHub token. A missing asset or mismatched hash
 stops the build; no old runtime fallback is used. Existing local bundle files
 are checked and never silently replaced.
 
-For a source rebuild, download artifacts from the run IDs in `controlled-artifacts.json`;
-unpack their `runtime-packages.tar.gz` before assembling. They are intermediate
-build inputs, not APKs or proof of a complete corresponding-source bundle.
-The exact replacement APKs still need signing and device acceptance.
+Downloading the recorded artifacts and unpacking their
+`runtime-packages.tar.gz` reuses compiled intermediates; it is NOT a source
+rebuild. For actual compilation, use the pinned Termux recipes and
+`scripts/build_controlled_runtime.sh`, then rebuild the launchers/QuickJS and
+review the new package inventories before assembling. See
+[source rebuild procedures](../legal/SOURCE-REBUILD.md). Rebuilt bytes must not
+be silently accepted under the old artifact hashes. Existing accepted signed
+APKs can be packaged without rebuilding or resigning them.
 
 ## Previous WebP Repair
 

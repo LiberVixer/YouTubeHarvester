@@ -125,6 +125,11 @@ See [source coverage evidence](legal/APPLICATION-SOURCE-COVERAGE-20261005.md)
 for exact producing versions and limitations. `collect_controlled_sources.py`
 accepts `--jvm`, `--additional`, `--application` and `--rust` to combine verified
 inventories in a new preparation archive; it never approves publication itself.
+The subsequent `--jvm-builds`, `--androidx-builds` and `--review-evidence` inputs
+preserve the reviewed producer/settings trees and compilation/relocation reports.
+See `scripts/collect_jvm_build_inputs.py`, `scripts/collect_androidx_build_inputs.py`
+and [the current review](legal/FINAL-SOURCE-REVIEW-20261005.md). Probe-generated
+ELF/class files are not copied into the source bundle or accepted APKs.
 
 Earlier dev32 candidates replaced five WebP/SharpYUV shared libraries per ABI,
 using the pinned source/binary bundle under `native/`. Include the
@@ -138,6 +143,22 @@ path when packaging. For CI, configure `ANDROID_SOURCE_URL` and
 `ANDROID_SOURCE_SHA256` in the release environment; the workflow downloads and
 verifies this reviewed archive before packaging. Do not substitute application sources
 for the corresponding third-party runtime sources.
+
+Source preparation is not release approval. The packager also requires a separate
+`--review` JSON with `schemaVersion=1`, `completeCorrespondingSourcesVerified=true`,
+an empty `remaining` list, `releaseCommit`, `sourceArchiveSha256`, and an
+`apkSha256` map for all four ABI names. Record this only after the substantive
+source, notice and rebuild-input review is complete. A matching hash alone is
+not that review. The report must bind the exact signed APKs and release commit;
+rebuilding or resigning requires a new exact-artifact review.
+
+CI fetches this report using `ANDROID_SOURCE_REVIEW_URL` and
+`ANDROID_SOURCE_REVIEW_SHA256`; absent or mismatched review blocks publication.
+For local packaging of accepted signed candidates, pass `--candidate-dir` rather
+than selecting unsigned or subsequently rebuilt Gradle outputs. The packager
+verifies all four before creating output, copies them without resigning, and
+publishes the output directory atomically only after all checks pass. It does not
+upload files or publish a GitHub release itself.
 
 ## Checks
 
@@ -164,7 +185,9 @@ New hashes must not be generated silently in CI.
 
 Commit the Android sources, update versionCode/versionName, build with the signing
 environment, then run `python3 scripts/package_release.py --tag android-vVERSION
---sources /path/to/reviewed-runtime-sources.tar.gz` from the Android directory.
+--sources /path/to/reviewed-runtime-sources.tar.gz --review /path/to/completed-review.json`
+from the Android directory. To reuse accepted signed APKs, also pass
+`--candidate-dir /path/to/signed-candidates`.
 The script refuses unsigned/debuggable APKs, debug certificates, unexpected exported
 components, wrong approved fingerprints, mismatched package/version/tags, missing
 licensing/source files, or uncommitted Android changes. It emits four ABI APKs,

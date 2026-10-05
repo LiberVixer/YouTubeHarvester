@@ -92,7 +92,8 @@ def runtime_source_coverage(mapping, packages, recipes):
     return coverage
 
 
-def collect(android, audit_path, ndk, wrapper, payload, output, jvm=None, additional=None, application=None, rust=None):
+def collect(android, audit_path, ndk, wrapper, payload, output, jvm=None, additional=None, application=None,
+            rust=None, jvm_builds=None, androidx_builds=None, review_evidence=None):
     if output.exists():
         raise ValueError("Source output already exists")
     audit = json.loads(audit_path.read_text())
@@ -177,6 +178,26 @@ def collect(android, audit_path, ndk, wrapper, payload, output, jvm=None, additi
             rust_report = json.loads((rust / "RUST-SOURCE-INVENTORY.json").read_text())
             validate_file_inventory(rust, rust_report)
             shutil.copytree(rust, stage / "rust-sources")
+        if jvm_builds is not None:
+            if jvm is None:
+                raise ValueError("JVM producer build trees require the matching source JAR inventory")
+            build_report = json.loads((jvm_builds / "JVM-BUILD-INPUTS.json").read_text())
+            validate_file_inventory(jvm_builds, build_report)
+            shutil.copytree(jvm_builds, stage / "jvm-build-inputs")
+        if androidx_builds is not None:
+            build_report = json.loads((androidx_builds / "ANDROIDX-BUILD-INPUTS.json").read_text())
+            validate_file_inventory(androidx_builds, build_report)
+            shutil.copytree(androidx_builds, stage / "androidx-build-inputs")
+        if review_evidence is not None:
+            evidence = stage / "source-review-evidence"
+            evidence.mkdir()
+            for name in ("PROTOBUF-RELOCATION.json", "JVM-GENERATED-SOURCES-recheck.json",
+                         "protobuf-source-probe/PROTOBUF-SOURCE-PROBE.json",
+                         "androidx-native-probe/ANDROIDX-NATIVE-SOURCE-PROBE.json"):
+                target = evidence / Path(name).name
+                # Keep reports, not experimental ELF/class outputs, in the source set.
+                json.loads((review_evidence / name).read_text())
+                shutil.copy2(review_evidence / name, target)
         shutil.copytree(android / "scripts", stage / "scripts", ignore=shutil.ignore_patterns("__pycache__"))
         shutil.copytree(android / "legal", stage / "legal")
         for filename in ("LICENSE", "NOTICE", "RELEASING.md"):
@@ -193,6 +214,8 @@ def collect(android, audit_path, ndk, wrapper, payload, output, jvm=None, additi
                   "completeCorrespondingSourcesVerified": False,
                   "applicationEvidenceIncluded": application is not None,
                   "runtimeProducerPackages": len(coverage), "cargoEvidenceIncluded": rust is not None,
+                  "jvmProducerBuildTreesIncluded": jvm_builds is not None,
+                  "androidxSettingsBuildInputsIncluded": androidx_builds is not None,
                   "remaining": ["Review combined package/source/notices/rebuild coverage",
                                 "Device acceptance is limited to LDPlayer x86_64; other device checks are deferred"]}
         (stage / "SOURCE-INVENTORY.json").write_text(json.dumps(report, indent=2) + "\n")
@@ -212,8 +235,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("android", "audit", "ndk", "wrapper", "payload", "output"):
         parser.add_argument("--" + name, type=Path, required=True)
-    for name in ("jvm", "additional", "application", "rust"):
+    for name in ("jvm", "additional", "application", "rust", "jvm-builds", "androidx-builds", "review-evidence"):
         parser.add_argument("--" + name, type=Path)
     args = parser.parse_args()
     collect(args.android, args.audit, args.ndk, args.wrapper, args.payload, args.output,
-            args.jvm, args.additional, args.application, args.rust)
+            args.jvm, args.additional, args.application, args.rust,
+            args.jvm_builds, args.androidx_builds, args.review_evidence)

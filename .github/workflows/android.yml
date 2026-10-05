@@ -103,6 +103,11 @@ jobs:
           SOURCE_URL: ${{ vars.ANDROID_SOURCE_URL }}
           SOURCE_SHA256: ${{ vars.ANDROID_SOURCE_SHA256 }}
         run: python3 android/scripts/fetch_runtime_sources.py --output "$RUNNER_TEMP/runtime-sources.tar.gz"
+      - name: Fetch completed exact-artifact source review
+        env:
+          SOURCE_URL: ${{ vars.ANDROID_SOURCE_REVIEW_URL }}
+          SOURCE_SHA256: ${{ vars.ANDROID_SOURCE_REVIEW_SHA256 }}
+        run: python3 android/scripts/fetch_runtime_sources.py --output "$RUNNER_TEMP/source-review.json"
       - name: Restore pinned controlled runtime payload
         env:
           GH_TOKEN: ${{ github.token }}
@@ -118,7 +123,7 @@ jobs:
       - name: Verify and package release
         env:
           YTH_ANDROID_CERT_SHA256: ${{ vars.ANDROID_CERT_SHA256 }}
-        run: python3 android/scripts/package_release.py --tag "$GITHUB_REF_NAME" --sources "$RUNNER_TEMP/runtime-sources.tar.gz"
+        run: python3 android/scripts/package_release.py --tag "$GITHUB_REF_NAME" --sources "$RUNNER_TEMP/runtime-sources.tar.gz" --review "$RUNNER_TEMP/source-review.json"
       - name: Publish APKs and corresponding sources
         env:
           GH_TOKEN: ${{ github.token }}

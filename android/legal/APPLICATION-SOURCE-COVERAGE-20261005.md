@@ -66,7 +66,10 @@ although the binary has 523 classes. The producing AndroidX version catalog
 and relocation recipe select protobuf-javalite 4.28.2. Its original source
 JAR and complete upstream v28.2 archive, with BSD-3-Clause notices, are retained.
 All 523 relocated class names match that upstream artifact's class inventory.
-Bytecode equivalence or reproduction of the relocation build is not asserted.
+The [subsequent source review](FINAL-SOURCE-REVIEW-20261005.md) verified exact
+bytes for all 523 remapped classes and independently compiled all 159 Java
+sources. Reproduction of JAR metadata or the upstream source-to-binary build
+is not asserted.
 Other empty compatibility source JARs were inspected and contain no classes in
 their corresponding binary JARs, including nested `classes.jar` files.
 
@@ -119,3 +122,9 @@ source, notice and rebuild-input review is recorded. Limited LDPlayer x86_64
 acceptance does not establish ARM, API 26/35 or 16 KB device acceptance.
 Nothing in this audit approves a public release or changes deferred tests to
 passed tests.
+
+The subsequent review closed the Protobuf relocation and native AndroidX source
+compilation checks and retained missing settings/wrapper inputs. It identified
+specific remaining JVM build-input gaps rather than approving the bundle from
+hashes alone. See [review results](FINAL-SOURCE-REVIEW-20261005.md) and
+[rebuild procedures](SOURCE-REBUILD.md).

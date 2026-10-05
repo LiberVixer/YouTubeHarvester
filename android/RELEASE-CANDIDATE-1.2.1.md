@@ -28,6 +28,12 @@ repackaged Protobuf sources, and the producing rav1e Cargo locks. The combined
 preparation archive still requires final source/notice/rebuild coverage approval.
 No R2 APK has been published and the release remains a draft.
 
+The [subsequent review](legal/FINAL-SOURCE-REVIEW-20261005.md) verifies all 523
+relocated Protobuf class bytes, compiles its 159 Java sources, and source-compiles
+both native AndroidX libraries for all four ABIs. Remaining source gates are
+explicit upstream JVM build inputs and final bundle consolidation. The packager
+now rejects incomplete reviews and supports the preserved signed R2 set directly.
+
 ## Controlled Runtime Candidate: 2026-10-05
 
 Four replacement APKs were signed with the same permanent certificate listed
