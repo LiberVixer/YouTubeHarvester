@@ -93,7 +93,8 @@ def runtime_source_coverage(mapping, packages, recipes):
 
 
 def collect(android, audit_path, ndk, wrapper, payload, output, jvm=None, additional=None, application=None,
-            rust=None, jvm_builds=None, androidx_builds=None, review_evidence=None):
+            rust=None, jvm_builds=None, androidx_builds=None, review_evidence=None,
+            androidx_sources=None, androidx_published=None):
     if output.exists():
         raise ValueError("Source output already exists")
     audit = json.loads(audit_path.read_text())
@@ -188,12 +189,24 @@ def collect(android, audit_path, ndk, wrapper, payload, output, jvm=None, additi
             build_report = json.loads((androidx_builds / "ANDROIDX-BUILD-INPUTS.json").read_text())
             validate_file_inventory(androidx_builds, build_report)
             shutil.copytree(androidx_builds, stage / "androidx-build-inputs")
+        if androidx_sources is not None:
+            androidx_report = json.loads((androidx_sources / "ANDROIDX-RELEASE-SOURCES.json").read_text())
+            validate_file_inventory(androidx_sources, androidx_report)
+            shutil.copytree(androidx_sources, stage / "androidx-release-sources")
+        if androidx_published is not None:
+            published_report = json.loads((androidx_published / "ANDROIDX-PUBLISHED-INPUTS.json").read_text())
+            validate_file_inventory(androidx_published, published_report)
+            shutil.copytree(androidx_published, stage / "androidx-published-inputs")
         if review_evidence is not None:
             evidence = stage / "source-review-evidence"
             evidence.mkdir()
-            for name in ("PROTOBUF-RELOCATION.json", "JVM-GENERATED-SOURCES-recheck.json", "JVM-GENERATED-SOURCES-r3.json",
+            review_names = ["PROTOBUF-RELOCATION.json", "JVM-GENERATED-SOURCES-recheck.json", "JVM-GENERATED-SOURCES-r3.json",
                          "protobuf-source-probe/PROTOBUF-SOURCE-PROBE.json",
-                         "androidx-native-probe/ANDROIDX-NATIVE-SOURCE-PROBE.json"):
+                         "androidx-native-probe/ANDROIDX-NATIVE-SOURCE-PROBE.json"]
+            if androidx_sources is not None:
+                review_names += ["icon-generator-probe-r1/MATERIAL-ICON-SOURCE-PROBE.json",
+                                 "service-generator-probe-r2/ANDROIDX-SERVICE-SOURCE-PROBE.json"]
+            for name in review_names:
                 target = evidence / Path(name).name
                 # Keep reports, not experimental ELF/class outputs, in the source set.
                 json.loads((review_evidence / name).read_text())
@@ -216,6 +229,8 @@ def collect(android, audit_path, ndk, wrapper, payload, output, jvm=None, additi
                   "runtimeProducerPackages": len(coverage), "cargoEvidenceIncluded": rust is not None,
                   "jvmProducerBuildTreesIncluded": jvm_builds is not None,
                   "androidxSettingsBuildInputsIncluded": androidx_builds is not None,
+                  "androidxReleaseSourcesIncluded": androidx_sources is not None,
+                  "androidxPublishedInputsIncluded": androidx_published is not None,
                   "remaining": ["Review combined package/source/notices/rebuild coverage",
                                 "Device acceptance is limited to LDPlayer x86_64; other device checks are deferred"]}
         (stage / "SOURCE-INVENTORY.json").write_text(json.dumps(report, indent=2) + "\n")
@@ -235,9 +250,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("android", "audit", "ndk", "wrapper", "payload", "output"):
         parser.add_argument("--" + name, type=Path, required=True)
-    for name in ("jvm", "additional", "application", "rust", "jvm-builds", "androidx-builds", "review-evidence"):
+    for name in ("jvm", "additional", "application", "rust", "jvm-builds", "androidx-builds",
+                 "androidx-sources", "androidx-published", "review-evidence"):
         parser.add_argument("--" + name, type=Path)
     args = parser.parse_args()
     collect(args.android, args.audit, args.ndk, args.wrapper, args.payload, args.output,
             args.jvm, args.additional, args.application, args.rust,
-            args.jvm_builds, args.androidx_builds, args.review_evidence)
+            args.jvm_builds, args.androidx_builds, args.review_evidence,
+            args.androidx_sources, args.androidx_published)

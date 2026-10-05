@@ -138,6 +138,17 @@ Run `verify_jvm_generated_sources.py` on the resulting producer inventory,
 then `verify_source_preparation.py ARCHIVE --output NEW-REPORT.json` on the
 consolidated preparation. Neither check creates a completed release approval.
 
+For the expanded AndroidX preferred-input review, use a new source directory
+with `collect_androidx_release_sources.py --jvm JVM-SOURCES --output NEW-DIR`.
+Then run `collect_androidx_build_inputs.py --release-sources NEW-DIR --output
+NEW-ROOT-INPUTS` and `collect_androidx_published_inputs.py --inventory
+JVM-SOURCES/JVM-SOURCE-INVENTORY.json --output NEW-PUBLISHED-INPUTS`.
+The first two collectors support `--resume`; completed inventories are rechecked,
+root receipts are reused and discovered commits are frozen. Verify the original
+icon/service generators as documented in `legal/SOURCE-REBUILD.md`, then supply
+`--androidx-sources` and `--androidx-published` to the consolidated collector.
+Their source/build/resource reports are preparation evidence, not release approval.
+
 Earlier dev32 candidates replaced five WebP/SharpYUV shared libraries per ABI,
 using the pinned source/binary bundle under `native/`. Include the
 source archive, licenses and `scripts/rebuild_webp.py` in corresponding sources.

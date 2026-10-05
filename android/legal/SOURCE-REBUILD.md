@@ -81,15 +81,32 @@ Gradle. To use newly compiled runtime bytes, first review and update their pins;
 never bypass the mismatch check.
 
 The 130 Maven source JARs/POMs retain editable library sources and notices, but
-they are not by themselves a complete standalone upstream build checkout.
-AndroidX module/buildSrc/root inputs are supplemented by the matching settings
-plugins, placeholder project, Gradle trees and wrappers. A clean upstream JVM
-build-input closure has not yet been certified. The subsequent collection under
-`build/source-final-review-20261005/jvm-build-inputs-r2/` closes the missing Jackson
-parents and preserves complete Jackson/OkHttp/Coil build trees. In these trees,
-use the original Maven wrapper/POM for Jackson and the original Gradle wrapper
-for OkHttp/Coil, with the versions/catalogs shipped in each tree. Their generated
-version templates reproduce the published source files exactly. Other JVM
-producer families still need equivalent build-input review; five successful
-producer checks do not certify the whole graph. Do not mark the combined
-corresponding-source review complete from this subset.
+they are not by themselves standalone upstream build checkouts. The expanded
+`jvm-build-inputs-r3` inventory retains 19 producer trees covering 38 artifacts
+and ten recursive parent POMs. Use each original wrapper/build/catalog and its
+recorded producing commit. The generated-version/redirect checks and their
+limitations are described in `FINAL-SOURCE-REVIEW-20261005.md`.
+
+The AndroidX release-source inventory maps all 91 artifacts to 41 selected
+module trees at 32 immutable official commits. Corresponding root/buildSrc,
+settings tooling, wrappers, catalogs, inspection generators and root licenses
+are retained separately in `androidx-build-inputs-r3`; restore the module tree
+to its recorded `tree` path at that same root commit. Published AAR resources,
+manifests, symbols, assets and notices supplement the preferred module sources.
+Source matches, not a nearby version bump or moving branch name, identify the
+selected inputs. This does not certify a whole upstream Gradle rebuild or
+byte-identical Maven artifacts.
+
+`scripts/probe_material_icon_sources.py` compiles and runs the original retained
+icon generator with a thin runner. Its `--compiler-classpath` accepts Kotlin's
+compiler/runtime dependencies, and `--generator-classpath` accepts the original
+generator dependencies from its pinned version catalog. The probe checks every
+generated icon; only the generator's initial date-derived copyright year may
+differ. Provide new output directories so existing evidence is preserved.
+
+`scripts/probe_androidx_service_sources.py` accepts the JVM/module/root/published
+inventories, protoc 4.28.2's Linux tool, SDK 36.0.0 AIDL/aapt2 and an Android
+framework JAR. It regenerates PreferencesProto and Room RPC sources and checks
+the inspector template and public R sources. AppCompat documentation-stub tails
+are checked explicitly, not claimed as fully regenerated. Neither probe produces
+replacement APKs or a completed corresponding-source approval.

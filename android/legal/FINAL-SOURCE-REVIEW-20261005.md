@@ -166,3 +166,78 @@ permission to publish. Both approval flags remain false.
 The final focused regression run passed 65 tests without skips, including the
 JDK/ASM relocation fixture. All four accepted R2 signed APK checksums still
 match `SHA256SUMS-android.txt`. No full runtime compilation was restarted.
+
+## AndroidX Preferred Sources And Generators
+
+The expanded collection covers all 91 resolved AndroidX artifacts. Its latest
+inventory is `androidx-release-sources-r2/ANDROIDX-RELEASE-SOURCES.json`, under
+the same local review directory. It retains 41 selected module trees at 32
+immutable official Gitiles commits. Earlier investigated snapshots are kept
+as historical evidence; only the artifact records identify the selected trees.
+
+3297 published Java/Kotlin files match these trees byte for byte. A tree's
+version table is not used as proof of a producing commit: some source-identical
+snapshots have an RC or subsequent version in that table. In particular, the
+Fragment snapshot matches all 52 published sources, including fixes absent
+from an earlier stable-version bump. `customview-poolingcontainer:1.0.0` has
+its own module pin, distinct from `customview:1.0.0`.
+
+The original Material icon generator was compiled and run without changing
+its generator sources. All 11385 published generated Kotlin files match its
+output after accounting ONLY for the initial copyright year, which the
+upstream generator derives from the build date. All other bytes are compared.
+The module tree includes its 10660 raw XML inputs, generator, build scripts
+and declared dependencies. `MATERIAL-ICON-SOURCE-PROBE.json` records the
+generator/tool hashes and each comparison; experimental compiler binaries and
+generated classes are not included in the source bundle.
+
+`ANDROIDX-SERVICE-SOURCE-PROBE.json` covers the remaining eight generated files:
+
+- DataStore's PreferencesProto matches protoc 4.28.2's Java-lite output exactly.
+- Both Room RPC files match SDK 36.0.0 AIDL output except the single header
+  line recording the producing command's host paths. All code bytes match;
+  structured mode and minimum SDK 23 are checked rather than ignored.
+- Both inspector detection files match their preserved Gradle source template.
+- WorkManager's public R source is reproduced exactly by aapt2.
+- AppCompat's two public R documentation stubs match the complete generated
+  public-resource prefix. Their empty `@DocOnly` styleable tails are explicitly
+  checked. This is NOT full regeneration of the documentation-stub processing
+  or proof of the APK's compiled R classes. The preferred resource XML, public
+  declarations, published symbol tables and relevant build inputs are retained.
+
+The SDK 36 aapt2 probe used the available API 37 framework only as a linking
+input; it does not claim to reproduce an upstream SDK environment. The report
+records the framework and tool hashes. No probe output entered a signed APK.
+
+For all 32 selected commits, `androidx-build-inputs-r3` retains root scripts,
+buildSrc, settings plugins/wrappers/catalogs where present, inspection generator
+sources and the root license: 396 inventoried files/archives in total.
+`androidx-published-inputs-r2` supplements this with 1163 exact published
+resource/manifest/metadata/notice files across all 91 artifacts, including bitmap
+and asset inputs; compiled classes and native binaries are excluded.
+
+Collection resumes from verified saved inventories and root receipts. HTTP 429
+is retried with a bounded pause; authentication errors are not misclassified as
+missing historical metadata. New tests cover this behavior, archive/path safety,
+source substitutions and allowed generated-file differences.
+
+These inputs and seven focused source-review reports are included in a NEW R4
+preparation archive. R3 and the accepted four signed R2 APKs remain unchanged.
+The final combined build-input/notice and exact-APK source manifest approval is
+still separate. No partial generator or integrity check sets that approval true.
+
+## R4 Preparation Verified
+
+Local archive: `build/controlled-payloads-20261005-r2/source-preparation-combined-r4.tar.gz`.
+Size: 1,731,084,146 bytes. SHA256:
+`7658ea2a72cf941498b7d9bfbcdeea9426e3dd2439cb0715f242fab2a8b33a25`.
+The independent streaming pass verified all 5568 inventoried files, sizes and
+links. Its report is `build/source-final-review-20261005/SOURCE-PREPARATION-R4-VERIFIED.json`.
+The archive retains the original 151 native source archives and adds the
+AndroidX module/root/resource inputs and generator-review reports above.
+
+The final focused run passed 63 source-collection, generator, relocation and
+release-gate regression tests without skips. All four accepted R2 APK checksums
+were checked again and match. No runtime or APK was rebuilt; no release was
+published. Integrity verification remains distinct from final substantive
+source/build/notices approval, which is not recorded as complete.

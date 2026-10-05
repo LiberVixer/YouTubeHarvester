@@ -1,5 +1,6 @@
 import base64
 import io
+import json
 from pathlib import Path
 import tarfile
 import tempfile
@@ -7,12 +8,49 @@ import unittest
 from unittest.mock import patch
 import zipfile
 
-from collect_androidx_build_inputs import collect, download
+from collect_androidx_build_inputs import collect, collect_release_inputs, download
 from probe_androidx_native_sources import extract_native
 from probe_protobuf_sources import extract_sources
 
 
 class BuildInputTests(unittest.TestCase):
+    def test_release_build_inputs_resume_checks_inventory_and_cached_root(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            sources = root / "sources"
+            sources.mkdir()
+            (sources / "ANDROIDX-RELEASE-SOURCES.json").write_text(json.dumps({
+                "files": [], "artifacts": [{"commit": "a" * 40}]}))
+            entries = {"entries": [{"name": "buildSrc", "type": "tree"},
+                                   {"name": "inspection", "type": "tree"},
+                                   {"name": "settings.gradle", "type": "blob"},
+                                   {"name": "LICENSE.txt", "type": "blob"}]}
+
+            def save(url, target, encoded=False):
+                if encoded:
+                    target.write_bytes(b"root script")
+                else:
+                    with tarfile.open(target, "w:gz") as archive:
+                        member = tarfile.TarInfo("build.gradle")
+                        member.size = 6
+                        archive.addfile(member, io.BytesIO(b"source"))
+
+            output = root / "out"
+            with patch("collect_androidx_release_sources.gitiles_json", return_value=entries), \
+                    patch("collect_androidx_build_inputs.download", side_effect=save):
+                first = collect_release_inputs(output, sources)
+            self.assertEqual(len(first["files"]), 5)
+            self.assertFalse(first["completeCorrespondingSourcesVerified"])
+            with patch("collect_androidx_release_sources.gitiles_json") as network, \
+                    patch("collect_androidx_build_inputs.download") as download:
+                second = collect_release_inputs(output, sources, resume=True)
+            network.assert_not_called()
+            download.assert_not_called()
+            self.assertEqual(first, second)
+            (output / ("a" * 40) / "settings.gradle").write_bytes(b"changed")
+            with self.assertRaisesRegex(ValueError, "inventory mismatch"):
+                collect_release_inputs(output, sources, resume=True)
+
     def test_download_refuses_existing_file(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "existing"
