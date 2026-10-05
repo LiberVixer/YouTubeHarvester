@@ -27,14 +27,20 @@ license files are present in the pinned recipes' `termux-licenses/LICENSES`.
 These are evidence counts, not an assertion that every individual source file
 or notice has undergone legal review.
 
+The final `usr/etc/tls/cert.pem` extracted from each core ABI's
+`ca-certificates` package matches the producing recipe's SHA256:
+`64dfd5b1026700e0a0a324964749da9adc69ae5e51e899bf16ff47d6fd0e9a5e`.
+This checks certificate data integrity, not the final APK source bundle.
+
 Local detailed report: `android/build/controlled-source-audit-20261005.json`.
 It deliberately records `completeCorrespondingSourcesVerified=false`.
 
 ## Remaining Before Publication
 
 - `ca-certificates` downloads a PEM data file without an unpacked source tree.
-  Its producing recipe and SHA256 are preserved. Verify the final PEM against
-  that hash and retain the declared MPL-2.0 notice; absence of a source worktree
+  Its producing recipe and SHA256 are preserved, and the packaged PEM hash was
+  checked for all four ABIs. Retain the declared MPL-2.0 notice in the final
+  source bundle; absence of a source worktree
   is not treated as evidence of missing C source code.
 - `libc++` copies `libc++_shared.so` from the pinned NDK instead of compiling it.
   Preserve matching NDK/LLVM source and notices, or rebuild this library from
