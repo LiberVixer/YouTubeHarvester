@@ -8,7 +8,7 @@ import unittest
 from unittest.mock import patch
 import zipfile
 
-from package_controlled_payloads import Entry, closure, link_target, load_build, make_zip, merge, resolve, safe_name
+from package_controlled_payloads import Entry, closure, link_target, load_build, make_zip, merge, resolve, safe_name, validate_media_api
 
 
 def elf(machine=3):
@@ -19,6 +19,24 @@ def elf(machine=3):
 
 
 class ControlledPayloadTests(unittest.TestCase):
+    @patch("package_controlled_payloads.elf_dependencies", return_value=["libmediandk.so"])
+    def test_platform_media_ndk_is_not_shadowed_by_termux_shim(self, unused):
+        roots = {"usr/bin/ffmpeg": Entry(elf(), "ffmpeg")}
+        pool = {**roots, "usr/lib/libmediandk.so": Entry(elf(), "termux-shim")}
+        self.assertEqual(closure(pool, roots, "i686"), roots)
+
+    @patch("package_controlled_payloads.dynamic_symbols")
+    def test_media_imports_must_exist_at_minimum_android_api(self, symbols):
+        symbols.side_effect = [({"AMediaCodec_start"}, set()),
+                               ({"AMediaCodec_start"}, set()),
+                               (set(), {"AMediaCodec_start"})]
+        payload = {"usr/bin/ffmpeg": Entry(elf(), "ffmpeg")}
+        self.assertEqual(validate_media_api(payload, Entry(elf(), "shim"), elf()), ["AMediaCodec_start"])
+        symbols.side_effect = [({"AMediaCodec_start"}, set()), (set(), set()),
+                               (set(), {"AMediaCodec_start"})]
+        with self.assertRaisesRegex(ValueError, "API coverage failed"):
+            validate_media_api(payload, Entry(elf(), "shim"), elf())
+
     def test_unsafe_paths(self):
         for name in ("/etc/passwd", "usr/../outside"):
             with self.assertRaises(ValueError):

@@ -1,5 +1,31 @@
 # Android 1.2.1 Release Candidate
 
+## Current Controlled Candidate: R2, 2026-10-05
+
+The initial controlled candidate below was superseded after a real LDPlayer
+download exposed a Media NDK library-name collision. R2 excludes Termux's shim
+and uses Android's platform library, with imported symbols checked against
+API 26 for all four ABIs. All four R2 APKs are signed with the permanent
+certificate; independent manifest, signature, hash and ZIP/native alignment
+checks passed, including 432 nested 64-bit ELF files.
+
+Exact signed x86_64 R2 acceptance passed on LDPlayer API 34: YouTube download,
+FFmpeg postprocessing, publication to Downloads and archive persistence after
+force-stop/relaunch. See [evidence](legal/RUNTIME-ACCEPTANCE-CONTROLLED-20261005.md).
+Old candidates remain preserved. The new signed set is under
+`android/build/release-candidate-controlled-20261005-r2/`.
+
+| ABI | Signed R2 APK SHA-256 |
+| --- | --- |
+| arm64-v8a | `daa78e484fa2c32f850d988094782e325544524fe6dce12377b6d8afc1a758ef` |
+| armeabi-v7a | `6a184ab1cb59d82aa404bb547280513a7d72132eeffd102cab082ee90dac2faf` |
+| x86 | `43361145aa4f1b9bc5ffecb9eb8ed646a7f24c511a41fff520ede796fcf839f9` |
+| x86_64 | `807ec7b2da0298c7169f68ee18b58f39d1ce23aaba602f439d2dbc557cd752ec` |
+
+The source preparation snapshot is not yet an approved complete corresponding
+source set. Application/JVM source and notice coverage review remains required;
+no R2 APK has been published and the release remains a draft.
+
 ## Controlled Runtime Candidate: 2026-10-05
 
 Four replacement APKs were signed with the same permanent certificate listed

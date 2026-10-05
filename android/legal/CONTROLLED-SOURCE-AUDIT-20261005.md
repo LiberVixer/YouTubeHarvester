@@ -126,3 +126,14 @@ and notices, wrapper sources and the payload package mapping. Its 3189-entry
 file inventory was independently checked after packaging. It remains marked
 incomplete pending exact source/notice coverage review and application/JVM
 dependency source coverage; it is not configured as the reviewed public bundle.
+
+## Media NDK Packaging Repair
+
+The first signed controlled candidate failed FFmpeg loading on LDPlayer because
+the payload's Termux `libmediandk.so` shim shadowed Android's platform library.
+The repaired bundle excludes that shim after checking every imported symbol
+against the API 26 NDK stub for each ABI; no native compilation was repeated.
+See [acceptance evidence and current limitations](RUNTIME-ACCEPTANCE-CONTROLLED-20261005.md).
+The current pin in `native/controlled-payloads.properties` supersedes the initial
+bundle hash above. The source preparation archive above is an older preparation
+snapshot, not the exact repaired candidate's final corresponding-source set.

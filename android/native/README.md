@@ -11,7 +11,8 @@ recorded `android/build` locations, run from the repository root:
 ```sh
 python3 android/scripts/package_controlled_payloads.py --android android \
   --inputs android/native/controlled-artifacts.json \
-  --output android/build/controlled-payloads-20261005/runtime-replacements.zip
+  --ndk /path/to/android-sdk/ndk/28.2.13676358 \
+  --output android/build/controlled-payloads-20261005-r2/runtime-replacements.zip
 ```
 
 The output directory must not already contain the target ZIP. Payload assembly
@@ -19,6 +20,12 @@ checks package hashes, ELF architecture, non-system dependency closure and
 64-bit 16 KB alignment. It includes Cryptodome 3.23.0 and Mutagen 1.47.0 and
 records each packaged file's producing package and hash in the adjacent JSON.
 All payload symlinks are relative and remain inside `usr/`.
+
+Use Android's platform `libmediandk.so`, not Termux's same-named compatibility
+shim. Bundling the shim shadows the system library and breaks the system native
+dependency graph. Assembly checks every imported shim symbol against the pinned
+NDK's API 26 platform stub for each ABI before excluding it from the payload.
+This does not substitute for API 26 device acceptance.
 
 For a fresh checkout with GitHub access, restore the pinned prepared bundle:
 

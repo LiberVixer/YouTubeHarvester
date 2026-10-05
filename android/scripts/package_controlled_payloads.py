@@ -1,5 +1,6 @@
 """Create replacement payloads with package provenance; never approve publication."""
 import argparse
+import configparser
 from dataclasses import dataclass
 import hashlib
 import io
@@ -10,6 +11,7 @@ import re
 import stat
 import subprocess
 import tarfile
+import tempfile
 import zipfile
 
 from elf_alignment import inspect_native
@@ -18,7 +20,9 @@ from runtime_inventory import elf_dependencies
 
 ABIS = {"aarch64": "arm64-v8a", "arm": "armeabi-v7a", "i686": "x86", "x86_64": "x86_64"}
 MACHINES = {"aarch64": 183, "arm": 40, "i686": 3, "x86_64": 62}
-SYSTEM = {"libc.so", "libm.so", "libdl.so", "liblog.so", "libandroid.so"}
+SYSTEM = {"libc.so", "libm.so", "libdl.so", "liblog.so", "libandroid.so", "libmediandk.so"}
+NDK_TRIPLES = {"aarch64": "aarch64-linux-android", "arm": "arm-linux-androideabi",
+               "i686": "i686-linux-android", "x86_64": "x86_64-linux-android"}
 PREFIX = "data/data/com.liberivixer.youtubeharvester/"
 
 
@@ -119,6 +123,35 @@ def is_library(name):
     return bool(re.fullmatch(r"usr/lib/[^/]+\.so(?:\..+)?", name))
 
 
+def dynamic_symbols(data):
+    with tempfile.NamedTemporaryFile() as binary:
+        binary.write(data)
+        binary.flush()
+        output = subprocess.check_output(["readelf", "--dyn-syms", "--wide", binary.name], text=True)
+    defined, undefined = set(), set()
+    for line in output.splitlines():
+        fields = line.split()
+        if len(fields) < 8 or fields[4] not in {"GLOBAL", "WEAK"}:
+            continue
+        name = fields[7].split("@", 1)[0]
+        (undefined if fields[6] == "UND" else defined).add(name)
+    return defined, undefined
+
+
+def validate_media_api(payload, shim, stub):
+    provided, _ = dynamic_symbols(shim.data)
+    available, _ = dynamic_symbols(stub)
+    used = set()
+    for entry in payload.values():
+        if not entry.link and entry.data.startswith(b"\x7fELF"):
+            _, undefined = dynamic_symbols(entry.data)
+            used.update(undefined & provided)
+    missing = used - available
+    if not used or missing:
+        raise ValueError("Media NDK API coverage failed: " + ", ".join(sorted(missing)))
+    return sorted(used)
+
+
 def closure(pool, roots, arch):
     chosen = dict(roots)
     queue = list(roots)
@@ -202,10 +235,14 @@ def provenance(entries):
              "sha256": hashlib.sha256(entry.data).hexdigest()} for name, entry in sorted(entries.items())]
 
 
-def build(android, inputs, output):
+def build(android, inputs, output, ndk):
     if output.exists():
         raise ValueError("Replacement output already exists")
     lock = json.loads((android / "native/runtime-build-lock.json").read_text())
+    properties = configparser.ConfigParser(interpolation=None)
+    properties.read_string("[ndk]\n" + (ndk / "source.properties").read_text())
+    if properties["ndk"].get("Pkg.Revision") != lock["ndkVersion"]:
+        raise ValueError("NDK version differs from the controlled build lock")
     extension_lock = json.loads((android / "native/python-extensions-lock.json").read_text())
     pins = json.loads(inputs.read_text())
     if set(pins["architectures"]) != set(ABIS):
@@ -247,6 +284,8 @@ def build(android, inputs, output):
                 ffmpeg = read_package(core["ffmpeg"], lambda name: name in ("usr/bin/ffmpeg", "usr/bin/ffprobe"))
                 ffmpeg_roots = {name: ffmpeg[name] for name in ("usr/bin/ffmpeg", "usr/bin/ffprobe")}
                 ffmpeg_payload = closure({**pool, **ffmpeg_roots}, ffmpeg_roots, arch)
+                stub = ndk / "toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib" / NDK_TRIPLES[arch] / str(lock["apiLevel"]) / "libmediandk.so"
+                media_symbols = validate_media_api(ffmpeg_payload, pool["usr/lib/libmediandk.so"], stub.read_bytes())
                 launchers = {"libpython.so": python_payload.pop("usr/bin/python3.12"),
                              "libffmpeg.so": ffmpeg_payload.pop("usr/bin/ffmpeg"),
                              "libffprobe.so": ffmpeg_payload.pop("usr/bin/ffprobe")}
@@ -257,7 +296,9 @@ def build(android, inputs, output):
                 bundle.writestr(abi + "/libqjs.so", qjs.read(abi + "/libqjs.so"))
                 reports.append({"architecture": arch, "abi": abi, "input": pin,
                                 "python": provenance(python_payload), "ffmpeg": provenance(ffmpeg_payload),
-                                "launchers": provenance(launchers)})
+                                "launchers": provenance(launchers),
+                                "platformMediaNdk": {"apiLevel": lock["apiLevel"],
+                                                     "stubSha256": digest(stub), "imports": media_symbols}})
                 print(json.dumps({"architecture": arch, "pythonFiles": len(python_payload),
                                   "ffmpegFiles": len(ffmpeg_payload)}), flush=True)
         temporary.replace(output)
@@ -273,5 +314,6 @@ if __name__ == "__main__":
     parser.add_argument("--android", type=Path, required=True)
     parser.add_argument("--inputs", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--ndk", type=Path, required=True)
     args = parser.parse_args()
-    build(args.android, args.inputs, args.output)
+    build(args.android, args.inputs, args.output, args.ndk)
