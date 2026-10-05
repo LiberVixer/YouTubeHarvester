@@ -1,5 +1,15 @@
 # YouTube Harvester for Android
 
+## Stable Release 1.2.1
+
+The maintainer approved final publication of the four permanently signed R2
+APKs. Download them from [1.2.1](https://github.com/LiberVixer/YouTubeHarvester/releases/tag/v1.2.1)
+or the [Android release](https://github.com/LiberVixer/YouTubeHarvester/releases/tag/android-v1.2.1),
+which also retains the complete reviewed runtime sources, original notices and
+exact APK/source reports. Older preparation entries below are historical, not
+the current publication status. Reports retain the actual automated device-test
+coverage; owner approval does not mark unrun tests as passing.
+
 This directory contains an isolated native Android port. It does not import or modify the
 desktop PyQt launcher, Python downloader, Windows packaging, or Linux packaging.
 

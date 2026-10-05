@@ -21,11 +21,11 @@ A multilingual downloader for **Linux, Windows, and Android**. Monitor YouTube a
 
 ## Version 1.2.1
 
-Documentation updated: **2026-10-04**.
+Documentation updated: **2026-10-05**.
 
 Current source and local packages use **1.2.1** without beta/prerelease labels. Android uses `versionCode 120100`; internal debug builds retain `-debug`. Windows was rebuilt from the same current desktop sources as Linux, including Rutube support and recovery after interrupted downloads.
 
-**Release preparation, not a publication announcement.** Desktop installers and four Android tester APKs have been built locally. Public Android release acceptance is not complete; existing tester APKs retain the development certificate. A version number without beta does not make those APKs public release builds.
+**Stable release 1.2.1 for Linux, Windows and Android.** Desktop packages and four Android APKs are available without beta/prerelease labels. Public APKs use the permanent release certificate.
 
 Linux and Windows share the Python/yt-dlp downloader; the old Bash engine is disabled legacy source only.
 
@@ -96,7 +96,7 @@ Native Kotlin/Jetpack Compose application for **Android 8.0+ (API 26)**. Four AB
 
 ## Android Release Status
 
-Before public distribution: finish the permanent-key/independent-backup checks, complete the matching native runtime source/license bundle and security review, accept migration in the exact signed candidate, and test ARM devices, older supported Android, Android 15+ boot/resume, 16 KB pages, and TalkBack. Then verify final signed APKs and release packaging.
+The maintainer approved Android 1.2.1 publication. Matching sources, original notices and exact APK hashes are documented in the [final review](android/legal/FINAL-SOURCE-REVIEW-20261005.md). Automated device-test coverage and its limits remain recorded; not every Android device was tested.
 
 Do **not uninstall an existing tester app** to switch certificates. Encrypted migration has been tested in an isolated QA package, but this does not replace acceptance of the final public candidate.
 
@@ -132,14 +132,14 @@ Android 1.2.1, dark theme. Demonstration data.
 
 ## Downloads
 
-Locally prepared desktop artifacts are under `dist/release/`. Public downloads, when published, belong in [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases); this README does not claim that 1.2.1 has already been published.
+Download all variants from [1.2.1](https://github.com/LiberVixer/YouTubeHarvester/releases/tag/v1.2.1). Complete runtime sources are in the [Android release](https://github.com/LiberVixer/YouTubeHarvester/releases/tag/android-v1.2.1).
 
 | Platform | Files |
 | --- | --- |
 | Linux | `YouTubeHarvester_1.2.1_linux_all.deb`, `YouTubeHarvester_1.2.1_source.tar.gz`, `SHA256SUMS-linux.txt` |
 | Windows x64 | `YouTubeHarvester_1.2.1_windows_setup.exe`, `YouTubeHarvester_1.2.1_windows_x64.msi`, `YouTubeHarvester_1.2.1_windows_portable.zip`, `SHA256SUMS-windows.txt` |
 
-Private tester APKs: `android/YouTubeHarvester-1.2.1-<ABI>.apk`. They are **not public release artifacts**. Public Android packaging also requires application/runtime sources, BUILD-INFO and SHA256SUMS.
+Public APKs: `YouTubeHarvester-1.2.1-<ABI>-release.apk` for `arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`. Sources, original notices, BUILD-INFO, SOURCE-REVIEW and SHA256SUMS accompany the release. Local tester APKs are not substitutes.
 
 ## Install on Linux
 

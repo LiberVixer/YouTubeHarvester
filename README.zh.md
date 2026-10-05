@@ -21,11 +21,11 @@
 
 ## 1.2.1 版本
 
-文档更新：**2026-10-04**。
+文档更新：**2026-10-05**。
 
 当前源码与本地软件包均为 **1.2.1**，不含 beta/prerelease 标记。Android 使用 `versionCode 120100`；内部调试构建保留 `-debug`。Windows 已从与 Linux 相同的最新桌面源码重新构建，包含 Rutube 和中断后恢复修复。
 
-**这是发布准备，不是已发布公告。** 桌面安装包和四种测试 APK 已在本地生成。Android 公开发布验收尚未完成，测试 APK 仍使用开发证书。去掉 beta 不代表它们已成为公开发行版。
+**Linux、Windows 和 Android 稳定版 1.2.1。** 桌面软件包和四种 APK 不含 beta/prerelease 标记。公开 APK 使用永久发布证书签名。
 
 Linux 与 Windows 共用 Python/yt-dlp 下载引擎；旧 Bash 仅作为已禁用历史代码保留。
 
@@ -90,7 +90,7 @@ Rutube 直播扫描和付费检测已禁用。YouTube 付费检测只报告可�
 
 ## Android 发布状态
 
-公开分发前需完成：永久签名及独立密钥备份、完整对应原生 runtime 源码/许可证/安全审查、准确签名候选包的迁移验收，以及 ARM、旧版受支持 Android、Android 15+ boot/resume、16 KB 页设备和 TalkBack 测试。随后验证最终 APK 与发布包。
+所有者已批准 Android 1.2.1 发布。对应源码、原始许可证声明和 APK 哈希记录在[最终审查](android/legal/FINAL-SOURCE-REVIEW-20261005.md)中。自动设备测试的范围与限制仍保留在报告中；并未测试所有 Android 设备。
 
 **不要为更换证书卸载测试应用。** 加密迁移已在隔离 QA 包测试，不能代替最终公开候选包验收。
 
@@ -126,14 +126,14 @@ Android 1.2.1，深色主题。演示数据。
 
 ## 下载文件
 
-本地准备的桌面文件位于 `dist/release/`。公开发布后可从 [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases) 下载；本 README 不声称 1.2.1 已公开发布。
+所有格式见 [1.2.1](https://github.com/LiberVixer/YouTubeHarvester/releases/tag/v1.2.1)。完整 runtime 源码见 [Android 发布页](https://github.com/LiberVixer/YouTubeHarvester/releases/tag/android-v1.2.1)。
 
 | 平台 | 文件 |
 | --- | --- |
 | Linux | `YouTubeHarvester_1.2.1_linux_all.deb`, `YouTubeHarvester_1.2.1_source.tar.gz`, `SHA256SUMS-linux.txt` |
 | Windows x64 | `YouTubeHarvester_1.2.1_windows_setup.exe`, `YouTubeHarvester_1.2.1_windows_x64.msi`, `YouTubeHarvester_1.2.1_windows_portable.zip`, `SHA256SUMS-windows.txt` |
 
-私有测试 APK：`android/YouTubeHarvester-1.2.1-<ABI>.apk`，**并非公开发行文件**。Android 公开打包还需应用/runtime 源码、BUILD-INFO 和 SHA256SUMS。
+公开 APK：`YouTubeHarvester-1.2.1-<ABI>-release.apk`，支持 `arm64-v8a`、`armeabi-v7a`、`x86`、`x86_64`。同时提供源码、原始许可证声明、BUILD-INFO、SOURCE-REVIEW 和 SHA256SUMS。本地测试 APK 不能替代发布文件。
 
 ## Linux 安装
 

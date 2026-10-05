@@ -21,11 +21,11 @@
 
 ## バージョン 1.2.1
 
-文書更新：**2026-10-04**。
+文書更新：**2026-10-05**。
 
 現在のソースとローカル配布物は **1.2.1** で、beta/prerelease 表記はありません。Android は `versionCode 120100`、内部デバッグ版は `-debug` を保持します。Windows は Linux と同じ最新デスクトップソースから再ビルドされ、Rutube と中断後の復旧修正を含みます。
 
-**公開済みの告知ではなく、リリース準備状況です。** PC インストーラーと四つのテスト APK はローカルで生成済みです。Android の公開受け入れは未完了で、テスト APK は開発証明書を使用します。beta を削除しただけで公開版にはなりません。
+**Linux、Windows、Android 向け安定版 1.2.1。** PC パッケージと四つの APK を beta/prerelease 表記なしで公開します。公開 APK は恒久証明書で署名されています。
 
 Linux と Windows は共通の Python/yt-dlp エンジンを使用します。旧 Bash は無効な歴史的コードとしてのみ残ります。
 
@@ -94,7 +94,7 @@ PC で停止しても次の実行を妨げません。安全な一時ファイ�
 
 ## Android の公開状況
 
-公開前に恒久署名と独立した鍵バックアップ、対応するネイティブ runtime ソース/ライセンス/安全性審査、正確な署名候補版の移行受け入れ、ARM・旧対応 Android・Android 15+ boot/resume・16 KB ページ・TalkBack を検証します。その後、最終 APK と公開パッケージを確認します。
+所有者が Android 1.2.1 の公開を承認しました。対応ソース、元の通知と APK ハッシュは[最終レビュー](android/legal/FINAL-SOURCE-REVIEW-20261005.md)に記録されています。自動テストの範囲と制限は記録に残しており、全 Android 端末の検証は行っていません。
 
 **証明書変更のためテストアプリを削除しないでください。** 暗号化移行は隔離 QA パッケージで検証済みですが、最終公開候補の受け入れの代わりにはなりません。
 
@@ -130,14 +130,14 @@ Android 1.2.1、ダークテーマ。デモ用データ。
 
 ## ダウンロード
 
-ローカル準備済み PC ファイルは `dist/release/` にあります。公開後は [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases) から取得できます。本書は 1.2.1 が公開済みとは主張しません。
+全形式は [1.2.1](https://github.com/LiberVixer/YouTubeHarvester/releases/tag/v1.2.1) にあります。完全な runtime ソースは [Android リリース](https://github.com/LiberVixer/YouTubeHarvester/releases/tag/android-v1.2.1)にあります。
 
 | 環境 | ファイル |
 | --- | --- |
 | Linux | `YouTubeHarvester_1.2.1_linux_all.deb`, `YouTubeHarvester_1.2.1_source.tar.gz`, `SHA256SUMS-linux.txt` |
 | Windows x64 | `YouTubeHarvester_1.2.1_windows_setup.exe`, `YouTubeHarvester_1.2.1_windows_x64.msi`, `YouTubeHarvester_1.2.1_windows_portable.zip`, `SHA256SUMS-windows.txt` |
 
-非公開テスト APK：`android/YouTubeHarvester-1.2.1-<ABI>.apk`。**公開配布物ではありません**。公開 Android にはアプリ/runtime ソース、BUILD-INFO、SHA256SUMS も必要です。
+公開 APK：`YouTubeHarvester-1.2.1-<ABI>-release.apk`。ABI は `arm64-v8a`、`armeabi-v7a`、`x86`、`x86_64`。ソース、元の通知、BUILD-INFO、SOURCE-REVIEW、SHA256SUMS を提供します。ローカルテスト APK は公開ファイルの代わりにはなりません。
 
 ## Linux へのインストール
 

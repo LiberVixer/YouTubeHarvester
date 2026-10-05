@@ -21,11 +21,11 @@ Descargador multilingüe para **Linux, Windows y Android**: seguimiento de canal
 
 ## Versión 1.2.1
 
-Documentación actualizada: **2026-10-04**.
+Documentación actualizada: **2026-10-05**.
 
 Código y paquetes locales: **1.2.1**, sin beta/prerelease. Android usa `versionCode 120100`; las compilaciones internas conservan `-debug`. Windows se recompiló con el mismo código actual de Linux, incluyendo Rutube y recuperación tras interrupciones.
 
-**Preparación, no anuncio de publicación.** Se han construido localmente instaladores de escritorio y cuatro APK de prueba. La aceptación pública de Android sigue pendiente; los APK de prueba conservan el certificado de desarrollo. Quitar beta del número no los convierte en versiones públicas.
+**Versión estable 1.2.1 para Linux, Windows y Android.** Paquetes PC y cuatro APK disponibles sin beta/prerelease. Los APK públicos usan el certificado permanente.
 
 Linux y Windows comparten el motor Python/yt-dlp; el Bash antiguo queda solo como código heredado desactivado.
 
@@ -95,7 +95,7 @@ Aplicación nativa Kotlin/Jetpack Compose para **Android 8.0+ (API 26)**; ABI `a
 
 ## Estado del Lanzamiento Android
 
-Antes de publicar: completar firma permanente/copia independiente de clave, fuentes nativas correspondientes/licencias/auditoría de seguridad, migración en el candidato firmado exacto, ARM, Android antiguo compatible, Android 15+ boot/resume, páginas 16 KB y TalkBack. Después verificar APK finales y empaquetado.
+El responsable aprobó Android 1.2.1. Fuentes correspondientes, avisos originales y hashes APK constan en la [revisión final](android/legal/FINAL-SOURCE-REVIEW-20261005.md). Los informes conservan el alcance y los límites de las pruebas automatizadas; no se ha probado cada dispositivo Android.
 
 **No desinstale la app de prueba para cambiar el certificado.** La transferencia cifrada se probó en un paquete QA aislado, no sustituye la aceptación del candidato público final.
 
@@ -131,14 +131,14 @@ Android 1.2.1, tema oscuro. Datos de demostración.
 
 ## Descargas
 
-Archivos de escritorio preparados localmente: `dist/release/`. Tras publicación, [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases) ofrece las descargas; este README no afirma que 1.2.1 ya esté publicada.
+Todas las variantes están en [1.2.1](https://github.com/LiberVixer/YouTubeHarvester/releases/tag/v1.2.1). Las fuentes completas del runtime están en la [versión Android](https://github.com/LiberVixer/YouTubeHarvester/releases/tag/android-v1.2.1).
 
 | Plataforma | Archivos |
 | --- | --- |
 | Linux | `YouTubeHarvester_1.2.1_linux_all.deb`, `YouTubeHarvester_1.2.1_source.tar.gz`, `SHA256SUMS-linux.txt` |
 | Windows x64 | `YouTubeHarvester_1.2.1_windows_setup.exe`, `YouTubeHarvester_1.2.1_windows_x64.msi`, `YouTubeHarvester_1.2.1_windows_portable.zip`, `SHA256SUMS-windows.txt` |
 
-APK privados de prueba: `android/YouTubeHarvester-1.2.1-<ABI>.apk`, **no artefactos públicos**. Publicar Android exige también código app/runtime, BUILD-INFO y SHA256SUMS.
+APK públicos: `YouTubeHarvester-1.2.1-<ABI>-release.apk` para `arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`. Se incluyen fuentes, avisos originales, BUILD-INFO, SOURCE-REVIEW y SHA256SUMS. Los APK locales de prueba no sustituyen estos archivos.
 
 ## Instalación en Linux
 

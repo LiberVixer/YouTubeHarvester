@@ -21,11 +21,11 @@
 
 ## संस्करण 1.2.1
 
-दस्तावेज़ अद्यतन: **2026-10-04**।
+दस्तावेज़ अद्यतन: **2026-10-05**।
 
 वर्तमान स्रोत और स्थानीय पैकेज **1.2.1** हैं, beta/prerelease के बिना। Android में `versionCode 120100`; आंतरिक debug बिल्ड में `-debug` रहता है। Windows को Linux के समान वर्तमान स्रोत से बनाया गया, जिसमें Rutube और बाधित डाउनलोड के बाद पुनर्प्राप्ति शामिल है।
 
-**रिलीज़ की तैयारी है, प्रकाशन की घोषणा नहीं।** डेस्कटॉप इंस्टॉलर और चार परीक्षण APK स्थानीय रूप से बने हैं। सार्वजनिक Android स्वीकृति अधूरी है; परीक्षण APK में development प्रमाणपत्र है। beta हटाने से वे सार्वजनिक रिलीज़ नहीं बनते।
+**Linux, Windows और Android के लिए स्थिर संस्करण 1.2.1।** डेस्कटॉप पैकेज और चार APK बिना beta/prerelease के उपलब्ध हैं। सार्वजनिक APK स्थायी रिलीज़ प्रमाणपत्र से हस्ताक्षरित हैं।
 
 Linux और Windows समान Python/yt-dlp इंजन उपयोग करते हैं; पुराना Bash केवल बंद विरासत कोड है।
 
@@ -93,7 +93,7 @@ Rutube लाइव और भुगतान-सामग्री जाँच
 
 ## Android रिलीज़ स्थिति
 
-प्रकाशन से पहले: स्थायी हस्ताक्षर/स्वतंत्र कुंजी बैकअप, संबंधित मूल runtime स्रोत/लाइसेंस/सुरक्षा समीक्षा, ठीक अंतिम हस्ताक्षरित उम्मीदवार पर माइग्रेशन; ARM, पुराना समर्थित Android, Android 15+ boot/resume, 16 KB पृष्ठ और TalkBack जाँच। फिर अंतिम APK और पैकेज सत्यापन।
+स्वामी ने Android 1.2.1 प्रकाशन मंजूर किया है। संबंधित स्रोत, मूल सूचनाएँ और APK हैश [अंतिम समीक्षा](android/legal/FINAL-SOURCE-REVIEW-20261005.md) में हैं। स्वचालित परीक्षणों का दायरा और सीमाएँ रिपोर्ट में सुरक्षित हैं; हर Android उपकरण का परीक्षण नहीं हुआ है।
 
 **प्रमाणपत्र बदलने के लिए परीक्षण ऐप अनइंस्टॉल न करें।** अलग QA पैकेज में एन्क्रिप्टेड स्थानांतरण जाँचा गया है; अंतिम सार्वजनिक उम्मीदवार की स्वीकृति नहीं।
 
@@ -129,14 +129,14 @@ Android 1.2.1, डार्क थीम। प्रदर्शन डेट�
 
 ## डाउनलोड
 
-स्थानीय डेस्कटॉप फ़ाइलें: `dist/release/`। प्रकाशित होने पर डाउनलोड [GitHub Releases](https://github.com/LiberVixer/YouTubeHarvester/releases) में मिलेंगे; यह README नहीं कहता कि 1.2.1 पहले ही प्रकाशित है।
+सभी विकल्प [1.2.1](https://github.com/LiberVixer/YouTubeHarvester/releases/tag/v1.2.1) में हैं। पूरा runtime स्रोत [Android रिलीज़](https://github.com/LiberVixer/YouTubeHarvester/releases/tag/android-v1.2.1) में है।
 
 | प्लेटफ़ॉर्म | फ़ाइलें |
 | --- | --- |
 | Linux | `YouTubeHarvester_1.2.1_linux_all.deb`, `YouTubeHarvester_1.2.1_source.tar.gz`, `SHA256SUMS-linux.txt` |
 | Windows x64 | `YouTubeHarvester_1.2.1_windows_setup.exe`, `YouTubeHarvester_1.2.1_windows_x64.msi`, `YouTubeHarvester_1.2.1_windows_portable.zip`, `SHA256SUMS-windows.txt` |
 
-निजी परीक्षण APK: `android/YouTubeHarvester-1.2.1-<ABI>.apk`, **सार्वजनिक रिलीज़ फ़ाइलें नहीं**। Android प्रकाशन को ऐप/runtime स्रोत, BUILD-INFO और SHA256SUMS भी चाहिए।
+सार्वजनिक APK: `YouTubeHarvester-1.2.1-<ABI>-release.apk`, `arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64` के लिए। स्रोत, मूल सूचनाएँ, BUILD-INFO, SOURCE-REVIEW और SHA256SUMS उपलब्ध हैं। स्थानीय परीक्षण APK रिलीज़ फ़ाइलों का विकल्प नहीं हैं।
 
 ## Linux में स्थापना
 
