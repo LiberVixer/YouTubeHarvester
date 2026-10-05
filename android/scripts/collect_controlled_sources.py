@@ -53,7 +53,46 @@ def collect_worktrees(archive_path, metadata, destination, extra_trees):
     return len(found)
 
 
-def collect(android, audit_path, ndk, wrapper, payload, output):
+def validate_file_inventory(folder, report, key="files"):
+    for item in report[key]:
+        path = folder / safe_name(item["file"])
+        if digest(path) != item["sha256"] or path.stat().st_size != item["bytes"]:
+            raise ValueError("Source inventory mismatch: " + str(path))
+
+
+def runtime_source_coverage(mapping, packages, recipes):
+    parents = {}
+    with tarfile.open(recipes) as archive:
+        for item in archive:
+            parts = PurePosixPath(item.name).parts
+            if len(parts) == 3 and parts[0] == "packages" and parts[2].endswith(".subpackage.sh"):
+                parents[parts[2].removesuffix(".subpackage.sh")] = parts[1]
+    coverage = {}
+    for arch in mapping["architectures"]:
+        for kind in ("python", "ffmpeg", "launchers"):
+            for entry in arch[kind]:
+                producer = entry["package"]
+                name = producer.split("_", 1)[0]
+                if producer == "mutagen-1.47.0.tar.gz":
+                    coverage[producer] = {"source": "mutagen-1.47.0.tar.gz", "license": "GPL-2.0-or-later"}
+                elif name == "python-pycryptodomex":
+                    coverage[producer] = {"source": "original-sources/python-pycryptodomex/cache/v3.23.0x.tar.gz",
+                                          "license": "BSD-2-Clause and public-domain portions"}
+                else:
+                    parent = parents.get(name, name)
+                    if parent not in packages:
+                        raise ValueError("Payload producer lacks source evidence: " + producer)
+                    source = packages[parent]
+                    coverage[producer] = {"recipe": "packages/" + parent, "version": source["version"],
+                                          "originalArchives": source["originalArchives"],
+                                          "licenseDeclared": source["licenseDeclared"],
+                                          "licenseEvidence": source["licenseEvidence"],
+                                          "genericLicenseEvidence": source["genericLicenseEvidence"],
+                                          "recipeOnly": source["recipeOnly"]}
+    return coverage
+
+
+def collect(android, audit_path, ndk, wrapper, payload, output, jvm=None, additional=None, application=None, rust=None):
     if output.exists():
         raise ValueError("Source output already exists")
     audit = json.loads(audit_path.read_text())
@@ -118,6 +157,26 @@ def collect(android, audit_path, ndk, wrapper, payload, output):
         shutil.copy2(wrapper, stage / "youtubedl-android-wrapper-0.18.1.tar.gz")
         shutil.copy2(audit_path, stage / "controlled-source-audit.json")
         shutil.copy2(payload, stage / "runtime-payload-package-mapping.json")
+        coverage = runtime_source_coverage(json.loads(payload.read_text()), core_evidence["packages"],
+                                           core / "termux-recipes.tar.gz")
+        (stage / "RUNTIME-PACKAGE-SOURCE-COVERAGE.json").write_text(json.dumps(coverage, indent=2) + "\n")
+        if any(path is not None for path in (jvm, additional, application)):
+            if not all(path is not None for path in (jvm, additional, application)):
+                raise ValueError("Application, JVM and supplemental evidence must be supplied together")
+            jvm_report = json.loads((jvm / "JVM-SOURCE-INVENTORY.json").read_text())
+            if jvm_report["missing"]:
+                raise ValueError("JVM source downloads incomplete")
+            for artifact in jvm_report["artifacts"]:
+                validate_file_inventory(jvm, artifact, "downloads")
+            application_report = json.loads((additional / "APPLICATION-SOURCE-AUDIT.json").read_text())
+            validate_file_inventory(additional, application_report)
+            shutil.copytree(jvm, stage / "jvm-sources")
+            shutil.copytree(additional, stage / "supplemental-sources")
+            shutil.copy2(application, stage / "application-sources.tar.gz")
+        if rust is not None:
+            rust_report = json.loads((rust / "RUST-SOURCE-INVENTORY.json").read_text())
+            validate_file_inventory(rust, rust_report)
+            shutil.copytree(rust, stage / "rust-sources")
         shutil.copytree(android / "scripts", stage / "scripts", ignore=shutil.ignore_patterns("__pycache__"))
         shutil.copytree(android / "legal", stage / "legal")
         for filename in ("LICENSE", "NOTICE", "RELEASING.md"):
@@ -129,12 +188,13 @@ def collect(android, audit_path, ndk, wrapper, payload, output):
         (stage / "cacert-2025-08-12.pem").write_bytes(cert.data)
         files = [{"file": str(p.relative_to(stage)), "sha256": digest(p), "bytes": p.stat().st_size}
                  for p in sorted(stage.rglob("*")) if p.is_file()]
-        report = {"scope": "Native runtime source preparation; not a complete application source attestation",
+        report = {"scope": "Source preparation; final combined coverage review is not approved",
                   "originalArchives": source_count, "files": files, "publicReleaseReady": False,
                   "completeCorrespondingSourcesVerified": False,
-                  "remaining": ["Review exact APK-to-package/source coverage and notices",
-                                "Review application/JVM dependency source coverage",
-                                "Sign and accept exact replacement APKs on device"]}
+                  "applicationEvidenceIncluded": application is not None,
+                  "runtimeProducerPackages": len(coverage), "cargoEvidenceIncluded": rust is not None,
+                  "remaining": ["Review combined package/source/notices/rebuild coverage",
+                                "Device acceptance is limited to LDPlayer x86_64; other device checks are deferred"]}
         (stage / "SOURCE-INVENTORY.json").write_text(json.dumps(report, indent=2) + "\n")
         temporary = output.with_suffix(".tar.gz.part")
         try:
@@ -152,5 +212,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("android", "audit", "ndk", "wrapper", "payload", "output"):
         parser.add_argument("--" + name, type=Path, required=True)
+    for name in ("jvm", "additional", "application", "rust"):
+        parser.add_argument("--" + name, type=Path)
     args = parser.parse_args()
-    collect(args.android, args.audit, args.ndk, args.wrapper, args.payload, args.output)
+    collect(args.android, args.audit, args.ndk, args.wrapper, args.payload, args.output,
+            args.jvm, args.additional, args.application, args.rust)

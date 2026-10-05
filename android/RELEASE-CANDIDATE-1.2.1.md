@@ -22,9 +22,11 @@ Old candidates remain preserved. The new signed set is under
 | x86 | `43361145aa4f1b9bc5ffecb9eb8ed646a7f24c511a41fff520ede796fcf839f9` |
 | x86_64 | `807ec7b2da0298c7169f68ee18b58f39d1ce23aaba602f439d2dbc557cd752ec` |
 
-The source preparation snapshot is not yet an approved complete corresponding
-source set. Application/JVM source and notice coverage review remains required;
-no R2 APK has been published and the release remains a draft.
+The [R2 application source audit](legal/APPLICATION-SOURCE-COVERAGE-20261005.md)
+preserves all 130 Maven source artifacts, native AndroidX sources, EJS and
+repackaged Protobuf sources, and the producing rav1e Cargo locks. The combined
+preparation archive still requires final source/notice/rebuild coverage approval.
+No R2 APK has been published and the release remains a draft.
 
 ## Controlled Runtime Candidate: 2026-10-05
 

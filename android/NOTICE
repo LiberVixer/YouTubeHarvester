@@ -10,6 +10,10 @@ Runtime:
   https://github.com/yausername/youtubedl-android/tree/0.18.1
 - yt-dlp 2026.08.19: Unlicense; pinned in runtime.properties and reported in Diagnostics.
   https://github.com/yt-dlp/yt-dlp/releases/tag/2026.08.19
+- yt-dlp-ejs 0.8.0: Unlicense, with bundled astring 1.9.0 (MIT) and
+  meriyah 6.1.4 (ISC). Preserve their source archives and license notices,
+  not only the minified JavaScript files embedded in the yt-dlp zipapp.
+  https://github.com/yt-dlp/ejs/tree/0.8.0
 - Python: Python Software Foundation License.
   https://www.python.org/psf/license/
 - PyCryptodome (Cryptodome namespace) 3.23.0, source-built for all four ABIs:
@@ -37,6 +41,9 @@ Runtime:
 
 Application libraries:
 - AndroidX / Compose / Room / WorkManager / DataStore: Apache-2.0.
+- DataStore's repackaged protobuf-javalite 4.28.2: BSD-3-Clause.
+  The original sources, license and AndroidX relocation recipe are preserved.
+  https://github.com/protocolbuffers/protobuf/tree/v28.2
 - Kotlin and kotlinx.coroutines: Apache-2.0.
 - Coil and OkHttp: Apache-2.0.
 - Apache Commons Compress and Commons IO: Apache-2.0.

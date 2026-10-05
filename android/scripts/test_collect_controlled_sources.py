@@ -5,10 +5,38 @@ import tarfile
 import tempfile
 import unittest
 
-from collect_controlled_sources import collect_worktrees
+from collect_controlled_sources import collect_worktrees, runtime_source_coverage, validate_file_inventory
 
 
 class SourceCollectionTests(unittest.TestCase):
+    def test_subpackage_source_mapping_and_unknown_producer(self):
+        with tempfile.TemporaryDirectory() as directory:
+            recipes = Path(directory) / "recipes.tar.gz"
+            with tarfile.open(recipes, "w:gz") as archive:
+                item = tarfile.TarInfo("packages/ncurses/ncurses-ui-libs.subpackage.sh")
+                item.size = 0
+                archive.addfile(item, io.BytesIO())
+            metadata = {"ncurses": {"version": "6.5", "originalArchives": [], "licenseDeclared": "MIT",
+                                     "licenseEvidence": [], "genericLicenseEvidence": [], "recipeOnly": False}}
+            arch = {"python": [{"package": "ncurses-ui-libs_6.5_x86_64.deb"}], "ffmpeg": [], "launchers": []}
+            mapping = {"architectures": [arch]}
+            result = runtime_source_coverage(mapping, metadata, recipes)
+            self.assertEqual(result[arch["python"][0]["package"]]["recipe"], "packages/ncurses")
+            arch["python"] = [{"package": "unknown_1.0_x86_64.deb"}]
+            with self.assertRaises(ValueError):
+                runtime_source_coverage(mapping, metadata, recipes)
+
+    def test_source_inventory_rejects_changed_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "source.jar").write_bytes(b"source")
+            report = {"files": [{"file": "source.jar", "bytes": 6,
+                                  "sha256": hashlib.sha256(b"source").hexdigest()}]}
+            validate_file_inventory(root, report)
+            (root / "source.jar").write_bytes(b"tamper")
+            with self.assertRaises(ValueError):
+                validate_file_inventory(root, report)
+
     def test_relative_source_link_preserved_escape_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

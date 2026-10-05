@@ -101,7 +101,7 @@ Python/FFmpeg and extension builds. See `native/controlled-artifacts.json`,
 `native/controlled-payloads.properties`, `native/README.md` and
 `legal/CONTROLLED-SOURCE-AUDIT-20261005.md`. Download the recorded artifacts and
 assemble the pinned replacement bundle before Gradle runs. The local
-`build/controlled-payloads-20261005/runtime-replacements.json` records every
+`build/controlled-payloads-20261005-r2/runtime-replacements.json` records every
 packaged file's producing package and hash. This supersedes the earlier
 partial WebP-only replacement, without changing wrapper classes.
 
@@ -109,6 +109,22 @@ partial WebP-only replacement, without changing wrapper classes.
 custom-fetch source trees, NDK sources/notices and the package mapping. Its output
 is explicitly NOT approved for public packaging until exact APK source/notice
 coverage, application/JVM dependency coverage and device acceptance are reviewed.
+
+For the exact R2 source audit, export the resolved dependency graph without
+updating binary verification pins:
+
+```sh
+./gradlew -I scripts/export_release_dependencies.gradle :app:exportReleaseSourceDependencies --offline
+python3 scripts/collect_jvm_sources.py --graph build/release-source-dependencies.json --output build/jvm-sources-NEW
+python3 scripts/collect_rav1e_sources.py --android . --output build/rust-sources-NEW
+```
+
+Preserve supplemental AndroidX native trees/build inputs, yt-dlp/EJS sources
+and repackaged Protobuf sources before running `audit_application_sources.py`.
+See [source coverage evidence](legal/APPLICATION-SOURCE-COVERAGE-20261005.md)
+for exact producing versions and limitations. `collect_controlled_sources.py`
+accepts `--jvm`, `--additional`, `--application` and `--rust` to combine verified
+inventories in a new preparation archive; it never approves publication itself.
 
 Earlier dev32 candidates replaced five WebP/SharpYUV shared libraries per ABI,
 using the pinned source/binary bundle under `native/`. Include the

@@ -1,0 +1,39 @@
+import groovy.json.JsonOutput
+import java.security.MessageDigest
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+
+// Export actual runtime artifacts, not BOMs or unselected metadata variants.
+gradle.projectsEvaluated {
+    def app = gradle.rootProject.project(':app')
+    app.tasks.register('exportReleaseSourceDependencies') {
+        doLast {
+            def sha256 = { File file ->
+                def digest = MessageDigest.getInstance('SHA-256')
+                file.withInputStream { input ->
+                    byte[] buffer = new byte[65536]
+                    int count
+                    while ((count = input.read(buffer)) != -1) digest.update(buffer, 0, count)
+                }
+                digest.digest().encodeHex().toString()
+            }
+            def configuration = app.configurations.getByName('releaseRuntimeClasspath')
+            def artifacts = configuration.incoming.artifacts.artifacts.collect { artifact ->
+                def component = artifact.id.componentIdentifier
+                def item = [file: artifact.file.absolutePath, name: artifact.file.name,
+                            sha256: sha256(artifact.file), bytes: artifact.file.length()]
+                if (component instanceof ModuleComponentIdentifier) {
+                    item.module = [group: component.group, name: component.module, version: component.version]
+                } else {
+                    item.localComponent = component.displayName
+                }
+                item
+            }.unique { it.file }.sort { it.module?.toString() ?: it.file }
+            def destination = new File(app.projectDir.parentFile, 'build/release-source-dependencies.json')
+            destination.parentFile.mkdirs()
+            destination.text = JsonOutput.prettyPrint(JsonOutput.toJson([
+                configuration: configuration.name, artifacts: artifacts
+            ])) + '\n'
+            println "Exported ${artifacts.size()} runtime artifacts to ${destination}"
+        }
+    }
+}

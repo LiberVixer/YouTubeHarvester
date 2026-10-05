@@ -2,8 +2,10 @@
 
 All four controlled core runtime builds completed 157 main packages. Downloaded
 artifacts passed their complete file checksum inventories: 320 entries for
-x86_64, 326 for each other ABI. Existing signed APKs still use the earlier
-upstream runtime and are not attested by these new source archives.
+x86_64, 326 for each other ABI. The initial signed candidates used the earlier
+upstream runtime; the current signed R2 set now uses these controlled inputs.
+Historical preparation results below must not be confused with current R2
+acceptance or final corresponding-source approval.
 
 | ABI | Run | Application commit |
 | --- | --- | --- |
@@ -71,6 +73,12 @@ warns about Termux's `x86_64` architecture spelling; the package contents were
 read successfully and their ELF architecture was checked independently.
 
 ## Remaining Before Publication
+
+This checklist records the initial native review. Runtime integration and exact
+x86_64 R2 download acceptance have since passed. The updated application,
+AndroidX native, EJS, Protobuf and Cargo evidence is documented in
+[R2 source coverage](APPLICATION-SOURCE-COVERAGE-20261005.md). Final combined
+source/notice/rebuild coverage approval remains separate.
 
 - `ca-certificates` downloads a PEM data file without an unpacked source tree.
   Its producing recipe and SHA256 are preserved, and the packaged PEM hash was
