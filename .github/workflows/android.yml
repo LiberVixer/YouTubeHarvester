@@ -33,7 +33,7 @@ jobs:
           python3 -m unittest discover -s scripts -p 'test_*.py' -v
           ./gradlew testDebugUnitTest lintRelease assembleDebug assembleRelease assembleDebugAndroidTest --no-daemon
           python3 scripts/elf_alignment.py app/build/outputs/apk/release/*.apk
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
           name: android-validation
@@ -70,7 +70,7 @@ jobs:
           disable-animations: true
           working-directory: android
           script: ./gradlew connectedDebugAndroidTest --no-daemon
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
           name: android-device-tests-${{ matrix.api }}
