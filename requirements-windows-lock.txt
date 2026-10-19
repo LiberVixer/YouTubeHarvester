@@ -22,7 +22,7 @@ pefile==2024.8.26
     # via pyinstaller
 pillow==12.3.0
     # via -r requirements-build.txt
-pycryptodomex==3.23.0
+pycryptodomex==3.24.1
     # via yt-dlp
 pyinstaller==6.22.3
     # via -r requirements-build.txt
