@@ -223,9 +223,9 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     // Room's migration test serializers must share the app classloader's runtime.
-    debugImplementation(platform("org.jetbrains.kotlinx:kotlinx-serialization-bom:1.11.0"))
+    debugImplementation(platform("org.jetbrains.kotlinx:kotlinx-serialization-bom:1.12.0"))
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     add("screenshotsImplementation", "androidx.compose.ui:ui-test-manifest")
-    add("screenshotsImplementation", platform("org.jetbrains.kotlinx:kotlinx-serialization-bom:1.11.0"))
+    add("screenshotsImplementation", platform("org.jetbrains.kotlinx:kotlinx-serialization-bom:1.12.0"))
 }
