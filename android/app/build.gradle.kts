@@ -208,7 +208,7 @@ dependencies {
     implementation("commons-io:commons-io:2.22.0")
     add(upstreamFfmpeg.name, "io.github.junkfood02.youtubedl-android:ffmpeg:0.18.1")
     implementation(files(patchedFfmpeg).builtBy(prepareFfmpeg))
-    implementation(platform("com.fasterxml.jackson:jackson-bom:2.22.3"))
+    implementation(platform("com.fasterxml.jackson:jackson-bom:2.22.4"))
     constraints {
         implementation("org.apache.commons:commons-compress:1.28.0") { because("Replace vulnerable runtime archive extraction dependency") }
         implementation("commons-io:commons-io:2.22.0")
