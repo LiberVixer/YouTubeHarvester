@@ -40,7 +40,7 @@ python-xlib==0.33
     # via pynput
 requests==2.34.2
     # via yt-dlp
-setuptools==84.0.0
+setuptools==84.2.1
     # via pyinstaller
 six==1.17.0
     # via

@@ -40,7 +40,7 @@ pywin32-ctypes==0.2.3
     # via pyinstaller
 requests==2.34.2
     # via yt-dlp
-setuptools==84.0.0
+setuptools==84.2.1
     # via pyinstaller
 six==1.17.0
     # via pynput
