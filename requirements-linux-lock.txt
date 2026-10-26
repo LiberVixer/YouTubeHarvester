@@ -50,7 +50,7 @@ urllib3==2.8.0
     # via
     #   requests
     #   yt-dlp
-websockets==17.2
+websockets==17.3
     # via yt-dlp
 yt-dlp==2026.8.19
     # via -r requirements.txt
